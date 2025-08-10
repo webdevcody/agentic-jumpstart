@@ -17,6 +17,11 @@ export const ServerRoute = createServerFileRoute("/api/login/google/").methods({
       codeVerifier,
       ["profile", "email"]
     );
+    
+    // Force Google to show account selection on every login
+    // Using just "select_account" instead of "consent select_account" to avoid re-consent
+    authorizationInfo.searchParams.set("prompt", "select_account");
+    authorizationInfo.searchParams.set("access_type", "online");
 
     setCookie("google_oauth_state", state, {
       path: "/",

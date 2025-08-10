@@ -81,9 +81,6 @@ export function UpgradePlaceholder({
                 Upgrade to Premium
                 <ArrowRight className="h-5 w-5" />
               </Link>
-              <p className="text-xs text-muted-foreground">
-                30-day money-back guarantee
-              </p>
             </div>
           </div>
         </div>

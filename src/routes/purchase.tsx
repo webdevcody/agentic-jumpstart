@@ -200,9 +200,6 @@ function RouteComponent() {
 
                 {/* Guarantee */}
                 <div className="text-center mb-12 p-6 rounded-lg border border-theme-400/20 bg-white/5">
-                  <h3 className="text-white font-bold mb-2">
-                    30-Day Money-Back Guarantee
-                  </h3>
                   <p className="text-gray-300">
                     Try the challenges risk-free. If you're not completely
                     satisfied, get a full refund within 30 days.
@@ -213,10 +210,11 @@ function RouteComponent() {
                 <div className="text-center space-y-6">
                   <div>
                     <div className="text-gray-400 mb-2">
-                      Regular price <span className="line-through">$49.99</span>
+                      Regular price{" "}
+                      <span className="line-through">$299.99</span>
                     </div>
                     <div className="text-6xl font-bold text-white mb-2">
-                      $20.00
+                      $199.00
                     </div>
                     <div className="text-theme-400 font-medium">
                       Limited Time Offer

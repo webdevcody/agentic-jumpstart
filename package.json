@@ -4,7 +4,7 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev": "npm run docker:up && vite dev",
+    "dev": "npm run db:up && vite dev",
     "build": "vite build",
     "start": "npm run db:migrate && node .output/server/index.mjs",
     "db:push": "drizzle-kit push --config=drizzle.config.ts",
@@ -17,7 +17,7 @@
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f",
-    "stripe:webhook": "stripe listen --forward-to http://localhost:3000/api/stripe/webhook",
+    "stripe:listen": "stripe listen --forward-to http://localhost:3000/api/stripe/webhook",
     "upload:videos": "tsx ./scripts/upload-videos-to-r2.ts"
   },
   "dependencies": {
