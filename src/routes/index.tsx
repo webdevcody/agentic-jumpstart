@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { HeroSection } from "./-components/hero";
-import { CodePreviewSection } from "./-components/code-preview";
 import { ModulesSection } from "./-components/modules";
 import { PricingSection } from "./-components/pricing";
 import { FAQSection } from "./-components/faq";
@@ -26,11 +25,10 @@ function Home() {
   const { segments } = Route.useLoaderData();
 
   return (
-    <div className="min-h-screen bg-white dark:bg-background">
+    <div className="min-h-screen bg-background">
       <HeroSection />
-      <NewsletterSection />
+      {/* <NewsletterSection /> */}
       <ModulesSection segments={segments} />
-      <CodePreviewSection />
       <TestimonialsSection />
       <PricingSection />
       <FAQSection />

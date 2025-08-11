@@ -9,7 +9,7 @@ function RouteComponent() {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <article className="prose prose-slate lg:prose-lg mx-auto">
         <h1>Privacy Policy</h1>
-        <p className="text-sm text-gray-600">Last updated: March 30, 2025</p>
+        <p className="text-sm text-muted-foreground">Last updated: March 30, 2025</p>
 
         <p>
           This Privacy Policy describes Our policies and procedures on the

@@ -127,16 +127,16 @@ export default {
         "gradient-red-transparent-hover":
           "linear-gradient(135deg, #dc2626 0%, transparent 100%)",
         "gradient-ai":
-          "linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #6366f1 100%)",
+          "linear-gradient(135deg, #00acc1 0%, #2196f3 50%, #4a5cc5 100%)",
         "gradient-ai-subtle":
-          "linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%)",
+          "linear-gradient(135deg, rgba(0, 172, 193, 0.1) 0%, rgba(33, 150, 243, 0.1) 100%)",
       },
       boxShadow: {
         "glow-sm": "0 0 10px rgba(var(--color-theme-500-rgb), 0.3)",
         glow: "0 0 20px rgba(var(--color-theme-500-rgb), 0.4)",
         "glow-lg": "0 0 30px rgba(var(--color-theme-500-rgb), 0.5)",
-        "glow-cyan": "0 0 25px rgba(6, 182, 212, 0.5)",
-        "glow-blue": "0 0 25px rgba(59, 130, 246, 0.5)",
+        "glow-cyan": "0 0 25px rgba(0, 172, 193, 0.5)",
+        "glow-blue": "0 0 25px rgba(33, 150, 243, 0.5)",
         "inner-glow": "inset 0 0 20px rgba(var(--color-theme-500-rgb), 0.2)",
         glass: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
         "elevation-1":

@@ -8,8 +8,8 @@ interface StatProps {
 export function Stat({ label, value }: StatProps) {
   return (
     <div className="text-center">
-      <div className="text-2xl font-bold text-white">{value}</div>
-      <div className="text-sm text-gray-400">{label}</div>
+      <div className="text-2xl font-bold text-foreground">{value}</div>
+      <div className="text-sm text-muted-foreground">{label}</div>
     </div>
   );
 }

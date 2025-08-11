@@ -51,24 +51,24 @@ export function NewsletterSection() {
     useNewsletterSubscription();
 
   return (
-    <section className="bg-black py-12 border-t border-b border-theme-200">
+    <section className="bg-theme-50 dark:bg-black py-12 border-t border-b border-theme-200 dark:border-theme-200">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-theme-400 to-theme-500 bg-clip-text text-transparent">
+          <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-theme-500 to-theme-600 dark:from-theme-400 dark:to-theme-500 bg-clip-text text-transparent">
             /subscribe
           </h2>
-          <p className="text-gray-400 text-xl mb-8 max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-xl mb-8 max-w-2xl mx-auto">
             Join our community to receive early access to new content and
             special discounts reserved for subscribers.
           </p>
 
           {isSubmitted ? (
             <div className="max-w-xl mx-auto">
-              <div className="bg-theme-500/10 border border-theme-500/20 rounded-lg p-6">
-                <h3 className="text-2xl font-semibold text-theme-400 mb-2">
+              <div className="bg-theme-100 dark:bg-theme-500/10 border border-theme-200 dark:border-theme-500/20 rounded-lg p-6">
+                <h3 className="text-2xl font-semibold text-theme-600 dark:text-theme-400 mb-2">
                   Thank you for subscribing!
                 </h3>
-                <p className="text-gray-400">
+                <p className="text-muted-foreground">
                   We'll be in touch soon with updates and exclusive content.
                 </p>
               </div>

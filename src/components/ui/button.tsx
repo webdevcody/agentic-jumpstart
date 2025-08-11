@@ -13,7 +13,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "w-full justify-center module-card px-4 py-2 text-theme-700 dark:text-theme-300 hover:text-theme-800 dark:hover:text-theme-200 transition-all duration-200 hover:shadow-elevation-3",
+          "w-full justify-center px-4 py-2 bg-theme-500 text-theme-50 hover:shadow-elevation-3 hover:bg-theme-600 hover:text-white",
         destructive:
           "border border-red-500 bg-transparent text-red-500 shadow-sm hover:bg-red-50 hover:text-red-600 dark:border-red-400 dark:text-red-400 dark:hover:bg-red-950/50 dark:hover:text-red-300",
         outline:

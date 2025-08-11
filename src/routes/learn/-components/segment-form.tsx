@@ -116,7 +116,7 @@ export function SegmentForm({
               <div className="absolute top-4 right-4 h-2 w-2 rounded-full bg-theme-400 animate-pulse" />
               <CardTitle className="flex items-center gap-3 text-xl">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-theme-500 to-theme-600 shadow-glow-sm">
-                  <Edit className="h-5 w-5 text-white" />
+                  <Edit className="h-5 w-5 text-primary-foreground" />
                 </div>
                 Basic Information
               </CardTitle>
@@ -216,10 +216,10 @@ export function SegmentForm({
             style={{ animationDelay: "0.1s" }}
           >
             <CardHeader className="relative">
-              <div className="absolute top-4 right-4 h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
+              <div className="absolute top-4 right-4 h-2 w-2 rounded-full bg-primary animate-pulse" />
               <CardTitle className="flex items-center gap-3 text-xl">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
-                  <FileText className="h-5 w-5 text-white" />
+                  <FileText className="h-5 w-5 text-primary-foreground" />
                 </div>
                 Content
               </CardTitle>
@@ -261,7 +261,7 @@ export function SegmentForm({
               <div className="absolute top-4 right-4 h-2 w-2 rounded-full bg-purple-400 animate-pulse" />
               <CardTitle className="flex items-center gap-3 text-xl">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg">
-                  <Video className="h-5 w-5 text-white" />
+                  <Video className="h-5 w-5 text-primary-foreground" />
                 </div>
                 Media Content
               </CardTitle>
@@ -307,12 +307,12 @@ export function SegmentForm({
                             </label>
                           </div>
                         ) : (
-                          <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
+                          <Card className="bg-accent/10 border-accent/20">
                             <CardContent className="pt-6">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-                                    <Video className="h-5 w-5 text-green-600" />
+                                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/20">
+                                    <Video className="h-5 w-5 text-accent-foreground" />
                                   </div>
                                   <div>
                                     <p className="text-sm font-medium">
@@ -338,12 +338,12 @@ export function SegmentForm({
                         )}
 
                         {uploadProgress && (
-                          <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+                          <Card className="bg-primary/10 border-primary/20">
                             <CardContent className="pt-6">
                               <div className="space-y-3">
                                 <div className="flex justify-between items-center">
                                   <div className="flex items-center gap-2">
-                                    <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
                                     <span className="text-sm font-medium">
                                       Uploading video...
                                     </span>
@@ -395,7 +395,7 @@ export function SegmentForm({
               <div className="absolute top-4 right-4 h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
               <CardTitle className="flex items-center gap-3 text-xl">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg">
-                  <Crown className="h-5 w-5 text-white" />
+                  <Crown className="h-5 w-5 text-primary-foreground" />
                 </div>
                 Content Settings
               </CardTitle>
@@ -413,13 +413,13 @@ export function SegmentForm({
                     <div className="relative space-y-2">
                       <FormLabel className="text-lg font-bold flex items-center gap-3">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg">
-                          <Crown className="h-4 w-4 text-white" />
+                          <Crown className="h-4 w-4 text-primary-foreground" />
                         </div>
                         <span className="bg-gradient-to-r from-amber-600 to-amber-500 bg-clip-text text-transparent">
                           Premium Content
                         </span>
                       </FormLabel>
-                      <FormDescription className="text-base text-amber-700 dark:text-amber-300 leading-relaxed mr-8">
+                      <FormDescription className="text-base text-muted-foreground leading-relaxed mr-8">
                         Mark this segment as premium content.
                         <br />
                         Only users with premium access will be able to view this

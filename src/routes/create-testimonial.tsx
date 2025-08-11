@@ -159,7 +159,7 @@ function CreateTestimonial() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-2">
           <label htmlFor="displayName" className="text-sm font-medium">
-            Display Name <span className="text-red-500">*</span>
+            Display Name <span className="text-destructive">*</span>
           </label>
           <Input
             id="displayName"
@@ -167,11 +167,11 @@ function CreateTestimonial() {
             placeholder="How you'd like to be known"
             className={cn(
               form.formState.errors.displayName &&
-                "border-red-500 focus-visible:ring-red-500"
+                "border-destructive focus-visible:ring-destructive"
             )}
           />
           {form.formState.errors.displayName && (
-            <p className="text-sm text-red-500">
+            <p className="text-sm text-destructive">
               {form.formState.errors.displayName.message}
             </p>
           )}
@@ -179,7 +179,7 @@ function CreateTestimonial() {
 
         <div className="space-y-2">
           <label htmlFor="content" className="text-sm font-medium">
-            Your Testimonial <span className="text-red-500">*</span>
+            Your Testimonial <span className="text-destructive">*</span>
           </label>
           <Textarea
             id="content"
@@ -188,11 +188,11 @@ function CreateTestimonial() {
             className={cn(
               "min-h-[150px]",
               form.formState.errors.content &&
-                "border-red-500 focus-visible:ring-red-500"
+                "border-destructive focus-visible:ring-destructive"
             )}
           />
           {form.formState.errors.content && (
-            <p className="text-sm text-red-500">
+            <p className="text-sm text-destructive">
               {form.formState.errors.content.message}
             </p>
           )}
@@ -225,7 +225,7 @@ function CreateTestimonial() {
             </p>
           )}
           {form.formState.errors.emojis && (
-            <p className="text-sm text-red-500">
+            <p className="text-sm text-destructive">
               {form.formState.errors.emojis.message}
             </p>
           )}
@@ -243,7 +243,7 @@ function CreateTestimonial() {
               });
             }}
             className={cn(
-              form.formState.errors.permissionGranted && "border-red-500"
+              form.formState.errors.permissionGranted && "border-destructive"
             )}
           />
           <div className="grid gap-1.5 leading-none">
@@ -251,13 +251,13 @@ function CreateTestimonial() {
               htmlFor="permission"
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
-              Permission to Share <span className="text-red-500">*</span>
+              Permission to Share <span className="text-destructive">*</span>
             </label>
             <p className="text-sm text-muted-foreground">
               I agree to let my testimonial be shared publicly on this site
             </p>
             {form.formState.errors.permissionGranted && (
-              <p className="text-sm text-red-500">
+              <p className="text-sm text-destructive">
                 {form.formState.errors.permissionGranted.message}
               </p>
             )}

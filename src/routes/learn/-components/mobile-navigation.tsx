@@ -47,17 +47,6 @@ export function MobileNavigation({
           <SheetTitle>Course Content</SheetTitle>
         </SheetHeader>
 
-        {/* Brand Header */}
-        <div className="px-4 pb-2">
-          <div className="flex items-center gap-2">
-            <img
-              src="/logo.png"
-              alt="Beginner React Challenges"
-              className="size-6"
-            />
-            <span className="font-semibold text-xs">Agentic Jumpstart</span>
-          </div>
-        </div>
         <div className="flex-1 my-4 px-4 overflow-y-auto">
           <NavigationItems
             modules={modules}

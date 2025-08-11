@@ -16,6 +16,7 @@ import appCss from "~/styles/app.css?url";
 import { seo } from "~/utils/seo";
 import { Header } from "~/routes/-components/header";
 import { FooterSection } from "~/routes/-components/footer";
+import { ThemeProvider } from "~/components/ThemeProvider";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 
@@ -103,7 +104,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   }, [routerState.status, routerState.location.pathname]);
 
   return (
-    <html className="dark font-inter" suppressHydrationWarning>
+    <html className="font-inter" suppressHydrationWarning>
       <head>
         <HeadContent />
         <script
@@ -126,31 +127,35 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 // Clear any existing theme classes
                 root.classList.remove(THEME_CLASSES.LIGHT, THEME_CLASSES.DARK);
                 
-                if (!theme) {
-                  // First visit - store as system theme
+                if (!theme || theme === 'system') {
+                  // Use system preference for system theme or if no theme is set
                   resolvedTheme = window.matchMedia(DARK_MODE_MEDIA_QUERY).matches ? THEME_CLASSES.DARK : THEME_CLASSES.LIGHT;
                   
-                  // Set cookie with system preference
-                  const expires = new Date(Date.now() + COOKIE_EXPIRY_DAYS * MILLISECONDS_PER_DAY).toUTCString();
-                  document.cookie = THEME_COOKIE_NAME + '=system; expires=' + expires + '; path=/; SameSite=Lax';
-                } else if (theme === 'system') {
-                  resolvedTheme = window.matchMedia(DARK_MODE_MEDIA_QUERY).matches ? THEME_CLASSES.DARK : THEME_CLASSES.LIGHT;
+                  if (!theme) {
+                    // Set cookie with system preference on first visit
+                    const expires = new Date(Date.now() + COOKIE_EXPIRY_DAYS * MILLISECONDS_PER_DAY).toUTCString();
+                    document.cookie = THEME_COOKIE_NAME + '=system; expires=' + expires + '; path=/; SameSite=Lax';
+                  }
                 } else {
                   resolvedTheme = theme;
                 }
                 
                 root.classList.add(resolvedTheme);
+                
+                // Add data attribute for debugging
+                root.setAttribute('data-theme', theme || 'system');
+                root.setAttribute('data-resolved-theme', resolvedTheme);
               })();
             `,
           }}
         />
         <style>{`
           #nprogress .bar {
-            background: #22c55e !important;
+            background: #00acc1 !important;
             height: 3px;
           }
           #nprogress .peg {
-            box-shadow: 0 0 10px #22c55e, 0 0 5px #22c55e;
+            box-shadow: 0 0 10px #00acc1, 0 0 5px #00acc1;
           }
           #nprogress .spinner-icon {
             display: none;
@@ -158,14 +163,16 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         `}</style>
       </head>
       <body className="min-h-screen flex flex-col">
-        {showHeader && <Header />}
-        <main className={`flex-1 ${showHeader ? "mt-16" : ""}`}>
-          {children}
-        </main>
-        {showFooter && <FooterSection />}
-        <TanStackRouterDevtools position="bottom-right" />
-        <ReactQueryDevtools buttonPosition="bottom-left" />
-        <Scripts />
+        <ThemeProvider>
+          {showHeader && <Header />}
+          <main className={`flex-1 ${showHeader ? "mt-16" : ""}`}>
+            {children}
+          </main>
+          {showFooter && <FooterSection />}
+          <TanStackRouterDevtools position="bottom-right" />
+          <ReactQueryDevtools buttonPosition="bottom-left" />
+          <Scripts />
+        </ThemeProvider>
       </body>
     </html>
   );

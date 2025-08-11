@@ -49,7 +49,7 @@ export function ModulePanel({
   const segments = module.segments || [];
 
   return (
-    <div className="border-t border-gray-200/60 dark:border-gray-700/60 w-full">
+    <div className="border-t border-border/60 w-full">
       {isAdmin ? (
         <DragDropContext onDragEnd={(result) => onDragEnd(result, module.id)}>
           <Droppable droppableId={`module-${module.id}-segments`}>

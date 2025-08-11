@@ -47,35 +47,35 @@ const checkoutFn = createServerFn()
 
 const features = [
   {
-    title: "20 Beginner React Challenges",
+    title: "Master Cursor IDE",
     description:
-      "Learn React through hands-on practice with carefully crafted challenges",
+      "Learn AI pair programming and code generation with Cursor's advanced features",
     icon: Code,
   },
   {
-    title: "Problem-Solving Approach",
+    title: "Claude Code CLI Mastery",
     description:
-      "Master the art of breaking down complex problems with whiteboarding",
+      "Seamless AI-assisted development with Claude's command-line interface",
     icon: Sparkles,
   },
   {
-    title: "Step-by-Step Guidance",
-    description: "Detailed explanations and solution code for each challenge",
+    title: "Advanced Prompting Techniques",
+    description: "Optimize Claude Sonnet and Opus for maximum coding efficiency",
     icon: Star,
   },
   {
-    title: "Discord Community",
-    description: "Get help and discuss solutions with other learners",
+    title: "AI Agent Development",
+    description: "Build real-world projects using AI agents and automation",
     icon: Users,
   },
   {
-    title: "React Fundamentals",
-    description: "Build a strong foundation in React concepts and patterns",
+    title: "10x Development Speed",
+    description: "Transform your workflow with cutting-edge AI programming methods",
     icon: Trophy,
   },
   {
     title: "Lifetime Access",
-    description: "Access all challenges and future updates at your own pace",
+    description: "Access all training modules and future AI tool updates",
     icon: RefreshCcw,
   },
 ];
@@ -114,160 +114,161 @@ function RouteComponent() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-background via-muted to-background">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgb(var(--color-theme-500-rgb)/0.05)_0%,transparent_65%)] pointer-events-none" />
+    <div className="relative w-full min-h-screen">
+      {/* Modern AI-themed gradient background - matching hero */}
+      <div className="absolute inset-0 hero-background-ai"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-theme-500/5 dark:via-theme-950/20 to-transparent"></div>
 
-      <div className="container mx-auto py-12 px-4 relative z-10">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 text-theme-400 font-medium mb-4">
-              <Sparkles className="h-5 w-5" />
-              <span>Limited Time Offer - 60% OFF</span>
-            </div>
-            <h1 className="text-5xl font-bold mb-4 text-white bg-clip-text">
-              20 Beginner React Challenges
-            </h1>
-            <p className="text-xl text-muted-foreground mb-4">
-              Master React through hands-on problem solving
-            </p>
-            {/* <div className="flex items-center justify-center gap-2 text-theme-400">
-              <div className="flex">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-5 w-5 fill-current" />
-                ))}
+      {/* AI circuit pattern overlay */}
+      <div className="absolute inset-0 opacity-5 dark:opacity-10">
+        <div className="circuit-pattern absolute inset-0"></div>
+      </div>
+
+      {/* AI-themed floating elements */}
+      <div className="floating-elements">
+        <div className="floating-element-1"></div>
+        <div className="floating-element-2"></div>
+        <div className="floating-element-3"></div>
+        <div className="floating-element-small top-10 right-10"></div>
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 h-full">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-12 h-full">
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center max-w-5xl">
+              {/* Badge - matching hero style */}
+              <div className="inline-flex items-center px-4 py-2 rounded-full bg-theme-50/50 dark:bg-background/20 backdrop-blur-sm border border-theme-200 dark:border-border/50 text-theme-600 dark:text-theme-400 text-sm font-medium mb-8">
+                <span className="w-2 h-2 bg-theme-500 dark:bg-theme-400 rounded-full mr-2 animate-pulse"></span>
+                Limited Time Offer - 60% OFF
               </div>
-              <span className="text-muted-foreground">4.9/5 from 500+ students</span>
-            </div> */}
-          </div>
 
-          <div className="module-card">
-            <div className="p-8">
-              <div className="max-w-3xl mx-auto">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold text-white mb-2">
-                    Complete Challenge Package
-                  </h2>
-                  <p className="text-muted-foreground">
-                    Get lifetime access to all challenges and solutions
-                  </p>
-                </div>
+              <h1 className="text-6xl leading-tight mb-8">
+                Agentic Coding{" "}
+                <span className="text-theme-400">Mastery Course</span>
+              </h1>
 
-                {/* Features Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                  {features.map((feature) => (
-                    <div
-                      key={feature.title}
-                      className="flex items-start gap-3 p-4 rounded-lg hover:bg-white/5 transition-colors"
-                    >
-                      <div className="flex-shrink-0">
-                        <feature.icon className="h-6 w-6 text-theme-400" />
-                      </div>
-                      <div>
-                        <p className="text-white font-medium">
-                          {feature.title}
-                        </p>
-                        <p className="text-muted-foreground text-sm">
-                          {feature.description}
-                        </p>
-                      </div>
+              <p className="text-description mb-12 max-w-3xl mx-auto">
+                Transform your development workflow with AI-first programming.
+                Master Cursor IDE, Claude Code CLI, and advanced AI models to
+                build applications 10x faster than traditional methods. Get
+                lifetime access to cutting-edge techniques.
+              </p>
+
+              <div className="video-container max-w-4xl mx-auto mb-16">
+                <div className="video-wrapper p-8">
+                  <div className="relative z-10">
+                    <div className="text-center mb-8">
+                      <h2 className="text-4xl font-bold text-theme-600 dark:text-theme-400 mb-2">
+                        Complete Learning Package
+                      </h2>
+                      <p className="text-muted-foreground">
+                        Everything you need to master AI-first development
+                      </p>
                     </div>
-                  ))}
-                </div>
 
-                {/* Testimonials */}
-                {/* <div className="mb-12">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {testimonials.map((testimonial) => (
-                      <div
-                        key={testimonial.name}
-                        className="p-4 rounded-lg bg-white/5 border border-theme-400/10"
-                      >
-                        <p className="text-muted-foreground mb-4">
-                          "{testimonial.text}"
-                        </p>
-                        <div>
-                          <div className="text-white font-medium">
-                            {testimonial.name}
+                    {/* Features Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                      {features.map((feature) => (
+                        <div
+                          key={feature.title}
+                          className="flex items-start gap-3 p-4 rounded-lg hover:bg-theme-50/20 dark:hover:bg-background/20 transition-colors group"
+                        >
+                          <div className="flex-shrink-0">
+                            <feature.icon className="h-6 w-6 text-theme-500 dark:text-theme-400 group-hover:scale-110 transition-transform" />
                           </div>
-                          <div className="text-muted-foreground/70 text-sm">
-                            {testimonial.role} at {testimonial.company}
+                          <div className="text-left">
+                            <p className="text-foreground font-medium group-hover:text-theme-600 dark:group-hover:text-theme-400 transition-colors">
+                              {feature.title}
+                            </p>
+                            <p className="text-muted-foreground text-sm">
+                              {feature.description}
+                            </p>
                           </div>
                         </div>
+                      ))}
+                    </div>
+
+                    {/* Guarantee */}
+                    <div className="text-center mb-12 p-6 rounded-lg border border-theme-200/50 dark:border-border/50 bg-theme-50/20 dark:bg-background/20 backdrop-blur-sm">
+                      <p className="text-muted-foreground">
+                        Try the course risk-free. If you're not completely
+                        satisfied, get a full refund within 30 days.
+                      </p>
+                    </div>
+
+                    {/* Pricing */}
+                    <div className="text-center space-y-6">
+                      <div>
+                        <div className="text-muted-foreground/70 mb-2">
+                          Regular price{" "}
+                          <span className="line-through">$299.99</span>
+                        </div>
+                        <div className="text-6xl font-bold text-foreground mb-2">
+                          $199.00
+                        </div>
+                        <div className="text-theme-500 dark:text-theme-400 font-medium">
+                          Limited Time Offer
+                        </div>
+                        <div className="text-muted-foreground text-sm mt-1">
+                          One-time payment, lifetime access
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </div> */}
 
-                {/* Guarantee */}
-                <div className="text-center mb-12 p-6 rounded-lg border border-theme-400/20 bg-white/5">
-                  <p className="text-muted-foreground">
-                    Try the challenges risk-free. If you're not completely
-                    satisfied, get a full refund within 30 days.
-                  </p>
-                </div>
+                      <div className="flex flex-col items-center gap-4">
+                        {user ? (
+                          !user.isPremium ? (
+                            <Button size="lg" onClick={handlePurchase}>
+                              <ShoppingCart className="mr-2 h-4 w-4" />
+                              Get Instant Access
+                            </Button>
+                          ) : (
+                            <Link
+                              to="/learn/$slug"
+                              params={{ slug: continueSlug }}
+                              className={buttonVariants({
+                                variant: "secondary",
+                                size: "lg",
+                              })}
+                            >
+                              Continue with Course
+                              <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
+                          )
+                        ) : (
+                          <a
+                            href={`/api/login/google?redirect_uri=${encodeURIComponent("/purchase")}`}
+                          >
+                            <Button size="lg">
+                              <User className="mr-2 h-4 w-4" />
+                              Login to Purchase
+                            </Button>
+                          </a>
+                        )}
 
-                {/* Pricing */}
-                <div className="text-center space-y-6">
-                  <div>
-                    <div className="text-muted-foreground/70 mb-2">
-                      Regular price{" "}
-                      <span className="line-through">$299.99</span>
-                    </div>
-                    <div className="text-6xl font-bold text-white mb-2">
-                      $199.00
-                    </div>
-                    <div className="text-theme-400 font-medium">
-                      Limited Time Offer
-                    </div>
-                    <div className="text-muted-foreground text-sm mt-1">
-                      One-time payment, lifetime access
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-center gap-4">
-                    {user ? (
-                      !user.isPremium ? (
-                        <Button size="lg" onClick={handlePurchase}>
-                          <ShoppingCart className="mr-2 h-4 w-4" />
-                          Get Instant Access
-                        </Button>
-                      ) : (
-                        <Link
-                          to="/learn/$slug"
-                          params={{ slug: continueSlug }}
-                          className={buttonVariants({
-                            variant: "secondary",
-                            size: "lg",
-                          })}
-                        >
-                          Continue with Course
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Link>
-                      )
-                    ) : (
-                      <a
-                        href={`/api/login/google?redirect_uri=${encodeURIComponent("/purchase")}`}
-                      >
-                        <Button size="lg">
-                          <User className="mr-2 h-4 w-4" />
-                          Login to Purchase
-                        </Button>
-                      </a>
-                    )}
-
-                    <div className="flex items-center gap-2 text-muted-foreground/70">
-                      <Lock className="h-4 w-4" />
-                      <span className="text-sm">
-                        Secure payment with Stripe
-                      </span>
+                        <div className="flex items-center gap-2 text-muted-foreground/70">
+                          <Lock className="h-4 w-4" />
+                          <span className="text-sm">
+                            Secure payment with Stripe
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
+
+                {/* Decorative elements - matching hero */}
+                <div className="video-decorative-1"></div>
+                <div className="video-decorative-2"></div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Bottom gradient fade with theme accent - matching hero */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background via-background/80 to-transparent"></div>
+      <div className="section-divider-glow-bottom"></div>
     </div>
   );
 }

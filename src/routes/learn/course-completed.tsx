@@ -33,7 +33,7 @@ function CourseCompleted() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background gradient similar to homepage */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgb(var(--color-theme-500-rgb)/0.05)_0%,transparent_65%)] pointer-events-none" />
 
@@ -56,7 +56,7 @@ function CourseCompleted() {
               />
             </svg>
           </div>
-          <h1 className="text-5xl sm:text-6xl font-bold text-white">
+          <h1 className="text-5xl sm:text-6xl font-bold text-foreground">
             Congratulations! <span className="text-theme-400">🎉</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -66,7 +66,7 @@ function CourseCompleted() {
         </div>
 
         <div className="bg-card/30 backdrop-blur-sm rounded-lg border border-theme-400/20 shadow-[0_0_15px_rgb(var(--color-theme-500-rgb)/0.1)] p-6 space-y-4">
-          <h2 className="text-2xl font-semibold text-white">Get in Touch</h2>
+          <h2 className="text-2xl font-semibold text-foreground">Get in Touch</h2>
           <p className="text-muted-foreground">
             Have questions or feedback? Feel free to reach out to me at{" "}
             <a
@@ -79,7 +79,7 @@ function CourseCompleted() {
         </div>
 
         <div className="bg-card/30 backdrop-blur-sm rounded-lg border border-theme-400/20 shadow-[0_0_15px_rgb(var(--color-theme-500-rgb)/0.1)] p-6 space-y-4">
-          <h2 className="text-2xl font-semibold text-white">Stay Updated</h2>
+          <h2 className="text-2xl font-semibold text-foreground">Stay Updated</h2>
           <p className="text-muted-foreground">
             Sign up for our newsletter to get notified about new courses,
             updates, and exclusive content.
@@ -109,12 +109,12 @@ function CourseCompleted() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="bg-background/50 border-theme-400/20 focus:border-theme-400 text-white"
+                  className="bg-background/50 border-theme-400/20 focus:border-theme-400 text-foreground"
                 />
               </div>
               <Button
                 type="submit"
-                className="w-full bg-theme-400 hover:bg-theme-500 text-black font-semibold"
+                className="w-full bg-theme-400 hover:bg-theme-500 text-primary-foreground font-semibold"
                 disabled={isLoading}
               >
                 {isLoading ? "Subscribing..." : "Subscribe to Newsletter"}
@@ -124,12 +124,12 @@ function CourseCompleted() {
         </div>
 
         <div className="bg-card/30 backdrop-blur-sm rounded-lg border border-theme-400/20 shadow-[0_0_15px_rgb(var(--color-theme-500-rgb)/0.1)] p-6 space-y-4">
-          <h2 className="text-2xl font-semibold text-white">Connect With Me</h2>
+          <h2 className="text-2xl font-semibold text-foreground">Connect With Me</h2>
           <div className="flex gap-4 justify-center">
             <Button
               variant="outline"
               asChild
-              className="border-theme-400/20 hover:bg-theme-400 hover:text-black transition-colors"
+              className="border-theme-400/20 hover:bg-theme-400 hover:text-primary-foreground transition-colors"
             >
               <a
                 href="https://twitter.com/webdevcody"
@@ -143,7 +143,7 @@ function CourseCompleted() {
             <Button
               variant="outline"
               asChild
-              className="border-theme-400/20 hover:bg-theme-400 hover:text-black transition-colors"
+              className="border-theme-400/20 hover:bg-theme-400 hover:text-primary-foreground transition-colors"
             >
               <a
                 href="https://github.com/webdevcody"
@@ -157,7 +157,7 @@ function CourseCompleted() {
             <Button
               variant="outline"
               asChild
-              className="border-theme-400/20 hover:bg-theme-400 hover:text-black transition-colors"
+              className="border-theme-400/20 hover:bg-theme-400 hover:text-primary-foreground transition-colors"
             >
               <a
                 href="https://discord.gg/webdevcody"

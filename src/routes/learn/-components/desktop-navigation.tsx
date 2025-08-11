@@ -14,6 +14,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { reorderModulesFn } from "~/fn/modules";
 import { cn } from "~/lib/utils";
 import { NewModuleButton } from "./new-module-button";
+import { Link } from "@tanstack/react-router";
 
 interface ModuleWithSegments extends Module {
   segments: Segment[];
@@ -80,18 +81,19 @@ export function DesktopNavigation({
 
   return (
     <Sidebar className="hidden lg:block w-80 xl:w-[380px]">
-      <SidebarContent className="pt-6 w-full flex flex-col h-full">
+      <SidebarContent className="pt-4 w-full flex flex-col h-full">
         {/* Brand Header */}
-        <div className="px-4">
-          <div className="flex items-center gap-2">
-            <img
-              src="/logo.png"
-              alt="Agentic Jumpstart Logo"
-              className="size-12"
-            />
-            <span className="font-semibold">Agentic Jumpstart</span>
-          </div>
-        </div>
+        <Link
+          to="/"
+          className="px-4 flex justify-center items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity duration-200"
+        >
+          <img
+            src="/logo.png"
+            alt="Agentic Jumpstart Logo"
+            className="size-12"
+          />
+          <span className="font-semibold">Agentic Jumpstart</span>
+        </Link>
 
         <SidebarGroup className="flex-1">
           <SidebarGroupContent>

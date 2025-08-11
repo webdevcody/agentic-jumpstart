@@ -76,6 +76,7 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   const value = {
     theme: themeQuery.data as Theme,
     setTheme: (theme: Theme) => {
+      console.log("setting theme", theme);
       setThemeFn({ data: { theme } }).then(() => {
         themeQuery.refetch();
       });

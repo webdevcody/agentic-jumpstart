@@ -63,7 +63,7 @@ export function DeleteModuleButton({
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
         >
           <Trash2 className="h-4 w-4" />
         </Button>
@@ -74,8 +74,8 @@ export function DeleteModuleButton({
       >
         <AlertDialogHeader className="space-y-4 p-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900 dark:to-red-800">
-              <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
+            <div className="p-2 rounded-lg bg-destructive/10">
+              <Trash2 className="h-5 w-5 text-destructive" />
             </div>
             <AlertDialogTitle className="text-xl font-semibold text-foreground leading-tight">
               Delete Module

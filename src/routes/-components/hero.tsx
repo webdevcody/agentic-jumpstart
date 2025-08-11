@@ -25,53 +25,54 @@ export function HeroSection() {
   });
 
   return (
-    <section className="relative h-screen overflow-hidden w-full">
+    <section className="relative w-full py-12">
       {/* Modern AI-themed gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800"></div>
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-theme-950/20 to-transparent"></div>
+      <div className="absolute inset-0 hero-background-ai"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-theme-500/5 dark:via-theme-950/20 to-transparent"></div>
 
       {/* AI circuit pattern overlay */}
-      <div className="absolute inset-0 opacity-10">
+      <div className="absolute inset-0 opacity-5 dark:opacity-10">
         <div className="circuit-pattern absolute inset-0"></div>
       </div>
 
       {/* AI-themed floating elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-theme-500/10 to-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-theme-400/8 rounded-full blur-3xl animate-pulse delay-500"></div>
-        <div className="absolute top-10 right-10 w-32 h-32 bg-theme-300/5 rounded-full blur-2xl animate-float"></div>
+      <div className="floating-elements">
+        <div className="floating-element-1"></div>
+        <div className="floating-element-2"></div>
+        <div className="floating-element-3"></div>
+        <div className="floating-element-small top-10 right-10"></div>
       </div>
 
       {/* Content */}
       <div className="relative z-10 h-full">
-        <div className="container mx-auto h-full px-6 lg:px-12">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 h-full">
           <div className="flex items-center h-full">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 w-full items-center">
               {/* Left side - Content */}
-              <div className="max-w-2xl">
+              <div className="hero-content">
                 {/* Badge */}
-                <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-theme-400 text-sm font-medium mb-8">
-                  <span className="w-2 h-2 bg-theme-400 rounded-full mr-2 animate-pulse"></span>
-                  React Mastery Course
+                <div className="inline-flex items-center px-4 py-2 rounded-full bg-theme-50/50 dark:bg-background/20 backdrop-blur-sm border border-theme-200 dark:border-border/50 text-theme-600 dark:text-theme-400 text-sm font-medium mb-8">
+                  <span className="w-2 h-2 bg-theme-500 dark:bg-theme-400 rounded-full mr-2 animate-pulse"></span>
+                  Agentic Coding Mastery Course
                 </div>
 
-                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-8 text-white leading-tight">
-                  20 <span className="text-gradient-ai">Beginner</span> React
-                  <br />
-                  <span className="text-gradient-ai ai-glow">Challenges</span>
+                <h1 className="text-6xl leading-tight mb-8">
+                  Coding is <span className="text-theme-400">Changing</span>,
+                  Master{" "}
+                  <span className="text-theme-400">Agentic Coding</span>{" "}
                 </h1>
 
-                <p className="text-xl text-muted-foreground mb-12 leading-relaxed max-w-xl">
-                  Master React through hands-on practice with 20 engaging
-                  challenges. From building a Connect Four game to crafting a
-                  Quote Generator, you'll learn to solve real-world React
-                  problems by breaking them down into manageable pieces.
+                <p className="text-description mb-12 max-w-xl">
+                  Master AI-first development with Cursor IDE, Claude Code CLI,
+                  and advanced AI models. Learn how to leverage Claude Sonnet
+                  3.5, Claude Opus, and cutting-edge agentic programming
+                  techniques to accelerate your development workflow and build
+                  applications 10x faster than traditional programming methods.
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link to="/purchase">
-                    <Button className="btn-ai" size="lg">
+                    <Button size="lg">
                       <ShoppingCart className="mr-2 h-4 w-4" />
                       Buy Now
                     </Button>
@@ -83,22 +84,6 @@ export function HeroSection() {
                     </Button>
                   </Link>
                 </div>
-
-                {/* Stats */}
-                <div className="flex items-center gap-8 mt-12 pt-8 border-t border-white/10">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-white">20</div>
-                    <div className="text-sm text-muted-foreground/70">Challenges</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-white">6+</div>
-                    <div className="text-sm text-muted-foreground/70">Hours Content</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-white">∞</div>
-                    <div className="text-sm text-muted-foreground/70">Learning</div>
-                  </div>
-                </div>
               </div>
 
               {/* Right side - Video player */}
@@ -106,14 +91,14 @@ export function HeroSection() {
                 {firstVideoSegment && (
                   <div className="w-full max-w-lg lg:max-w-xl">
                     {/* Video container with glass morphism effect */}
-                    <div className="relative p-1 rounded-2xl bg-gradient-to-br from-white/20 via-white/10 to-white/5 backdrop-blur-sm">
-                      <div className="rounded-xl overflow-hidden bg-black/20 backdrop-blur-sm shadow-elevation-3">
+                    <div className="video-container">
+                      <div className="video-wrapper">
                         <VideoPlayer segmentId={firstVideoSegment.id} />
                       </div>
 
                       {/* Decorative elements - using theme colors */}
-                      <div className="absolute -top-4 -right-4 w-8 h-8 bg-theme-400/30 rounded-full blur-sm"></div>
-                      <div className="absolute -bottom-4 -left-4 w-6 h-6 bg-theme-500/30 rounded-full blur-sm"></div>
+                      <div className="video-decorative-1"></div>
+                      <div className="video-decorative-2"></div>
                     </div>
                   </div>
                 )}
@@ -124,8 +109,8 @@ export function HeroSection() {
       </div>
 
       {/* Bottom gradient fade with theme accent */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent"></div>
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-theme-500/30 to-transparent"></div>
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background via-background/80 to-transparent"></div>
+      <div className="section-divider-glow-bottom"></div>
     </section>
   );
 }

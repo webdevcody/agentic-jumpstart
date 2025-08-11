@@ -24,15 +24,15 @@ export function VideoPlayer({ segmentId }: VideoPlayerProps) {
 
   if (isLoading) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
-        <div className="flex flex-col items-center gap-4 text-white">
+      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-background to-muted">
+        <div className="flex flex-col items-center gap-4 text-foreground">
           <div className="relative">
-            <div className="p-4 rounded-full bg-white/10 backdrop-blur-sm">
+            <div className="p-4 rounded-full bg-foreground/10 backdrop-blur-sm">
               <Play className="h-8 w-8" />
             </div>
             <Loader2 className="absolute -top-1 -left-1 h-10 w-10 animate-spin text-theme-500" />
           </div>
-          <p className="text-sm text-gray-300">Loading video...</p>
+          <p className="text-sm text-muted-foreground">Loading video...</p>
         </div>
       </div>
     );
@@ -40,14 +40,14 @@ export function VideoPlayer({ segmentId }: VideoPlayerProps) {
 
   if (error) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
-        <div className="flex flex-col items-center gap-4 text-white p-8">
-          <div className="p-4 rounded-full bg-red-500/20">
-            <Play className="h-8 w-8 text-red-400" />
+      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-background to-muted">
+        <div className="flex flex-col items-center gap-4 text-foreground p-8">
+          <div className="p-4 rounded-full bg-destructive/20">
+            <Play className="h-8 w-8 text-destructive" />
           </div>
           <div className="text-center">
-            <p className="text-sm text-gray-300 mb-2">Unable to load video</p>
-            <p className="text-xs text-gray-400">
+            <p className="text-sm text-muted-foreground mb-2">Unable to load video</p>
+            <p className="text-xs text-muted-foreground">
               Please try refreshing the page
             </p>
           </div>
@@ -61,7 +61,7 @@ export function VideoPlayer({ segmentId }: VideoPlayerProps) {
       <video
         src={data.videoUrl}
         controls
-        className="w-full h-full object-cover bg-black"
+        className="w-full h-full object-cover bg-background"
         preload="metadata"
         poster=""
       >

@@ -21,7 +21,7 @@ function RouteComponent() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background gradient similar to homepage */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgb(var(--color-theme-500-rgb)/0.05)_0%,transparent_65%)] pointer-events-none" />
 
@@ -46,7 +46,7 @@ function RouteComponent() {
                 />
               </svg>
             </div>
-            <h1 className="text-4xl font-bold text-white mb-4">
+            <h1 className="text-4xl font-bold text-foreground mb-4">
               Payment Successful!
             </h1>
             <p className="text-muted-foreground mb-8">
@@ -55,7 +55,7 @@ function RouteComponent() {
             <Button
               asChild
               disabled={isLoading || !firstSegment?.slug}
-              className="w-full bg-theme-400 hover:bg-theme-500 text-black font-semibold"
+              className="w-full bg-theme-400 hover:bg-theme-500 text-primary-foreground font-semibold"
             >
               {isLoading || !firstSegment ? (
                 "Loading..."

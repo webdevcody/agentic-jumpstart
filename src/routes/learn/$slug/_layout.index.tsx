@@ -93,7 +93,7 @@ function ViewSegment({
         <UpgradePlaceholder currentSegment={currentSegment} />
       ) : currentSegment.videoKey ? (
         <div className="relative">
-          <div className="aspect-video rounded-xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 shadow-elevation-3 border border-gray-200 dark:border-gray-700">
+          <div className="aspect-video rounded-xl overflow-hidden bg-gradient-to-br from-background to-muted shadow-elevation-3 border border-border">
             <VideoPlayer segmentId={currentSegment.id} />
           </div>
         </div>

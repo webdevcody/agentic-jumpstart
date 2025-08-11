@@ -135,8 +135,8 @@ export function DeleteSegmentButton({
       >
         <AlertDialogHeader className="space-y-4 p-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900 dark:to-red-800">
-              <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
+            <div className="p-2 rounded-lg bg-destructive/10">
+              <Trash2 className="h-5 w-5 text-destructive" />
             </div>
             <AlertDialogTitle className="text-xl font-semibold text-foreground leading-tight">
               Are you absolutely sure?
