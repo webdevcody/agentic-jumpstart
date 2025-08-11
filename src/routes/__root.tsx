@@ -27,9 +27,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { charSet: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },
         ...seo({
-          title: "20 Beginner React Challenges | by WebDevCody",
+          title: "Agentic Jumpstart | by WebDevCody",
           description:
-            "A collection of 20 beginner React challenges to help you improve your skills and become a better React developer.",
+            "A course to help you learn agentic coding and build real-world projects using AI agents and automation.",
         }),
       ],
       links: [
@@ -58,7 +58,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         {
           src: "https://umami-production-101d.up.railway.app/script.js",
           defer: true,
-          "data-website-id": "bde4216e-7d46-49e4-8bfc-7f28d5a0ba17",
+          "data-website-id": "a25b9b45-4772-4642-b752-052c04e52cf5",
         },
       ],
     }),
