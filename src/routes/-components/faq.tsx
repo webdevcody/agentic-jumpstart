@@ -32,10 +32,9 @@ const faqData: FAQItemProps[] = [
     question: "What AI tools will I learn to use?",
     answer: (
       <p className="text-muted-foreground">
-        You'll master Cursor IDE, Claude Code CLI, Claude Sonnet, Claude Opus,
-        GitHub Copilot, and other cutting-edge AI development tools. The course
-        covers both free and premium AI assistants, showing you how to maximize
-        your productivity with each one.
+        You'll master Cursor IDE, Cursor CLI, Claude Code CLI, ChatGPT, and
+        other cutting-edge AI development tools. The course showing you how to
+        maximize your productivity with each one.
       </p>
     ),
   },
@@ -206,15 +205,13 @@ export function FAQSection() {
             </div>
 
             <h2 className="text-6xl leading-tight mb-8">
-              Frequently Asked{" "}
-              <span className="text-theme-400">
-                Questions
-              </span>
+              Frequently Asked <span className="text-theme-400">Questions</span>
             </h2>
 
             <p className="text-description mb-12 max-w-3xl mx-auto">
-              Get quick answers to common questions about our agentic coding course, 
-              AI tools, and development techniques. Still have questions? Reach out anytime.
+              Get quick answers to common questions about our agentic coding
+              course, AI tools, and development techniques. Still have
+              questions? Reach out anytime.
             </p>
           </div>
 
