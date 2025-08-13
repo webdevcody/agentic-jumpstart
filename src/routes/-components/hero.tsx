@@ -1,4 +1,4 @@
-import { Button } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
 import { Link } from "@tanstack/react-router";
 import { useContinueSlug } from "~/hooks/use-continue-slug";
 import { createServerFn } from "@tanstack/react-start";
@@ -71,17 +71,32 @@ export function HeroSection() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Link to="/purchase">
-                    <Button size="lg">
-                      <ShoppingCart className="mr-2 h-4 w-4" />
-                      Buy Now
-                    </Button>
+                  <Link
+                    to="/purchase"
+                    className={buttonVariants({ variant: "outline" })}
+                    onKeyDown={(e) => {
+                      if (e.key === " ") {
+                        e.preventDefault();
+                        e.currentTarget.click();
+                      }
+                    }}
+                  >
+                    <ShoppingCart className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Buy Now
                   </Link>
-                  <Link to={"/learn/$slug"} params={{ slug: continueSlug }}>
-                    <Button size="lg">
-                      Continue Learning
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
+                  <Link
+                    to={"/learn/$slug"}
+                    params={{ slug: continueSlug }}
+                    className={buttonVariants({ variant: "default" })}
+                    onKeyDown={(e) => {
+                      if (e.key === " ") {
+                        e.preventDefault();
+                        e.currentTarget.click();
+                      }
+                    }}
+                  >
+                    Start Learning
+                    <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                   </Link>
                 </div>
               </div>
