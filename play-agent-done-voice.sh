@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-exit 0;
-
 set -euo pipefail
 
 # ElevenLabs TTS notifier
