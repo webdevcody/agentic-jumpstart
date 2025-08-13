@@ -86,7 +86,16 @@ export function SegmentItem({
           </div>
 
           <div className="flex items-center gap-1">
-            {segment.isPremium && !isPremium && (
+            {segment.isComingSoon ? (
+              <div
+                className={cn(
+                  "flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium",
+                  "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                )}
+              >
+                Coming Soon
+              </div>
+            ) : segment.isPremium && !isPremium ? (
               <div
                 className={cn(
                   "flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium",
@@ -96,7 +105,7 @@ export function SegmentItem({
                 <Lock className="h-3 w-3 text-muted-foreground" />
                 Pro Only
               </div>
-            )}
+            ) : null}
           </div>
         </button>
       </div>

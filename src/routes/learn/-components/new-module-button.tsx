@@ -60,10 +60,7 @@ export function NewModuleButton() {
 
   return (
     <>
-      <Button
-        className="mt-4 module-card px-4 py-2 flex items-center gap-2 text-sm font-medium text-theme-700 dark:text-theme-300 hover:text-theme-800 dark:hover:text-theme-200 transition-all duration-200 hover:shadow-elevation-3"
-        onClick={() => setOpen(true)}
-      >
+      <Button onClick={() => setOpen(true)}>
         <Plus className="mr-2 h-4 w-4" />
         New Module
       </Button>

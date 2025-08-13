@@ -52,8 +52,8 @@ export function useEditSegment(segment: any) {
         },
       });
 
-      // Navigate back to the segment
-      navigate({ to: "/learn/$slug", params: { slug } });
+      // Navigate back to the segment with the new slug
+      navigate({ to: "/learn/$slug", params: { slug: values.slug } });
     } catch (error) {
       console.error("Failed to update segment:", error);
       // TODO: Show error toast

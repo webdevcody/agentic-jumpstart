@@ -79,10 +79,10 @@ export function ModuleAccordionHeader({
               </div>
             )}
 
-            <div className="flex-1">
+            <div className="flex-1 flex items-center gap-2">
               <button
                 onClick={onToggle}
-                className="flex items-center justify-between w-full text-left group/module"
+                className="flex items-center justify-between flex-1 text-left group/module"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="p-1.5 rounded-lg bg-gradient-to-br from-theme-500/10 to-theme-600/10 group-hover/module:from-theme-500/20 group-hover/module:to-theme-600/20 transition-all duration-300 flex-shrink-0">
@@ -109,12 +109,7 @@ export function ModuleAccordionHeader({
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  {isAdmin ? (
-                    <DeleteModuleButton
-                      moduleId={module.id}
-                      moduleTitle={module.title}
-                    />
-                  ) : (
+                  {!isAdmin && (
                     <div className="relative w-8 h-8">
                       <svg className="w-8 h-8 transform" viewBox="0 0 36 36">
                         <path
@@ -152,6 +147,13 @@ export function ModuleAccordionHeader({
                   />
                 </div>
               </button>
+              
+              {isAdmin && (
+                <DeleteModuleButton
+                  moduleId={module.id}
+                  moduleTitle={module.title}
+                />
+              )}
             </div>
           </div>
         </div>
