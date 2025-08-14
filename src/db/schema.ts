@@ -145,6 +145,15 @@ export const testimonials = tableCreator("testimonial", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const guestBookEntries = tableCreator("guest_book_entry", {
+  id: serial("id").primaryKey(),
+  userId: serial("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const attachments = tableCreator("attachment", {
   id: serial("id").primaryKey(),
   segmentId: serial("segmentId")
@@ -165,6 +174,16 @@ export const testimonialsRelations = relations(testimonials, ({ one }) => ({
     references: [profiles.userId],
   }),
 }));
+
+export const guestBookEntriesRelations = relations(
+  guestBookEntries,
+  ({ one }) => ({
+    profile: one(profiles, {
+      fields: [guestBookEntries.userId],
+      references: [profiles.userId],
+    }),
+  })
+);
 
 export const segmentsRelations = relations(segments, ({ one, many }) => ({
   attachments: many(attachments),
@@ -220,3 +239,5 @@ export type Testimonial = typeof testimonials.$inferSelect;
 export type TestimonialCreate = typeof testimonials.$inferInsert;
 export type Comment = typeof comments.$inferSelect;
 export type CommentCreate = typeof comments.$inferInsert;
+export type GuestBookEntry = typeof guestBookEntries.$inferSelect;
+export type GuestBookEntryCreate = typeof guestBookEntries.$inferInsert;
