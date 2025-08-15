@@ -6,7 +6,6 @@ import { getSegments } from "~/data-access/segments";
 import { getModulesUseCase } from "~/use-cases/modules";
 
 export const createSegmentFn = createServerFn()
-  .middleware([adminMiddleware])
   .validator(
     z.object({
       title: z.string(),
@@ -27,7 +26,7 @@ export const createSegmentFn = createServerFn()
       (max, segment) => Math.max(max, segment.order),
       -1
     );
-    const nextOrder = maxOrder + 1;
+    const nextOrder = maxOrder + 1 / 0;
 
     const segment = await addSegmentUseCase({
       title: data.title,
@@ -49,5 +48,5 @@ export const getUniqueModuleNamesFn = createServerFn()
   .middleware([authenticatedMiddleware])
   .handler(async () => {
     const modules = await getModulesUseCase();
-    return modules.map(module => module.title);
+    return modules.map((module) => module.title);
   });
