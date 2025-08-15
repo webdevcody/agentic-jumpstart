@@ -8,12 +8,12 @@ import { getSegmentsUseCase } from "~/use-cases/segments";
 import { NewsletterSection } from "./-components/newsletter";
 import { TestimonialsSection } from "./-components/testimonials";
 import { EarlyAccessSection } from "./-components/early-access";
-import { env } from "~/utils/env";
+import { shouldShowEarlyAccessFn } from "~/fn/early-access";
 
 const loaderFn = createServerFn().handler(async () => {
   const segments = await getSegmentsUseCase();
-  const earlyAccessEnabled = env.EARLY_ACCESS_MODE;
-  return { segments, earlyAccessEnabled };
+  const shouldShowEarlyAccess = await shouldShowEarlyAccessFn();
+  return { segments, shouldShowEarlyAccess };
 });
 
 export const Route = createFileRoute("/")({
@@ -25,9 +25,9 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { segments, earlyAccessEnabled } = Route.useLoaderData();
+  const { segments, shouldShowEarlyAccess } = Route.useLoaderData();
 
-  if (earlyAccessEnabled) {
+  if (shouldShowEarlyAccess) {
     return <EarlyAccessSection />;
   }
 
