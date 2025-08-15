@@ -4,6 +4,7 @@ import { cn } from "~/lib/utils";
 import { type Segment } from "~/db/schema";
 import { ContentPanel } from "./content-panel";
 import { CommentsPanel } from "./comments-panel";
+import { MarkdownContent } from "~/routes/learn/-components/markdown-content";
 
 interface VideoContentTabsPanelProps {
   currentSegment: Segment;
@@ -14,7 +15,7 @@ export function VideoContentTabsPanel({
   currentSegment,
   isLoggedIn,
 }: VideoContentTabsPanelProps) {
-  const [activeTab, setActiveTab] = useState<"content" | "comments">("content");
+  const [activeTab, setActiveTab] = useState<"content" | "transcripts" | "comments">("content");
 
   return (
     <div className="module-card overflow-hidden">
@@ -31,6 +32,18 @@ export function VideoContentTabsPanel({
         >
           <FileText className="h-4 w-4" />
           Lesson Content
+        </button>
+        <button
+          onClick={() => setActiveTab("transcripts")}
+          className={cn(
+            "flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 border-b-2 cursor-pointer",
+            activeTab === "transcripts"
+              ? "border-theme-500 text-theme-600 dark:text-theme-400 bg-theme-50 dark:bg-theme-950/30"
+              : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          )}
+        >
+          <FileText className="h-4 w-4" />
+          Transcripts
         </button>
         <button
           onClick={() => setActiveTab("comments")}
@@ -50,6 +63,19 @@ export function VideoContentTabsPanel({
       <div className="p-6">
         {activeTab === "content" && (
           <ContentPanel currentSegment={currentSegment} />
+        )}
+
+        {activeTab === "transcripts" && (
+          <div className="animate-fade-in">
+            {currentSegment.transcripts ? (
+              <MarkdownContent content={currentSegment.transcripts} />
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No transcripts available for this segment.</p>
+              </div>
+            )}
+          </div>
         )}
 
         {activeTab === "comments" && (

@@ -42,6 +42,7 @@ export function useEditSegment(segment: any) {
           updates: {
             title: values.title,
             content: values.content,
+            transcripts: values.transcripts,
             videoKey: videoKey,
             moduleTitle: values.moduleTitle,
             slug: values.slug,

@@ -41,6 +41,7 @@ function RouteComponent() {
           defaultValues={{
             title: segment.title,
             content: segment.content ?? "",
+            transcripts: segment.transcripts ?? "",
             slug: segment.slug,
             moduleTitle: segment.moduleTitle,
             isPremium: segment.isPremium,

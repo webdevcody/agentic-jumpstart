@@ -38,6 +38,7 @@ export function useAddSegment() {
         data: {
           title: values.title,
           content: values.content,
+          transcripts: values.transcripts,
           slug: values.slug,
           moduleTitle: values.moduleTitle,
           length: videoDuration,

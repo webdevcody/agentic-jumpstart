@@ -45,6 +45,7 @@ export const formSchema = z.object({
     .min(2, "Title must be at least 2 characters")
     .max(100, "Title must be less than 100 characters"),
   content: z.string().optional(),
+  transcripts: z.string().optional(),
   video: z.instanceof(File).optional(),
   moduleTitle: z.string().min(1, "Module ID is required"),
   slug: z.string().min(2, "Slug must be at least 2 characters"),
@@ -89,6 +90,7 @@ export function SegmentForm({
     defaultValues: {
       title: defaultValues?.title || "",
       content: defaultValues?.content || "",
+      transcripts: defaultValues?.transcripts || "",
       video: undefined,
       slug: defaultValues?.slug || "",
       moduleTitle: defaultValues?.moduleTitle || "",
@@ -263,7 +265,7 @@ export function SegmentForm({
             <Card className="module-card animate-slide-up border-theme-200/40 dark:border-theme-800/40">
               <Tabs defaultValue="media" className="w-full">
                 <CardHeader className="pb-4">
-                  <TabsList className="grid w-full grid-cols-2">
+                  <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger
                       value="media"
                       className="flex items-center gap-2"
@@ -277,6 +279,13 @@ export function SegmentForm({
                     >
                       <FileText className="h-4 w-4" />
                       Content
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="transcripts"
+                      className="flex items-center gap-2"
+                    >
+                      <FileText className="h-4 w-4" />
+                      Transcripts
                     </TabsTrigger>
                   </TabsList>
                 </CardHeader>
@@ -421,6 +430,31 @@ export function SegmentForm({
                           <FormDescription className="text-xs">
                             Supports Markdown syntax for headers, links, code
                             blocks, and more
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="transcripts" className="mt-0">
+                    <FormField
+                      control={form.control}
+                      name="transcripts"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm">
+                            Video Transcripts (Optional)
+                          </FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="# Video Transcripts&#10;&#10;Paste your transcripts here using **Markdown** formatting..."
+                              className="min-h-[300px] text-sm font-mono border-theme-200/40 dark:border-theme-800/40 focus:border-theme-500 dark:focus:border-theme-400 transition-colors duration-200 resize-none"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription className="text-xs">
+                            Supports Markdown syntax; great for searchable, accessible transcripts
                           </FormDescription>
                           <FormMessage />
                         </FormItem>

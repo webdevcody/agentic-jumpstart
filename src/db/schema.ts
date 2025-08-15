@@ -81,6 +81,7 @@ export const segments = tableCreator(
     slug: text("slug").notNull(),
     title: text("title").notNull(),
     content: text("content"),
+    transcripts: text("transcripts"),
     order: integer("order").notNull(),
     length: text("length"),
     isPremium: boolean("isPremium").notNull().default(false),

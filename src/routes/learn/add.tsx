@@ -46,6 +46,7 @@ function RouteComponent() {
           defaultValues={{
             title: "",
             content: "",
+            transcripts: "",
             slug: "",
             moduleTitle: search.moduleTitle || "",
             isPremium: false,

@@ -11,6 +11,7 @@ export const createSegmentFn = createServerFn()
     z.object({
       title: z.string(),
       content: z.string().optional(),
+      transcripts: z.string().optional(),
       videoKey: z.string().optional(),
       slug: z.string(),
       moduleTitle: z.string(),
@@ -31,6 +32,7 @@ export const createSegmentFn = createServerFn()
     const segment = await addSegmentUseCase({
       title: data.title,
       content: data.content,
+      transcripts: data.transcripts,
       slug: data.slug,
       order: nextOrder,
       moduleTitle: data.moduleTitle,

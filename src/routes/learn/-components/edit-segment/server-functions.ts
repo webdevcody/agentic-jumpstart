@@ -16,6 +16,7 @@ export const updateSegmentFn = createServerFn()
       updates: z.object({
         title: z.string(),
         content: z.string().optional(),
+        transcripts: z.string().optional(),
         videoKey: z.string().optional(),
         moduleTitle: z.string(),
         slug: z.string(),
