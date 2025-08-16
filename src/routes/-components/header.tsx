@@ -112,6 +112,14 @@ export function Header() {
 
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center gap-3">
+              {user?.isAdmin && (
+                <Link
+                  to="/admin/comments"
+                  className={buttonVariants({ variant: "ghost" })}
+                >
+                  Comments
+                </Link>
+              )}
               {user ? (
                 <a
                   href="/api/logout"
@@ -187,6 +195,15 @@ export function Header() {
                         <div className="flex items-center justify-center">
                           <ModeToggle />
                         </div>
+                        {user?.isAdmin && (
+                          <Link
+                            to="/admin/comments"
+                            className={buttonVariants({ variant: "ghost" })}
+                            onClick={() => setIsOpen(false)}
+                          >
+                            Comments
+                          </Link>
+                        )}
                         {user ? (
                           <a
                             href="/api/logout"

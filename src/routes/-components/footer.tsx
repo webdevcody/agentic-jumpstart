@@ -73,6 +73,16 @@ export function FooterSection() {
                   webdevcody@gmail.com
                 </a>
               </li>
+              <li>
+                <a
+                  href="https://example.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-foreground transition-colors"
+                >
+                  Discord
+                </a>
+              </li>
             </ul>
           </div>
         </div>

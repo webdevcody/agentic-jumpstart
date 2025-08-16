@@ -1,12 +1,20 @@
 import { createServerFn } from "@tanstack/react-start";
-import { authenticatedMiddleware, unauthenticatedMiddleware } from "~/lib/auth";
+import {
+  authenticatedMiddleware,
+  unauthenticatedMiddleware,
+  adminMiddleware,
+} from "~/lib/auth";
 import { z } from "zod";
 import {
   createComment,
   deleteComment,
   getComments,
   updateComment,
+  getAllRecentComments,
+  deleteCommentAsAdmin,
 } from "~/data-access/comments";
+
+const MAX_COMMENTS_PER_PAGE = 100;
 
 export const getCommentsFn = createServerFn()
   .middleware([unauthenticatedMiddleware])
@@ -56,4 +64,21 @@ export const updateCommentFn = createServerFn({ method: "POST" })
   .validator(updateCommentSchema)
   .handler(async ({ data, context }) => {
     return updateComment(data.commentId, data.content, context.userId);
+  });
+
+export const getAllRecentCommentsFn = createServerFn()
+  .middleware([adminMiddleware])
+  .validator(z.object({ filterAdminReplied: z.boolean().optional() }))
+  .handler(async ({ data }) => {
+    return getAllRecentComments(
+      MAX_COMMENTS_PER_PAGE,
+      data?.filterAdminReplied ?? false
+    );
+  });
+
+export const deleteCommentAsAdminFn = createServerFn({ method: "POST" })
+  .middleware([adminMiddleware])
+  .validator(z.object({ commentId: z.number() }))
+  .handler(async ({ data }) => {
+    return deleteCommentAsAdmin(data.commentId);
   });

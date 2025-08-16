@@ -28,6 +28,7 @@ import { Route as LearnNotFoundRouteImport } from './routes/learn/not-found'
 import { Route as LearnNoSegmentsRouteImport } from './routes/learn/no-segments'
 import { Route as LearnCourseCompletedRouteImport } from './routes/learn/course-completed'
 import { Route as LearnAddRouteImport } from './routes/learn/add'
+import { Route as AdminCommentsRouteImport } from './routes/admin/comments'
 import { Route as LearnSlugEditRouteImport } from './routes/learn/$slug/edit'
 import { Route as LearnSlugLayoutRouteImport } from './routes/learn/$slug/_layout'
 import { Route as LearnSlugLayoutIndexRouteImport } from './routes/learn/$slug/_layout.index'
@@ -125,6 +126,11 @@ const LearnAddRoute = LearnAddRouteImport.update({
   path: '/learn/add',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminCommentsRoute = AdminCommentsRouteImport.update({
+  id: '/admin/comments',
+  path: '/admin/comments',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LearnSlugEditRoute = LearnSlugEditRouteImport.update({
   id: '/edit',
   path: '/edit',
@@ -180,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/terms-of-service': typeof TermsOfServiceRoute
   '/unauthenticated': typeof UnauthenticatedRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/admin/comments': typeof AdminCommentsRoute
   '/learn/add': typeof LearnAddRoute
   '/learn/course-completed': typeof LearnCourseCompletedRoute
   '/learn/no-segments': typeof LearnNoSegmentsRoute
@@ -201,6 +208,7 @@ export interface FileRoutesByTo {
   '/terms-of-service': typeof TermsOfServiceRoute
   '/unauthenticated': typeof UnauthenticatedRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/admin/comments': typeof AdminCommentsRoute
   '/learn/add': typeof LearnAddRoute
   '/learn/course-completed': typeof LearnCourseCompletedRoute
   '/learn/no-segments': typeof LearnNoSegmentsRoute
@@ -222,6 +230,7 @@ export interface FileRoutesById {
   '/terms-of-service': typeof TermsOfServiceRoute
   '/unauthenticated': typeof UnauthenticatedRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/admin/comments': typeof AdminCommentsRoute
   '/learn/add': typeof LearnAddRoute
   '/learn/course-completed': typeof LearnCourseCompletedRoute
   '/learn/no-segments': typeof LearnNoSegmentsRoute
@@ -246,6 +255,7 @@ export interface FileRouteTypes {
     | '/terms-of-service'
     | '/unauthenticated'
     | '/unauthorized'
+    | '/admin/comments'
     | '/learn/add'
     | '/learn/course-completed'
     | '/learn/no-segments'
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
     | '/terms-of-service'
     | '/unauthenticated'
     | '/unauthorized'
+    | '/admin/comments'
     | '/learn/add'
     | '/learn/course-completed'
     | '/learn/no-segments'
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '/terms-of-service'
     | '/unauthenticated'
     | '/unauthorized'
+    | '/admin/comments'
     | '/learn/add'
     | '/learn/course-completed'
     | '/learn/no-segments'
@@ -310,6 +322,7 @@ export interface RootRouteChildren {
   TermsOfServiceRoute: typeof TermsOfServiceRoute
   UnauthenticatedRoute: typeof UnauthenticatedRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
+  AdminCommentsRoute: typeof AdminCommentsRoute
   LearnAddRoute: typeof LearnAddRoute
   LearnCourseCompletedRoute: typeof LearnCourseCompletedRoute
   LearnNoSegmentsRoute: typeof LearnNoSegmentsRoute
@@ -492,6 +505,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LearnAddRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/comments': {
+      id: '/admin/comments'
+      path: '/admin/comments'
+      fullPath: '/admin/comments'
+      preLoaderRoute: typeof AdminCommentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/learn/$slug/edit': {
       id: '/learn/$slug/edit'
       path: '/edit'
@@ -593,6 +613,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsOfServiceRoute: TermsOfServiceRoute,
   UnauthenticatedRoute: UnauthenticatedRoute,
   UnauthorizedRoute: UnauthorizedRoute,
+  AdminCommentsRoute: AdminCommentsRoute,
   LearnAddRoute: LearnAddRoute,
   LearnCourseCompletedRoute: LearnCourseCompletedRoute,
   LearnNoSegmentsRoute: LearnNoSegmentsRoute,
