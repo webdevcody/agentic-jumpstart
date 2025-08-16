@@ -97,7 +97,7 @@ export function DesktopNavigation({
 
         <SidebarGroup className="flex-1">
           <SidebarGroupContent>
-            <SidebarMenu className="w-full">
+            <SidebarMenu className="w-full space-y-2">
               <DragDropContext onDragEnd={handleDragEnd}>
                 <Droppable droppableId="modules">
                   {(provided) => (
