@@ -99,7 +99,7 @@ export function EarlyAccessSection() {
                 Early Access Registration
               </div>
 
-              <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-theme-500 to-theme-600 dark:from-theme-400 dark:to-theme-500 bg-clip-text text-transparent animate-gradient">
+              <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-theme-500 to-theme-600 dark:from-theme-400 dark:to-theme-500 bg-clip-text text-transparent animate-gradient leading-normal pb-1">
                 Coming Soon
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground mb-4">
