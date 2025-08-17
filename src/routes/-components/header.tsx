@@ -1,6 +1,13 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Button, buttonVariants } from "../../components/ui/button";
-import { LogOut, Menu, User, ChevronDown, TrendingUp } from "lucide-react";
+import {
+  LogOut,
+  Menu,
+  User,
+  ChevronDown,
+  TrendingUp,
+  DollarSign,
+} from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "../../components/ui/sheet";
 import {
   DropdownMenu,
@@ -123,10 +130,11 @@ export function Header() {
                     Course Content
                   </Link>
                 )}
-                {user && !user.isAdmin && (
+                {user && !user.isAdmin && !affiliateStatus?.isAffiliate && (
                   <Link
                     to="/affiliates"
                     className={cn(
+                      "flex items-center",
                       "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
                       "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     )}
@@ -135,7 +143,8 @@ export function Header() {
                         "text-theme-600 dark:text-theme-400 bg-theme-500/15 dark:bg-theme-500/10 font-semibold",
                     }}
                   >
-                    Affiliate
+                    <DollarSign className="h-4 w-4 mr-2 text-theme-400" />
+                    Become an Affiliate
                   </Link>
                 )}
               </div>
@@ -164,7 +173,10 @@ export function Header() {
                   {affiliateStatus?.isAffiliate && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          className="flex items-center gap-2"
+                        >
                           <User className="h-4 w-4" />
                           <span>Account</span>
                           <ChevronDown className="h-4 w-4" />
@@ -172,7 +184,10 @@ export function Header() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link to="/affiliate-dashboard" className="flex items-center">
+                          <Link
+                            to="/affiliate-dashboard"
+                            className="flex items-center"
+                          >
                             <TrendingUp className="mr-2 h-4 w-4" />
                             Affiliate Dashboard
                           </Link>
@@ -259,7 +274,7 @@ export function Header() {
                           Course Content
                         </Link>
                       )}
-                      {user && !user.isAdmin && (
+                      {user && !user.isAdmin && !affiliateStatus?.isAffiliate && (
                         <Link
                           to="/affiliates"
                           className="flex items-center py-3 text-lg text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/50 px-3"

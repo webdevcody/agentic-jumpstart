@@ -103,7 +103,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     !routerState.location.pathname.startsWith("/learn") && !shouldShowEarlyAccess;
   const showHeader =
     !routerState.location.pathname.startsWith("/learn") && !shouldShowEarlyAccess;
-  const showThemeToggle = routerState.location.pathname === "/";
+  const showThemeToggle = routerState.location.pathname === "/" && shouldShowEarlyAccess;
 
   const prevPathnameRef = React.useRef("");
 
