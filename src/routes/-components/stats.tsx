@@ -89,10 +89,10 @@ export function StatsSection({ stats }: StatsProps) {
                 Course <span className="text-theme-400">Overview</span>
               </h2>
             </ScrollAnimation>
-            <ScrollAnimation direction="up" delay={0.1}>
+            <ScrollAnimation direction="up" delay={0.0}>
               <p className="text-description max-w-2xl mx-auto">
-                Comprehensive agentic coding curriculum designed to transform your
-                development workflow
+                Comprehensive agentic coding curriculum designed to transform
+                your development workflow
               </p>
             </ScrollAnimation>
           </div>
@@ -102,7 +102,11 @@ export function StatsSection({ stats }: StatsProps) {
             {statsData.map((stat, index) => {
               const Icon = stat.icon;
               return (
-                <ScrollScale key={index} delay={0.2 + index * 0.1} className="group relative">
+                <ScrollScale
+                  key={index}
+                  delay={0.2 + index * 0.1}
+                  className="group relative"
+                >
                   {/* Card with glass morphism and glow effect */}
                   <div className="relative overflow-hidden rounded-2xl bg-card/80 dark:bg-card/60 backdrop-blur-sm border border-theme-200/60 dark:border-theme-500/30 shadow-elevation-2 transition-all duration-300 hover:shadow-glow-cyan hover:border-theme-400/80 hover:-translate-y-1 p-8">
                     {/* Glow effect on hover */}
@@ -159,7 +163,7 @@ export function StatsSection({ stats }: StatsProps) {
 
           {/* Marketing Keywords Section - SEO Optimized */}
           <div className="mt-16 text-center">
-            <ScrollAnimation direction="up" delay={0.5}>
+            <ScrollAnimation direction="up" delay={0.2}>
               <h3 className="text-2xl font-semibold mb-8 text-foreground">
                 Master the Latest{" "}
                 <span className="text-theme-400">AI Coding Tools</span> &
@@ -168,7 +172,11 @@ export function StatsSection({ stats }: StatsProps) {
             </ScrollAnimation>
 
             {/* Keywords Grid */}
-            <ScrollAnimation direction="up" delay={0.6} className="max-w-6xl mx-auto">
+            <ScrollAnimation
+              direction="up"
+              delay={0.6}
+              className="max-w-6xl mx-auto"
+            >
               <div className="flex flex-wrap justify-center gap-3">
                 {[
                   { text: "Cursor IDE", highlight: true },

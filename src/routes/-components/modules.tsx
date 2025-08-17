@@ -120,18 +120,19 @@ export function ModulesSection({
               </div>
             </ScrollAnimation>
 
-            <ScrollAnimation direction="up" delay={0.1}>
+            <ScrollAnimation direction="up" delay={0.0}>
               <h2 className="text-6xl leading-tight mb-8">
                 The Perfect Curriculum to{" "}
                 <span className="text-theme-400">Master Agentic Coding</span>
               </h2>
             </ScrollAnimation>
 
-            <ScrollAnimation direction="up" delay={0.2}>
+            <ScrollAnimation direction="up" delay={0.1}>
               <p className="text-description mb-12 max-w-4xl mx-auto">
-                Learn to leverage AI tools like Cursor, Claude Code, and advanced
-                models to build applications faster than ever. From setup to
-                deployment, master the complete AI-assisted development workflow.
+                Learn to leverage AI tools like Cursor, Claude Code, and
+                advanced models to build applications faster than ever. From
+                setup to deployment, master the complete AI-assisted development
+                workflow.
               </p>
             </ScrollAnimation>
           </div>
@@ -149,7 +150,12 @@ export function ModulesSection({
                 );
 
                 return (
-                  <ScrollAnimation key={moduleId} direction="up" delay={0.3 + index * 0.15} className="relative">
+                  <ScrollAnimation
+                    key={moduleId}
+                    direction="up"
+                    delay={0.1 + index * 0.15}
+                    className="relative"
+                  >
                     {/* Connector line */}
                     {index < moduleEntries.length - 1 && (
                       <div className="absolute left-8 top-20 w-px h-16 bg-gradient-to-b from-theme-300 to-theme-100 dark:from-theme-700 dark:to-theme-900"></div>

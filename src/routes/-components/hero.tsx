@@ -6,7 +6,7 @@ import { getSegments } from "~/data-access/segments";
 import { VideoPlayer } from "~/routes/learn/-components/video-player";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, ShoppingCart } from "lucide-react";
-import { ScrollAnimation, ScrollFadeIn } from "~/components/scroll-animation";
+import { ScrollAnimation } from "~/components/scroll-animation";
 
 const getFirstVideoSegmentFn = createServerFn().handler(async () => {
   const segments = await getSegments();
@@ -59,7 +59,7 @@ export function HeroSection() {
                   </div>
                 </ScrollAnimation>
 
-                <ScrollAnimation direction="up" delay={0.1}>
+                <ScrollAnimation direction="up" delay={0}>
                   <h1 className="text-6xl leading-tight mb-8">
                     Coding is <span className="text-theme-400">Changing</span>,
                     Master{" "}
@@ -69,49 +69,57 @@ export function HeroSection() {
 
                 <ScrollAnimation direction="up" delay={0.2}>
                   <p className="text-description mb-12 max-w-xl">
-                    Master AI-first development with Cursor IDE, Claude Code CLI,
-                    and advanced AI models. Learn how to leverage Claude Sonnet
-                    3.5, Claude Opus, and cutting-edge agentic programming
-                    techniques to accelerate your development workflow and build
-                    applications 10x faster than traditional programming methods.
+                    Master AI-first development with Cursor IDE, Claude Code
+                    CLI, and advanced AI models. Learn how to leverage Claude
+                    Sonnet 3.5, Claude Opus, and cutting-edge agentic
+                    programming techniques to accelerate your development
+                    workflow and build applications 10x faster than traditional
+                    programming methods.
                   </p>
                 </ScrollAnimation>
 
                 <ScrollAnimation direction="up" delay={0.3}>
                   <div className="flex flex-col sm:flex-row gap-4">
-                  <Link
-                    to="/purchase"
-                    className={buttonVariants({ variant: "outline" })}
-                    onKeyDown={(e) => {
-                      if (e.key === " ") {
-                        e.preventDefault();
-                        e.currentTarget.click();
-                      }
-                    }}
-                  >
-                    <ShoppingCart className="mr-2 h-4 w-4" aria-hidden="true" />
-                    Buy Now
-                  </Link>
-                  <Link
-                    to={"/learn/$slug"}
-                    params={{ slug: continueSlug }}
-                    className={buttonVariants({ variant: "default" })}
-                    onKeyDown={(e) => {
-                      if (e.key === " ") {
-                        e.preventDefault();
-                        e.currentTarget.click();
-                      }
-                    }}
-                  >
-                    Start Learning
-                    <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                  </Link>
+                    <Link
+                      to="/purchase"
+                      className={buttonVariants({ variant: "outline" })}
+                      onKeyDown={(e) => {
+                        if (e.key === " ") {
+                          e.preventDefault();
+                          e.currentTarget.click();
+                        }
+                      }}
+                    >
+                      <ShoppingCart
+                        className="mr-2 h-4 w-4"
+                        aria-hidden="true"
+                      />
+                      Buy Now
+                    </Link>
+                    <Link
+                      to={"/learn/$slug"}
+                      params={{ slug: continueSlug }}
+                      className={buttonVariants({ variant: "default" })}
+                      onKeyDown={(e) => {
+                        if (e.key === " ") {
+                          e.preventDefault();
+                          e.currentTarget.click();
+                        }
+                      }}
+                    >
+                      Start Learning
+                      <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                    </Link>
                   </div>
                 </ScrollAnimation>
               </div>
 
               {/* Right side - Video player */}
-              <ScrollAnimation direction="left" delay={0.4} className="flex items-center justify-center lg:justify-end">
+              <ScrollAnimation
+                direction="left"
+                delay={0.4}
+                className="flex items-center justify-center lg:justify-end"
+              >
                 {firstVideoSegment && (
                   <div className="w-full max-w-lg lg:max-w-xl">
                     {/* Video container with glass morphism effect */}
