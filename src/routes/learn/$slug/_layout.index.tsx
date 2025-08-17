@@ -107,8 +107,13 @@ function ViewSegment({
             <div className="text-center space-y-4">
               <div className="text-6xl opacity-20">🚀</div>
               <div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">Coming Soon</h3>
-                <p className="text-muted-foreground">This video content is currently being prepared and will be available soon.</p>
+                <h3 className="text-xl font-semibold text-foreground mb-2">
+                  Coming Soon
+                </h3>
+                <p className="text-muted-foreground">
+                  This video content is currently being prepared and will be
+                  available soon.
+                </p>
               </div>
             </div>
           </div>
@@ -158,7 +163,7 @@ function RouteComponent() {
         defaultTab={tab}
         commentId={commentId}
       />
-      <FloatingFeedbackButton />
+      {/* <FloatingFeedbackButton /> */}
       <Toaster />
     </>
   );
