@@ -42,7 +42,7 @@ import {
 import { cn } from "~/lib/utils";
 
 const affiliateFormSchema = z.object({
-  paymentLink: z.string().url("Please provide a valid URL"),
+  paymentLink: z.url("Please provide a valid URL"),
   agreedToTerms: z.boolean().refine((val) => val === true, {
     message: "You must agree to the terms of service",
   }),

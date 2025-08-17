@@ -43,6 +43,19 @@ export async function updateAffiliateBalances(
   earnings: number,
   unpaid: number
 ) {
+  // Validate inputs
+  if (!Number.isInteger(affiliateId) || affiliateId <= 0) {
+    throw new Error("Affiliate ID must be a positive integer");
+  }
+  
+  if (!Number.isInteger(earnings) || earnings < 0) {
+    throw new Error("Earnings must be a non-negative integer");
+  }
+  
+  if (!Number.isInteger(unpaid) || unpaid < 0) {
+    throw new Error("Unpaid amount must be a non-negative integer");
+  }
+
   const [updated] = await database
     .update(affiliates)
     .set({
@@ -108,33 +121,78 @@ export async function getAffiliateStats(affiliateId: number) {
 export async function createAffiliatePayout(
   data: AffiliatePayoutCreate & { affiliateId: number }
 ) {
-  const [payout] = await database
-    .insert(affiliatePayouts)
-    .values(data)
-    .returning();
+  // Start a transaction to ensure consistency
+  return await database.transaction(async (tx) => {
+    // Get unpaid referrals to calculate total unpaid amount
+    const unpaidReferrals = await tx
+      .select({
+        id: affiliateReferrals.id,
+        commission: affiliateReferrals.commission,
+      })
+      .from(affiliateReferrals)
+      .where(
+        and(
+          eq(affiliateReferrals.affiliateId, data.affiliateId),
+          eq(affiliateReferrals.isPaid, false)
+        )
+      );
 
-  // Update affiliate paid amount and unpaid balance
-  await database
-    .update(affiliates)
-    .set({
-      paidAmount: sql`${affiliates.paidAmount} + ${data.amount}`,
-      unpaidBalance: sql`${affiliates.unpaidBalance} - ${data.amount}`,
-      updatedAt: new Date(),
-    })
-    .where(eq(affiliates.id, data.affiliateId));
+    const totalUnpaidAmount = unpaidReferrals.reduce((sum, referral) => sum + referral.commission, 0);
 
-  // Mark referrals as paid
-  await database
-    .update(affiliateReferrals)
-    .set({ isPaid: true })
-    .where(
-      and(
-        eq(affiliateReferrals.affiliateId, data.affiliateId),
-        eq(affiliateReferrals.isPaid, false)
-      )
-    );
+    // Validate that payout amount doesn't exceed unpaid balance
+    if (data.amount > totalUnpaidAmount) {
+      throw new Error(`Payout amount ($${data.amount / 100}) exceeds unpaid balance ($${totalUnpaidAmount / 100})`);
+    }
 
-  return payout;
+    // Create the payout record
+    const [payout] = await tx
+      .insert(affiliatePayouts)
+      .values(data)
+      .returning();
+
+    // Update affiliate paid amount and unpaid balance
+    await tx
+      .update(affiliates)
+      .set({
+        paidAmount: sql`${affiliates.paidAmount} + ${data.amount}`,
+        unpaidBalance: sql`${affiliates.unpaidBalance} - ${data.amount}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(affiliates.id, data.affiliateId));
+
+    // Mark referrals as paid up to the payout amount
+    let remainingPayout = data.amount;
+    const referralsToUpdate: number[] = [];
+
+    for (const referral of unpaidReferrals) {
+      if (remainingPayout >= referral.commission) {
+        referralsToUpdate.push(referral.id);
+        remainingPayout -= referral.commission;
+      } else if (remainingPayout > 0) {
+        // Partial payout - mark this referral as paid for the remaining amount
+        // Note: This creates a potential issue with partial payments that may need business logic review
+        referralsToUpdate.push(referral.id);
+        remainingPayout = 0;
+      }
+      
+      if (remainingPayout === 0) break;
+    }
+
+    // Update the selected referrals as paid
+    if (referralsToUpdate.length > 0) {
+      await tx
+        .update(affiliateReferrals)
+        .set({ isPaid: true })
+        .where(
+          and(
+            eq(affiliateReferrals.affiliateId, data.affiliateId),
+            sql`${affiliateReferrals.id} = ANY(${referralsToUpdate})`
+          )
+        );
+    }
+
+    return payout;
+  });
 }
 
 export async function getAffiliatePayouts(affiliateId: number) {
