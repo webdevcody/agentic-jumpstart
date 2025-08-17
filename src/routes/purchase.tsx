@@ -130,7 +130,7 @@ function RouteComponent() {
       // Set cookie as well for 30 days
       const expires = new Date();
       expires.setDate(expires.getDate() + 30);
-      document.cookie = `affiliateCode=${ref}; expires=${expires.toUTCString()}; path=/`;
+      document.cookie = `affiliateCode=${encodeURIComponent(ref)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
     }
   }, [ref]);
 
@@ -140,9 +140,25 @@ function RouteComponent() {
     if (!stripeResolved) throw new Error("Stripe failed to initialize");
 
     try {
-      // Get affiliate code from localStorage or cookie
-      const affiliateCode = localStorage.getItem("affiliateCode") || 
-        document.cookie.split("; ").find(row => row.startsWith("affiliateCode="))?.split("=")[1];
+      // Get affiliate code from localStorage or cookie with proper parsing
+      let affiliateCode = localStorage.getItem("affiliateCode");
+      
+      // Fallback to cookie if localStorage is empty
+      if (!affiliateCode) {
+        const cookieValue = document.cookie
+          .split("; ")
+          .find(row => row.startsWith("affiliateCode="))
+          ?.split("=")[1];
+        
+        if (cookieValue) {
+          try {
+            affiliateCode = decodeURIComponent(cookieValue);
+          } catch (decodeError) {
+            console.warn("Failed to decode affiliate code from cookie:", decodeError);
+            affiliateCode = null;
+          }
+        }
+      }
       
       const { sessionId } = await checkoutFn({ 
         data: { affiliateCode: affiliateCode || undefined } 

@@ -40,11 +40,20 @@ export const ServerRoute = createServerFileRoute("/api/stripe/webhook").methods(
                   });
                   
                   if (referral) {
-                    console.log(`Processed affiliate referral for code ${affiliateCode}`);
+                    console.log(`Successfully processed affiliate referral for code ${affiliateCode}, session ${session.id}, commission: $${referral.commission / 100}`);
+                  } else {
+                    console.warn(`Affiliate referral not processed for code ${affiliateCode}, session ${session.id} - likely duplicate, self-referral, or invalid code`);
                   }
                 } catch (error) {
-                  console.error("Failed to process affiliate referral:", error);
-                  // Don't fail the webhook for affiliate errors
+                  console.error(`Failed to process affiliate referral for code ${affiliateCode}, session ${session.id}:`, {
+                    error: error instanceof Error ? error.message : String(error),
+                    stack: error instanceof Error ? error.stack : undefined,
+                    affiliateCode,
+                    purchaserId: userId,
+                    sessionId: session.id,
+                    amount: session.amount_total,
+                  });
+                  // Don't fail the webhook for affiliate errors - user upgrade should succeed
                 }
               }
             }

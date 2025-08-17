@@ -15,9 +15,7 @@ import {
   getAllAffiliatesWithStats,
 } from "~/data-access/affiliates";
 import { ApplicationError } from "./errors";
-
-const COMMISSION_RATE = 30; // 30% commission
-const MINIMUM_PAYOUT = 5000; // $50 minimum payout (in cents)
+import { AFFILIATE_CONFIG } from "~/config";
 
 export async function registerAffiliateUseCase({
   userId,
@@ -54,14 +52,14 @@ export async function registerAffiliateUseCase({
   }
 
   // Generate unique affiliate code
-  const affiliateCode = generateAffiliateCode();
+  const affiliateCode = await generateUniqueAffiliateCode();
 
   // Create affiliate
   const affiliate = await createAffiliate({
     userId,
     affiliateCode,
     paymentLink,
-    commissionRate: COMMISSION_RATE,
+    commissionRate: AFFILIATE_CONFIG.COMMISSION_RATE,
     totalEarnings: 0,
     paidAmount: 0,
     unpaidBalance: 0,
@@ -82,43 +80,48 @@ export async function processAffiliateReferralUseCase({
   stripeSessionId: string;
   amount: number;
 }) {
-  // Get affiliate by code
-  const affiliate = await getAffiliateByCode(affiliateCode);
-  if (!affiliate) {
-    console.warn(`Invalid affiliate code: ${affiliateCode}`);
-    return null;
-  }
+  // Import database for transaction support
+  const { database } = await import("~/db");
+  
+  return await database.transaction(async (tx) => {
+    // Get affiliate by code (using the imported function which uses the main database)
+    const affiliate = await getAffiliateByCode(affiliateCode);
+    if (!affiliate) {
+      console.warn(`Invalid affiliate code: ${affiliateCode} for purchase ${stripeSessionId}`);
+      return null;
+    }
 
-  // Check for self-referral
-  if (affiliate.userId === purchaserId) {
-    console.warn(`Self-referral attempted by user ${purchaserId}`);
-    return null;
-  }
+    // Check for self-referral
+    if (affiliate.userId === purchaserId) {
+      console.warn(`Self-referral attempted by user ${purchaserId} for session ${stripeSessionId}`);
+      return null;
+    }
 
-  // Check if this session was already processed
-  const existingReferral = await getAffiliateByStripeSession(stripeSessionId);
-  if (existingReferral) {
-    console.warn(`Duplicate Stripe session: ${stripeSessionId}`);
-    return null;
-  }
+    // Check if this session was already processed (database unique constraint also helps with race conditions)
+    const existingReferral = await getAffiliateByStripeSession(stripeSessionId);
+    if (existingReferral) {
+      console.warn(`Duplicate Stripe session: ${stripeSessionId} already processed`);
+      return null;
+    }
 
-  // Calculate commission
-  const commission = Math.floor((amount * affiliate.commissionRate) / 100);
+    // Calculate commission
+    const commission = Math.floor((amount * affiliate.commissionRate) / 100);
 
-  // Create referral record
-  const referral = await createAffiliateReferral({
-    affiliateId: affiliate.id,
-    purchaserId,
-    stripeSessionId,
-    amount,
-    commission,
-    isPaid: false,
+    // Create referral record
+    const referral = await createAffiliateReferral({
+      affiliateId: affiliate.id,
+      purchaserId,
+      stripeSessionId,
+      amount,
+      commission,
+      isPaid: false,
+    });
+
+    // Update affiliate balances
+    await updateAffiliateBalances(affiliate.id, commission, commission);
+
+    return referral;
   });
-
-  // Update affiliate balances
-  await updateAffiliateBalances(affiliate.id, commission, commission);
-
-  return referral;
 }
 
 export async function recordAffiliatePayoutUseCase({
@@ -137,9 +140,9 @@ export async function recordAffiliatePayoutUseCase({
   paidBy: number;
 }) {
   // Validate minimum payout
-  if (amount < MINIMUM_PAYOUT) {
+  if (amount < AFFILIATE_CONFIG.MINIMUM_PAYOUT) {
     throw new ApplicationError(
-      `Minimum payout amount is $${MINIMUM_PAYOUT / 100}`,
+      `Minimum payout amount is $${AFFILIATE_CONFIG.MINIMUM_PAYOUT / 100}`,
       "MINIMUM_PAYOUT_NOT_MET"
     );
   }
@@ -243,15 +246,32 @@ export async function adminToggleAffiliateStatusUseCase({
   return updateAffiliateProfile(affiliateId, { isActive });
 }
 
-function generateAffiliateCode(): string {
-  // Generate a random 8-character alphanumeric code
-  const bytes = randomBytes(6);
-  const code = bytes
-    .toString("base64")
-    .replace(/[^a-zA-Z0-9]/g, "")
-    .substring(0, 8)
-    .toUpperCase();
+async function generateUniqueAffiliateCode(): Promise<string> {
+  let attempts = 0;
+  
+  while (attempts < AFFILIATE_CONFIG.AFFILIATE_CODE_RETRY_ATTEMPTS) {
+    // Generate a random affiliate code
+    const bytes = randomBytes(6);
+    const code = bytes
+      .toString("base64")
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .substring(0, AFFILIATE_CONFIG.AFFILIATE_CODE_LENGTH)
+      .toUpperCase();
 
-  // Ensure it's exactly 8 characters (pad if needed)
-  return code.padEnd(8, "0");
+    // Ensure it's exactly the required length (pad if needed)
+    const paddedCode = code.padEnd(AFFILIATE_CONFIG.AFFILIATE_CODE_LENGTH, "0");
+    
+    // Check if this code is already in use
+    const existingAffiliate = await getAffiliateByCode(paddedCode);
+    if (!existingAffiliate) {
+      return paddedCode;
+    }
+    
+    attempts++;
+  }
+  
+  throw new ApplicationError(
+    "Unable to generate unique affiliate code after multiple attempts",
+    "CODE_GENERATION_FAILED"
+  );
 }
