@@ -185,6 +185,7 @@ function CommentItem({ comment, level = 0 }: CommentItemProps) {
   return (
     <>
       <div
+        id={`comment-${comment.id}`}
         className={`${
           level > 0 ? "ml-4 border-l-2 comment-thread-line pl-4" : ""
         } ${level > 2 ? "ml-2" : ""}`}

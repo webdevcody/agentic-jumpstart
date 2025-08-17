@@ -27,6 +27,10 @@ import { FloatingFeedbackButton } from "./-components/feedback-button";
 
 export const Route = createFileRoute("/learn/$slug/_layout/")({
   component: RouteComponent,
+  validateSearch: z.object({
+    tab: z.enum(["content", "transcripts", "comments"]).optional(),
+    commentId: z.number().optional(),
+  }),
   loader: async ({ context: { queryClient }, params }) => {
     const { segment, segments, progress } = await getSegmentInfoFn({
       data: { slug: params.slug },
@@ -67,12 +71,16 @@ function ViewSegment({
   currentSegmentId,
   isPremium,
   isAdmin,
+  defaultTab,
+  commentId,
 }: {
   segments: Segment[];
   currentSegment: Segment;
   currentSegmentId: number;
   isPremium: boolean;
   isAdmin: boolean;
+  defaultTab?: "content" | "transcripts" | "comments";
+  commentId?: number;
 }) {
   const { setCurrentSegmentId } = useSegment();
 
@@ -127,6 +135,8 @@ function ViewSegment({
         <VideoContentTabsPanel
           currentSegment={currentSegment}
           isLoggedIn={isLoggedIn}
+          defaultTab={defaultTab}
+          commentId={commentId}
         />
       )}
     </div>
@@ -135,6 +145,7 @@ function ViewSegment({
 
 function RouteComponent() {
   const { segment, segments, isPremium, isAdmin } = Route.useLoaderData();
+  const { tab, commentId } = Route.useSearch();
 
   return (
     <>
@@ -144,6 +155,8 @@ function RouteComponent() {
         currentSegmentId={segment.id}
         isPremium={isPremium}
         isAdmin={isAdmin}
+        defaultTab={tab}
+        commentId={commentId}
       />
       <FloatingFeedbackButton />
       <Toaster />

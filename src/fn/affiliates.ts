@@ -1,6 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { authenticatedMiddleware, adminMiddleware } from "~/lib/auth";
+import {
+  authenticatedMiddleware,
+  adminMiddleware,
+  unauthenticatedMiddleware,
+} from "~/lib/auth";
 import {
   registerAffiliateUseCase,
   getAffiliateAnalyticsUseCase,
@@ -38,8 +42,11 @@ export const getAffiliateDashboardFn = createServerFn()
   });
 
 export const checkIfUserIsAffiliateFn = createServerFn()
-  .middleware([authenticatedMiddleware])
+  .middleware([unauthenticatedMiddleware])
   .handler(async ({ context }) => {
+    if (!context.userId) {
+      return { isAffiliate: false };
+    }
     const affiliate = await getAffiliateByUserId(context.userId);
     return { isAffiliate: !!affiliate };
   });

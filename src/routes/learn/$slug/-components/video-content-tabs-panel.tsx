@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileText, MessageSquare } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { type Segment } from "~/db/schema";
@@ -9,13 +9,24 @@ import { MarkdownContent } from "~/routes/learn/-components/markdown-content";
 interface VideoContentTabsPanelProps {
   currentSegment: Segment;
   isLoggedIn: boolean;
+  defaultTab?: "content" | "transcripts" | "comments";
+  commentId?: number;
 }
 
 export function VideoContentTabsPanel({
   currentSegment,
   isLoggedIn,
+  defaultTab,
+  commentId,
 }: VideoContentTabsPanelProps) {
-  const [activeTab, setActiveTab] = useState<"content" | "transcripts" | "comments">("content");
+  const [activeTab, setActiveTab] = useState<"content" | "transcripts" | "comments">(defaultTab || "content");
+
+  // Set active tab when defaultTab changes (from URL params)
+  useEffect(() => {
+    if (defaultTab) {
+      setActiveTab(defaultTab);
+    }
+  }, [defaultTab]);
 
   return (
     <div className="module-card overflow-hidden">
@@ -83,6 +94,7 @@ export function VideoContentTabsPanel({
             currentSegmentId={currentSegment.id}
             isLoggedIn={isLoggedIn}
             activeTab={activeTab}
+            commentId={commentId}
           />
         )}
       </div>

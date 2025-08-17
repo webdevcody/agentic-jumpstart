@@ -1,72 +1,81 @@
-# Welcome to TanStack.com!
+# Online Learning Platform
 
-This site is built with TanStack Router!
+A modern online learning platform built with TanStack Start, featuring video courses, user authentication, and payment processing.
 
-- [TanStack Router Docs](https://tanstack.com/router)
+## Tech Stack
 
-It's deployed automagically with Netlify!
-
-- [Netlify](https://netlify.com/)
+- **Framework**: TanStack Start (React 19 + TanStack Router)
+- **Database**: PostgreSQL with Drizzle ORM
+- **Authentication**: Arctic OAuth (Google login)
+- **Payments**: Stripe
+- **Storage**: AWS S3/R2 for video storage
+- **Styling**: Tailwind CSS v4 with shadcn/ui components
 
 ## Development
 
-From your terminal:
-
+Install dependencies:
 ```sh
-pnpm install
-pnpm dev
+npm install
 ```
 
-This starts your app in development mode, rebuilding assets on file changes.
-
-## Editing and previewing the docs of TanStack projects locally
-
-The documentations for all TanStack projects except for `React Charts` are hosted on [https://tanstack.com](https://tanstack.com), powered by this TanStack Router app.
-In production, the markdown doc pages are fetched from the GitHub repos of the projects, but in development they are read from the local file system.
-
-Follow these steps if you want to edit the doc pages of a project (in these steps we'll assume it's [`TanStack/form`](https://github.com/tanstack/form)) and preview them locally :
-
-1. Create a new directory called `tanstack`.
-
+Start development server (includes database):
 ```sh
-mkdir tanstack
+npm run dev
 ```
 
-2. Enter the directory and clone this repo and the repo of the project there.
+The app runs on http://localhost:3000
 
+## Database Setup
+
+Start PostgreSQL container:
 ```sh
-cd tanstack
-git clone git@github.com:TanStack/tanstack.com.git
-git clone git@github.com:TanStack/form.git
+npm run db:up
 ```
 
-> [!NOTE]
-> Your `tanstack` directory should look like this:
->
-> ```
-> tanstack/
->    |
->    +-- form/
->    |
->    +-- tanstack.com/
-> ```
-
-> [!WARNING]
-> Make sure the name of the directory in your local file system matches the name of the project's repo. For example, `tanstack/form` must be cloned into `form` (this is the default) instead of `some-other-name`, because that way, the doc pages won't be found.
-
-3. Enter the `tanstack/tanstack.com` directory, install the dependencies and run the app in dev mode:
-
+Run migrations:
 ```sh
-cd tanstack.com
-pnpm i
-# The app will run on https://localhost:3000 by default
-pnpm dev
+npm run db:migrate
 ```
 
-4. Now you can visit http://localhost:3000/form/latest/docs/overview in the browser and see the changes you make in `tanstack/form/docs`.
+Seed with sample data:
+```sh
+npm run db:seed
+```
 
-> [!NOTE]
-> The updated pages need to be manually reloaded in the browser.
+Reset database:
+```sh
+npm run db:reset
+```
 
-> [!WARNING]
-> You will need to update the `docs/config.json` file (in the project's repo) if you add a new doc page!
+## Stripe Setup
+
+Listen for webhooks:
+```sh
+npm run stripe:listen
+```
+
+## Environment Variables
+
+Create a `.env.local` file with:
+
+```
+DATABASE_URL=postgresql://username:password@localhost:5432/dbname
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_ENDPOINT_SECRET=whsec_...
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+R2_ACCOUNT_ID=your_r2_account_id
+R2_ACCESS_KEY_ID=your_r2_access_key
+R2_SECRET_ACCESS_KEY=your_r2_secret_key
+R2_BUCKET_NAME=your_bucket_name
+BASE_URL=http://localhost:3000
+```
+
+## Project Structure
+
+- `/src/routes/` - File-based routing with TanStack Router
+- `/src/components/` - Shared React components
+- `/src/data-access/` - Database queries (Drizzle)
+- `/src/use-cases/` - Business logic
+- `/src/fn/` - Server functions
+- `/src/db/` - Database schema and migrations

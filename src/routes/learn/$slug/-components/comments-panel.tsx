@@ -1,5 +1,5 @@
 import { MessageSquare } from "lucide-react";
-import { Suspense, useMemo } from "react";
+import { Suspense, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getCommentsQuery } from "~/lib/queries/comments";
 import { CommentForm } from "./comment-form";
@@ -10,6 +10,7 @@ interface CommentsPanelProps {
   currentSegmentId: number;
   isLoggedIn: boolean;
   activeTab: "content" | "comments";
+  commentId?: number;
 }
 
 /**
@@ -74,6 +75,7 @@ export function CommentsPanel({
   currentSegmentId,
   isLoggedIn,
   activeTab,
+  commentId,
 }: CommentsPanelProps) {
   // Get comments data
   const { data: existingComments } = useQuery(
@@ -87,6 +89,31 @@ export function CommentsPanel({
   const shouldAutoFocus = useMemo(() => {
     return showCommentForm && activeTab === "comments";
   }, [showCommentForm, activeTab]);
+
+  // Scroll to specific comment when commentId is provided
+  useEffect(() => {
+    if (commentId && activeTab === "comments" && existingComments) {
+      // Use a timeout to ensure the comments are rendered
+      const timeoutId = setTimeout(() => {
+        const commentElement = document.getElementById(`comment-${commentId}`);
+        if (commentElement) {
+          commentElement.scrollIntoView({ 
+            behavior: "smooth", 
+            block: "center" 
+          });
+          // Add a temporary highlight effect
+          commentElement.style.outline = "2px solid hsl(var(--theme-500))";
+          commentElement.style.borderRadius = "8px";
+          setTimeout(() => {
+            commentElement.style.outline = "";
+            commentElement.style.borderRadius = "";
+          }, 3000);
+        }
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [commentId, activeTab, existingComments]);
 
   return (
     <div className="animate-fade-in space-y-8">

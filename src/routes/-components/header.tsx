@@ -132,6 +132,25 @@ export function Header() {
                     Course Content
                   </Link>
                 )}
+                {/* Affiliate link for non-logged in users */}
+                {!user && (
+                  <Link
+                    to="/affiliates"
+                    className={cn(
+                      "flex items-center",
+                      "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                      "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    )}
+                    activeProps={{
+                      className:
+                        "text-theme-600 dark:text-theme-400 bg-theme-500/15 dark:bg-theme-500/10 font-semibold",
+                    }}
+                  >
+                    <DollarSign className="h-4 w-4 mr-2 text-theme-400" />
+                    Affiliate Program
+                  </Link>
+                )}
+                {/* Affiliate link for logged in users who are not affiliates */}
                 {user && !user.isAdmin && !affiliateStatus?.isAffiliate && (
                   <Link
                     to="/affiliates"
@@ -185,6 +204,15 @@ export function Header() {
                           >
                             <Users className="mr-2 h-4 w-4" />
                             Affiliates
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to="/admin/analytics"
+                            className="flex items-center"
+                          >
+                            <TrendingUp className="mr-2 h-4 w-4" />
+                            Analytics
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
@@ -301,13 +329,26 @@ export function Header() {
                           Course Content
                         </Link>
                       )}
+                      {/* Affiliate link for non-logged in users */}
+                      {!user && (
+                        <Link
+                          to="/affiliates"
+                          className="flex items-center py-3 text-lg text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/50 px-3"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          <DollarSign className="mr-2 h-4 w-4 text-theme-400" />
+                          Affiliate Program
+                        </Link>
+                      )}
+                      {/* Affiliate link for logged in users who are not affiliates */}
                       {user && !user.isAdmin && !affiliateStatus?.isAffiliate && (
                         <Link
                           to="/affiliates"
                           className="flex items-center py-3 text-lg text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/50 px-3"
                           onClick={() => setIsOpen(false)}
                         >
-                          Affiliate Program
+                          <DollarSign className="mr-2 h-4 w-4 text-theme-400" />
+                          Become an Affiliate
                         </Link>
                       )}
 
@@ -332,6 +373,14 @@ export function Header() {
                             >
                               <Users className="mr-2 h-4 w-4" />
                               Affiliates
+                            </Link>
+                            <Link
+                              to="/admin/analytics"
+                              className={buttonVariants({ variant: "ghost" })}
+                              onClick={() => setIsOpen(false)}
+                            >
+                              <TrendingUp className="mr-2 h-4 w-4" />
+                              Analytics
                             </Link>
                           </>
                         )}

@@ -137,13 +137,43 @@ function AdminComments() {
   };
 
   const handleSubmitReply = (segmentId: number, parentId: number) => {
-    if (replyContent.trim()) {
-      replyMutation.mutate({
-        segmentId,
-        content: replyContent.trim(),
-        parentId,
+    // Check if reply content is empty
+    const trimmedContent = replyContent.trim();
+    
+    if (!trimmedContent) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a reply message before posting.",
+        variant: "destructive",
       });
+      return;
     }
+
+    // Check if reply content is too short
+    if (trimmedContent.length < 3) {
+      toast({
+        title: "Validation Error",
+        description: "Reply must be at least 3 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if reply content is too long
+    if (trimmedContent.length > 5000) {
+      toast({
+        title: "Validation Error",
+        description: "Reply must be less than 5000 characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    replyMutation.mutate({
+      segmentId,
+      content: trimmedContent,
+      parentId,
+    });
   };
 
   const totalComments = comments.length;
@@ -392,6 +422,7 @@ function CommentItem({
                 <Link
                   to="/learn/$slug"
                   params={{ slug: comment.segment.slug }}
+                  search={{ tab: "comments", commentId: comment.id }}
                   className="inline-flex items-center gap-2 text-sm text-theme-600 dark:text-theme-400 hover:text-theme-700 dark:hover:text-theme-300 transition-colors mb-3 font-medium"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
@@ -433,38 +464,46 @@ function CommentItem({
                 onChange={(e) => setReplyContent(e.target.value)}
                 className="min-h-[100px] resize-none bg-background/60 dark:bg-background/40"
                 onFocus={() => onReply(comment.id)}
+                maxLength={5000}
               />
-              <div className="flex gap-3 justify-end">
-                {replyingToThis && (
+              <div className="flex gap-3 justify-between items-center">
+                <div className="text-xs text-muted-foreground">
+                  {replyingToThis && replyContent.length > 0 && (
+                    <span className={replyContent.length > 4900 ? "text-orange-500" : ""}>
+                      {replyContent.length} / 5000
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-3">
+                  {replyingToThis && (
+                      <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={onCancelReply}
+                      className="border-border/50"
+                    >
+                      Cancel
+                    </Button>
+                  )}
                   <Button
                     size="sm"
-                    variant="outline"
-                    onClick={onCancelReply}
-                    className="border-border/50"
+                    onClick={onSubmitReply}
+                    disabled={isPendingReply}
+                    className="btn-gradient"
                   >
-                    Cancel
+                    {isPendingReply ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white/70"></div>
+                        <span>Posting...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Send className="h-3.5 w-3.5" />
+                        <span>Post Reply</span>
+                      </div>
+                    )}
                   </Button>
-                )}
-                <Button
-                  size="sm"
-                  onClick={onSubmitReply}
-                  disabled={
-                    !replyContent.trim() || isPendingReply || !replyingToThis
-                  }
-                  className="btn-gradient"
-                >
-                  {isPendingReply ? (
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white/70"></div>
-                      <span>Posting...</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Send className="h-3.5 w-3.5" />
-                      <span>Post Reply</span>
-                    </div>
-                  )}
-                </Button>
+                </div>
               </div>
             </div>
           </div>
