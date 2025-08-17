@@ -38,3 +38,13 @@ export class LoginError extends PublicError {
     this.name = "LoginError";
   }
 }
+
+export class ApplicationError extends PublicError {
+  public code: string;
+  
+  constructor(message: string, code: string = "APPLICATION_ERROR") {
+    super(message);
+    this.name = "ApplicationError";
+    this.code = code;
+  }
+}

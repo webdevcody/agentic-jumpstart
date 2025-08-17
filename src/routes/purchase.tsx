@@ -6,6 +6,8 @@ import { env } from "~/utils/env";
 import { loadStripe } from "@stripe/stripe-js";
 import { publicEnv } from "~/utils/env-public";
 import { Button, buttonVariants } from "~/components/ui/button";
+import { useEffect } from "react";
+import { z } from "zod";
 import {
   Lock,
   Star,
@@ -22,16 +24,35 @@ import { useAuth } from "~/hooks/use-auth";
 import { useContinueSlug } from "~/hooks/use-continue-slug";
 import { Link } from "@tanstack/react-router";
 
+const searchSchema = z.object({
+  ref: z.string().optional(),
+});
+
 export const Route = createFileRoute("/purchase")({
+  validateSearch: searchSchema,
   component: RouteComponent,
+});
+
+const checkoutSchema = z.object({
+  affiliateCode: z.string().optional(),
 });
 
 const checkoutFn = createServerFn()
   .middleware([authenticatedMiddleware])
-  .handler(async ({ context }) => {
+  .validator(checkoutSchema)
+  .handler(async ({ context, data }) => {
     if (!context.email) {
       throw new Error("Email is required");
     }
+    
+    const metadata: Record<string, string> = {
+      userId: context.userId.toString(),
+    };
+    
+    if (data.affiliateCode) {
+      metadata.affiliateCode = data.affiliateCode;
+    }
+    
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [{ price: env.STRIPE_PRICE_ID, quantity: 1 }],
@@ -39,7 +60,7 @@ const checkoutFn = createServerFn()
       success_url: `${env.HOST_NAME}/success`,
       customer_email: context.email,
       cancel_url: `${env.HOST_NAME}/purchase`,
-      metadata: { userId: context.userId },
+      metadata,
     });
 
     return { sessionId: session.id };
@@ -100,6 +121,18 @@ const testimonials = [
 function RouteComponent() {
   const user = useAuth();
   const continueSlug = useContinueSlug();
+  const { ref } = Route.useSearch();
+
+  // Store affiliate code in localStorage when present in URL
+  useEffect(() => {
+    if (ref) {
+      localStorage.setItem("affiliateCode", ref);
+      // Set cookie as well for 30 days
+      const expires = new Date();
+      expires.setDate(expires.getDate() + 30);
+      document.cookie = `affiliateCode=${ref}; expires=${expires.toUTCString()}; path=/`;
+    }
+  }, [ref]);
 
   const handlePurchase = async () => {
     const stripePromise = loadStripe(publicEnv.VITE_STRIPE_PUBLISHABLE_KEY);
@@ -107,7 +140,13 @@ function RouteComponent() {
     if (!stripeResolved) throw new Error("Stripe failed to initialize");
 
     try {
-      const { sessionId } = await checkoutFn();
+      // Get affiliate code from localStorage or cookie
+      const affiliateCode = localStorage.getItem("affiliateCode") || 
+        document.cookie.split("; ").find(row => row.startsWith("affiliateCode="))?.split("=")[1];
+      
+      const { sessionId } = await checkoutFn({ 
+        data: { affiliateCode: affiliateCode || undefined } 
+      });
       const { error } = await stripeResolved.redirectToCheckout({ sessionId });
       if (error) throw error;
     } catch (error) {

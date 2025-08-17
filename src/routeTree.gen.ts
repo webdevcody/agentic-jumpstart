@@ -21,6 +21,8 @@ import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CreateTestimonialRouteImport } from './routes/create-testimonial'
 import { Route as CancelRouteImport } from './routes/cancel'
+import { Route as AffiliatesRouteImport } from './routes/affiliates'
+import { Route as AffiliateDashboardRouteImport } from './routes/affiliate-dashboard'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LearnIndexRouteImport } from './routes/learn/index'
@@ -29,6 +31,7 @@ import { Route as LearnNoSegmentsRouteImport } from './routes/learn/no-segments'
 import { Route as LearnCourseCompletedRouteImport } from './routes/learn/course-completed'
 import { Route as LearnAddRouteImport } from './routes/learn/add'
 import { Route as AdminCommentsRouteImport } from './routes/admin/comments'
+import { Route as AdminAffiliatesRouteImport } from './routes/admin/affiliates'
 import { Route as LearnSlugEditRouteImport } from './routes/learn/$slug/edit'
 import { Route as LearnSlugLayoutRouteImport } from './routes/learn/$slug/_layout'
 import { Route as LearnSlugLayoutIndexRouteImport } from './routes/learn/$slug/_layout.index'
@@ -86,6 +89,16 @@ const CancelRoute = CancelRouteImport.update({
   path: '/cancel',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AffiliatesRoute = AffiliatesRouteImport.update({
+  id: '/affiliates',
+  path: '/affiliates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AffiliateDashboardRoute = AffiliateDashboardRouteImport.update({
+  id: '/affiliate-dashboard',
+  path: '/affiliate-dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -129,6 +142,11 @@ const LearnAddRoute = LearnAddRouteImport.update({
 const AdminCommentsRoute = AdminCommentsRouteImport.update({
   id: '/admin/comments',
   path: '/admin/comments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAffiliatesRoute = AdminAffiliatesRouteImport.update({
+  id: '/admin/affiliates',
+  path: '/admin/affiliates',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LearnSlugEditRoute = LearnSlugEditRouteImport.update({
@@ -177,6 +195,8 @@ const ApiLoginGoogleCallbackIndexServerRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/affiliate-dashboard': typeof AffiliateDashboardRoute
+  '/affiliates': typeof AffiliatesRoute
   '/cancel': typeof CancelRoute
   '/create-testimonial': typeof CreateTestimonialRoute
   '/login': typeof LoginRoute
@@ -186,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/terms-of-service': typeof TermsOfServiceRoute
   '/unauthenticated': typeof UnauthenticatedRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/admin/affiliates': typeof AdminAffiliatesRoute
   '/admin/comments': typeof AdminCommentsRoute
   '/learn/add': typeof LearnAddRoute
   '/learn/course-completed': typeof LearnCourseCompletedRoute
@@ -199,6 +220,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/affiliate-dashboard': typeof AffiliateDashboardRoute
+  '/affiliates': typeof AffiliatesRoute
   '/cancel': typeof CancelRoute
   '/create-testimonial': typeof CreateTestimonialRoute
   '/login': typeof LoginRoute
@@ -208,6 +231,7 @@ export interface FileRoutesByTo {
   '/terms-of-service': typeof TermsOfServiceRoute
   '/unauthenticated': typeof UnauthenticatedRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/admin/affiliates': typeof AdminAffiliatesRoute
   '/admin/comments': typeof AdminCommentsRoute
   '/learn/add': typeof LearnAddRoute
   '/learn/course-completed': typeof LearnCourseCompletedRoute
@@ -221,6 +245,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/affiliate-dashboard': typeof AffiliateDashboardRoute
+  '/affiliates': typeof AffiliatesRoute
   '/cancel': typeof CancelRoute
   '/create-testimonial': typeof CreateTestimonialRoute
   '/login': typeof LoginRoute
@@ -230,6 +256,7 @@ export interface FileRoutesById {
   '/terms-of-service': typeof TermsOfServiceRoute
   '/unauthenticated': typeof UnauthenticatedRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/admin/affiliates': typeof AdminAffiliatesRoute
   '/admin/comments': typeof AdminCommentsRoute
   '/learn/add': typeof LearnAddRoute
   '/learn/course-completed': typeof LearnCourseCompletedRoute
@@ -246,6 +273,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/affiliate-dashboard'
+    | '/affiliates'
     | '/cancel'
     | '/create-testimonial'
     | '/login'
@@ -255,6 +284,7 @@ export interface FileRouteTypes {
     | '/terms-of-service'
     | '/unauthenticated'
     | '/unauthorized'
+    | '/admin/affiliates'
     | '/admin/comments'
     | '/learn/add'
     | '/learn/course-completed'
@@ -268,6 +298,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/affiliate-dashboard'
+    | '/affiliates'
     | '/cancel'
     | '/create-testimonial'
     | '/login'
@@ -277,6 +309,7 @@ export interface FileRouteTypes {
     | '/terms-of-service'
     | '/unauthenticated'
     | '/unauthorized'
+    | '/admin/affiliates'
     | '/admin/comments'
     | '/learn/add'
     | '/learn/course-completed'
@@ -289,6 +322,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
+    | '/affiliate-dashboard'
+    | '/affiliates'
     | '/cancel'
     | '/create-testimonial'
     | '/login'
@@ -298,6 +333,7 @@ export interface FileRouteTypes {
     | '/terms-of-service'
     | '/unauthenticated'
     | '/unauthorized'
+    | '/admin/affiliates'
     | '/admin/comments'
     | '/learn/add'
     | '/learn/course-completed'
@@ -313,6 +349,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  AffiliateDashboardRoute: typeof AffiliateDashboardRoute
+  AffiliatesRoute: typeof AffiliatesRoute
   CancelRoute: typeof CancelRoute
   CreateTestimonialRoute: typeof CreateTestimonialRoute
   LoginRoute: typeof LoginRoute
@@ -322,6 +360,7 @@ export interface RootRouteChildren {
   TermsOfServiceRoute: typeof TermsOfServiceRoute
   UnauthenticatedRoute: typeof UnauthenticatedRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
+  AdminAffiliatesRoute: typeof AdminAffiliatesRoute
   AdminCommentsRoute: typeof AdminCommentsRoute
   LearnAddRoute: typeof LearnAddRoute
   LearnCourseCompletedRoute: typeof LearnCourseCompletedRoute
@@ -449,6 +488,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CancelRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/affiliates': {
+      id: '/affiliates'
+      path: '/affiliates'
+      fullPath: '/affiliates'
+      preLoaderRoute: typeof AffiliatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/affiliate-dashboard': {
+      id: '/affiliate-dashboard'
+      path: '/affiliate-dashboard'
+      fullPath: '/affiliate-dashboard'
+      preLoaderRoute: typeof AffiliateDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -510,6 +563,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/comments'
       fullPath: '/admin/comments'
       preLoaderRoute: typeof AdminCommentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/affiliates': {
+      id: '/admin/affiliates'
+      path: '/admin/affiliates'
+      fullPath: '/admin/affiliates'
+      preLoaderRoute: typeof AdminAffiliatesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/learn/$slug/edit': {
@@ -604,6 +664,8 @@ const LearnSlugRouteWithChildren = LearnSlugRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  AffiliateDashboardRoute: AffiliateDashboardRoute,
+  AffiliatesRoute: AffiliatesRoute,
   CancelRoute: CancelRoute,
   CreateTestimonialRoute: CreateTestimonialRoute,
   LoginRoute: LoginRoute,
@@ -613,6 +675,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsOfServiceRoute: TermsOfServiceRoute,
   UnauthenticatedRoute: UnauthenticatedRoute,
   UnauthorizedRoute: UnauthorizedRoute,
+  AdminAffiliatesRoute: AdminAffiliatesRoute,
   AdminCommentsRoute: AdminCommentsRoute,
   LearnAddRoute: LearnAddRoute,
   LearnCourseCompletedRoute: LearnCourseCompletedRoute,

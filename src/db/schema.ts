@@ -188,6 +188,77 @@ export const attachments = tableCreator(
   ]
 );
 
+export const affiliates = tableCreator(
+  "affiliate",
+  {
+    id: serial("id").primaryKey(),
+    userId: serial("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" })
+      .unique(),
+    affiliateCode: text("affiliateCode").notNull().unique(),
+    paymentLink: text("paymentLink").notNull(),
+    commissionRate: integer("commissionRate").notNull().default(30),
+    totalEarnings: integer("totalEarnings").notNull().default(0),
+    paidAmount: integer("paidAmount").notNull().default(0),
+    unpaidBalance: integer("unpaidBalance").notNull().default(0),
+    isActive: boolean("isActive").notNull().default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("affiliates_user_id_idx").on(table.userId),
+    index("affiliates_code_idx").on(table.affiliateCode),
+  ]
+);
+
+export const affiliateReferrals = tableCreator(
+  "affiliate_referral",
+  {
+    id: serial("id").primaryKey(),
+    affiliateId: serial("affiliateId")
+      .notNull()
+      .references(() => affiliates.id, { onDelete: "cascade" }),
+    purchaserId: serial("purchaserId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    stripeSessionId: text("stripeSessionId").notNull(),
+    amount: integer("amount").notNull(),
+    commission: integer("commission").notNull(),
+    isPaid: boolean("isPaid").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("referrals_affiliate_created_idx").on(
+      table.affiliateId,
+      table.createdAt
+    ),
+    index("referrals_purchaser_idx").on(table.purchaserId),
+    uniqueIndex("referrals_stripe_session_unique").on(table.stripeSessionId),
+  ]
+);
+
+export const affiliatePayouts = tableCreator(
+  "affiliate_payout",
+  {
+    id: serial("id").primaryKey(),
+    affiliateId: serial("affiliateId")
+      .notNull()
+      .references(() => affiliates.id, { onDelete: "cascade" }),
+    amount: integer("amount").notNull(),
+    paymentMethod: text("paymentMethod").notNull(),
+    transactionId: text("transactionId"),
+    notes: text("notes"),
+    paidAt: timestamp("paid_at").notNull().defaultNow(),
+    paidBy: serial("paidBy")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    index("payouts_affiliate_paid_idx").on(table.affiliateId, table.paidAt),
+  ]
+);
+
 export const modulesRelations = relations(modules, ({ many }) => ({
   segments: many(segments),
 }));
@@ -238,6 +309,43 @@ export const attachmentsRelations = relations(attachments, ({ one }) => ({
   }),
 }));
 
+export const affiliatesRelations = relations(affiliates, ({ one, many }) => ({
+  user: one(users, {
+    fields: [affiliates.userId],
+    references: [users.id],
+  }),
+  referrals: many(affiliateReferrals),
+  payouts: many(affiliatePayouts),
+}));
+
+export const affiliateReferralsRelations = relations(
+  affiliateReferrals,
+  ({ one }) => ({
+    affiliate: one(affiliates, {
+      fields: [affiliateReferrals.affiliateId],
+      references: [affiliates.id],
+    }),
+    purchaser: one(users, {
+      fields: [affiliateReferrals.purchaserId],
+      references: [users.id],
+    }),
+  })
+);
+
+export const affiliatePayoutsRelations = relations(
+  affiliatePayouts,
+  ({ one }) => ({
+    affiliate: one(affiliates, {
+      fields: [affiliatePayouts.affiliateId],
+      references: [affiliates.id],
+    }),
+    paidByUser: one(users, {
+      fields: [affiliatePayouts.paidBy],
+      references: [users.id],
+    }),
+  })
+);
+
 export type User = typeof users.$inferSelect;
 export type Profile = typeof profiles.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
@@ -253,3 +361,9 @@ export type Testimonial = typeof testimonials.$inferSelect;
 export type TestimonialCreate = typeof testimonials.$inferInsert;
 export type Comment = typeof comments.$inferSelect;
 export type CommentCreate = typeof comments.$inferInsert;
+export type Affiliate = typeof affiliates.$inferSelect;
+export type AffiliateCreate = typeof affiliates.$inferInsert;
+export type AffiliateReferral = typeof affiliateReferrals.$inferSelect;
+export type AffiliateReferralCreate = typeof affiliateReferrals.$inferInsert;
+export type AffiliatePayout = typeof affiliatePayouts.$inferSelect;
+export type AffiliatePayoutCreate = typeof affiliatePayouts.$inferInsert;

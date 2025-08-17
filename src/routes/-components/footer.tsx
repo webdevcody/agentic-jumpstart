@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { DISCORD_INVITE_LINK } from "~/config";
 import { useFirstSegment } from "~/hooks/use-first-segment";
 
 export function FooterSection() {
@@ -75,7 +76,7 @@ export function FooterSection() {
               </li>
               <li>
                 <a
-                  href="https://example.com"
+                  href={DISCORD_INVITE_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-foreground transition-colors"
