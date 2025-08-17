@@ -71,7 +71,7 @@ export function VideoContentTabsPanel({
       </div>
 
       {/* Tab Content */}
-      <div className="p-6">
+      <div className="p-6 min-h-96">
         {activeTab === "content" && (
           <ContentPanel currentSegment={currentSegment} />
         )}

@@ -498,7 +498,7 @@ export function CommentList({
             <div className="pt-2">
               <Button
                 onClick={onStartDiscussion}
-                className="btn-gradient shadow-elevation-2 hover:shadow-elevation-3 transition-all duration-200"
+                className="shadow-elevation-2 hover:shadow-elevation-3 transition-all duration-200"
                 size="lg"
               >
                 <MessageSquare className="mr-2 h-4 w-4" />

@@ -28,7 +28,7 @@ export function SegmentItem({
   const content = (
     <div
       className={cn(
-        "segment-item group/segment p-3 rounded-lg border border-transparent transition-all duration-300",
+        "segment-item group/segment p-3 rounded-lg border border-transparent transition-all duration-700 ease-out",
         isActive &&
           "active bg-gradient-to-r from-theme-50 to-theme-100/50 dark:from-theme-950/50 dark:to-theme-900/30 border-theme-200 dark:border-theme-800 shadow-lg",
         !isActive && "hover:border-theme-200/50 dark:hover:border-theme-800/50"

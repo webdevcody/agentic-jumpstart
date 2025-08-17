@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Check,
   ChevronRight,
@@ -67,7 +67,7 @@ export function ModuleAccordionHeader({
     return null;
   }
 
-  const getModuleProgress = (module: ModuleWithSegments) => {
+  const moduleProgress = useMemo(() => {
     // Add safety check for module.segments
     if (!module.segments || !Array.isArray(module.segments)) {
       return {
@@ -88,9 +88,7 @@ export function ModuleAccordionHeader({
           ? (completedSegments / module.segments.length) * 100
           : 0,
     };
-  };
-
-  const moduleProgress = getModuleProgress(module);
+  }, [module.segments, progress]);
 
   const handleDeleteModule = async () => {
     try {
@@ -177,6 +175,7 @@ export function ModuleAccordionHeader({
                           strokeWidth="2"
                           strokeDasharray={`${moduleProgress.percentage}, 100`}
                           strokeLinecap="round"
+                          style={{ transition: 'stroke-dasharray 0.3s ease' }}
                         />
                       </svg>
                       <div className="absolute inset-0 flex items-center justify-center">
