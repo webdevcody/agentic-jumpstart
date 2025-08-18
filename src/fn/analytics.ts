@@ -143,7 +143,6 @@ const pageViewSchema = z.object({
 export const trackPageViewFn = createServerFn()
   .validator(pageViewSchema)
   .handler(async ({ data }) => {
-    console.log("Tracking page view:", data);
     const headers = getHeaders();
     try {
       await trackPageView({

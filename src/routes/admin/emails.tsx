@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { marked } from "marked";
+import sanitizeHtml from "sanitize-html";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
@@ -262,7 +263,24 @@ function AdminEmailsPage() {
         <div
           className="prose prose-sm dark:prose-invert max-w-none"
           dangerouslySetInnerHTML={{
-            __html: htmlContent || "<p>No content</p>",
+            __html: sanitizeHtml(htmlContent || "<p>No content</p>", {
+              allowedTags: [
+                'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'p', 'a', 'ul', 'ol',
+                'nl', 'li', 'b', 'i', 'strong', 'em', 'strike', 'code', 'hr', 'br', 'div',
+                'table', 'thead', 'caption', 'tbody', 'tr', 'th', 'td', 'pre', 'span'
+              ],
+              allowedAttributes: {
+                'a': ['href', 'name', 'target'],
+                'img': ['src', 'alt', 'width', 'height'],
+                'div': ['class'],
+                'span': ['class'],
+                'p': ['class'],
+                '*': ['class']
+              },
+              allowedSchemes: ['http', 'https', 'mailto'],
+              allowedSchemesByTag: {},
+              allowedSchemesAppliedToAttributes: ['href'],
+            }),
           }}
         />
       </div>
