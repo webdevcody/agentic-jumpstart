@@ -93,9 +93,29 @@ Required environment variables (see `/src/utils/env.ts`):
 - **Layered Architecture** - `/docs/technical/layered-architecture.md`
 - **Tailwind Additional Info** - `/docs/technical/tailwind.md`
 
-## IMPORTANT EXTRA CHECKS
+## New Tanstack Route
 
-Please read through `/docs/technical/important.md` for extra constraints for how you should be generating all code.
+When making an admin page, you can protect it by using this type of format:
+
+```typescript
+import { assertIsAdminFn } from "~/fn/auth";
+
+export const Route = createFileRoute("/admin/conversions")({
+  beforeLoad: () => assertIsAdminFn(),
+  component: ConversionsPage,
+});
+```
+
+## Tanstack Server Functions
+
+When trying to invoke a tanstack server function, remember you need to send an object that has a data property, like so:
+
+```typescript
+// an example of calling a server function using the { data } object
+getConversionMetricsFn({
+  data: { start: dateRange.start, end: dateRange.end },
+}),
+```
 
 ## DO NOT RUN SERVER
 

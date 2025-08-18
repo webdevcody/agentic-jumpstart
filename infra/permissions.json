@@ -1,0 +1,36 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ses:SendEmail",
+        "ses:SendRawEmail",
+        "ses:SendBulkTemplatedEmail",
+        "ses:SendTemplatedEmail"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ses:GetIdentityVerificationAttributes",
+        "ses:GetIdentityDkimAttributes",
+        "ses:GetIdentityNotificationAttributes",
+        "ses:GetIdentityPolicies",
+        "ses:GetSendQuota",
+        "ses:GetSendStatistics",
+        "ses:GetAccountSendingEnabled"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ses:ListIdentities",
+        "ses:ListVerifiedEmailAddresses"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

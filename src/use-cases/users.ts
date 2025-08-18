@@ -8,6 +8,7 @@ import { PublicError } from "./errors";
 import { GoogleUser, UserId, UserSession } from "./types";
 import { createProfile, getProfile } from "~/data-access/profiles";
 import { createAccountViaGoogle } from "~/data-access/accounts";
+import { createOrUpdateEmailPreferences } from "~/data-access/emails";
 import { getCurrentUser } from "~/utils/session";
 import { isAdmin } from "~/lib/auth";
 
@@ -37,6 +38,12 @@ export async function createGoogleUserUseCase(googleUser: GoogleUser) {
 
   if (!existingUser) {
     existingUser = await createUser(googleUser.email);
+    
+    // Create default email preferences for new users
+    await createOrUpdateEmailPreferences(existingUser.id, {
+      allowCourseUpdates: true,
+      allowPromotional: true,
+    });
   }
 
   await createAccountViaGoogle(existingUser.id, googleUser.sub);

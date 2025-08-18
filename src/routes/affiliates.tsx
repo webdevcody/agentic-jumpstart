@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { AFFILIATE_CONFIG } from "~/config";
 import { Button, buttonVariants } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Checkbox } from "~/components/ui/checkbox";
@@ -131,7 +132,7 @@ function AffiliatesPage() {
             {/* Badge */}
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-theme-50/50 dark:bg-background/20 backdrop-blur-sm border border-theme-200 dark:border-border/50 text-theme-600 dark:text-theme-400 text-sm font-medium mb-8">
               <span className="w-2 h-2 bg-theme-500 dark:bg-theme-400 rounded-full mr-2 animate-pulse"></span>
-              Earn 30% Commission
+              Earn {AFFILIATE_CONFIG.COMMISSION_RATE}% Commission
             </div>
 
             {/* Hero title with gradient text */}
@@ -152,7 +153,7 @@ function AffiliatesPage() {
             <div className="grid md:grid-cols-3 gap-6 mb-12 max-w-4xl mx-auto">
               <div className="video-wrapper p-6 text-center">
                 <DollarSign className="h-10 w-10 text-theme-500 dark:text-theme-400 mx-auto mb-3" />
-                <h3 className="font-semibold mb-2">30% Commission</h3>
+                <h3 className="font-semibold mb-2">{AFFILIATE_CONFIG.COMMISSION_RATE}% Commission</h3>
                 <p className="text-sm text-muted-foreground">$60 per sale</p>
               </div>
               <div className="video-wrapper p-6 text-center">
@@ -236,7 +237,7 @@ function AffiliatesPage() {
           <div className="text-center mb-16">
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-theme-50/50 dark:bg-background/20 backdrop-blur-sm border border-theme-200 dark:border-border/50 text-theme-600 dark:text-theme-400 text-sm font-medium mb-8">
               <span className="w-2 h-2 bg-theme-500 dark:bg-theme-400 rounded-full mr-2 animate-pulse"></span>
-              Earn 30% Commission
+              Earn {AFFILIATE_CONFIG.COMMISSION_RATE}% Commission
             </div>
 
             <h1 className="text-6xl font-bold mb-6">
@@ -255,7 +256,7 @@ function AffiliatesPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
             <div className="video-wrapper p-6">
               <DollarSign className="h-12 w-12 text-theme-500 dark:text-theme-400 mb-4" />
-              <h3 className="text-xl font-semibold mb-2">30% Commission</h3>
+              <h3 className="text-xl font-semibold mb-2">{AFFILIATE_CONFIG.COMMISSION_RATE}% Commission</h3>
               <p className="text-muted-foreground">
                 Earn $60 for every sale you refer. One of the highest commission
                 rates in the industry.
@@ -462,7 +463,7 @@ function AffiliatesPage() {
                                           </h3>
                                         </div>
                                         <p className="text-muted-foreground leading-relaxed">
-                                          Affiliates earn 30% commission on all
+                                          Affiliates earn {AFFILIATE_CONFIG.COMMISSION_RATE}% commission on all
                                           referred sales. Commissions are
                                           calculated based on the net sale price
                                           after any discounts.

@@ -259,6 +259,83 @@ export const affiliatePayouts = tableCreator(
   ]
 );
 
+export const emailBatches = tableCreator(
+  "email_batch",
+  {
+    id: serial("id").primaryKey(),
+    subject: text("subject").notNull(),
+    htmlContent: text("htmlContent").notNull(),
+    recipientCount: integer("recipientCount").notNull().default(0),
+    sentCount: integer("sentCount").notNull().default(0),
+    failedCount: integer("failedCount").notNull().default(0),
+    status: text("status").notNull().default("pending"), // pending, processing, completed, failed
+    adminId: serial("adminId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("email_batches_admin_created_idx").on(table.adminId, table.createdAt),
+    index("email_batches_status_idx").on(table.status),
+  ]
+);
+
+export const userEmailPreferences = tableCreator(
+  "user_email_preference",
+  {
+    id: serial("id").primaryKey(),
+    userId: serial("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" })
+      .unique(),
+    allowCourseUpdates: boolean("allowCourseUpdates").notNull().default(true),
+    allowPromotional: boolean("allowPromotional").notNull().default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [index("email_preferences_user_idx").on(table.userId)]
+);
+
+export const unsubscribeTokens = tableCreator(
+  "unsubscribe_token",
+  {
+    id: serial("id").primaryKey(),
+    token: text("token").notNull().unique(),
+    userId: serial("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    emailAddress: text("emailAddress").notNull(),
+    isUsed: boolean("isUsed").notNull().default(false),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("unsubscribe_tokens_token_idx").on(table.token),
+    index("unsubscribe_tokens_user_idx").on(table.userId),
+    index("unsubscribe_tokens_expires_idx").on(table.expiresAt),
+  ]
+);
+
+export const newsletterSignups = tableCreator(
+  "newsletter_signup",
+  {
+    id: serial("id").primaryKey(),
+    email: text("email").notNull().unique(),
+    source: text("source").notNull().default("early_access"), // 'early_access', 'newsletter', 'waitlist'
+    isVerified: boolean("isVerified").notNull().default(false),
+    subscriptionType: text("subscriptionType").notNull().default("newsletter"), // 'newsletter', 'waitlist'
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("newsletter_signups_email_idx").on(table.email),
+    index("newsletter_signups_source_idx").on(table.source),
+    index("newsletter_signups_type_idx").on(table.subscriptionType),
+    index("newsletter_signups_created_idx").on(table.createdAt),
+  ]
+);
+
 export const modulesRelations = relations(modules, ({ many }) => ({
   segments: many(segments),
 }));
@@ -346,6 +423,98 @@ export const affiliatePayoutsRelations = relations(
   })
 );
 
+export const emailBatchesRelations = relations(emailBatches, ({ one }) => ({
+  admin: one(users, {
+    fields: [emailBatches.adminId],
+    references: [users.id],
+  }),
+}));
+
+export const userEmailPreferencesRelations = relations(
+  userEmailPreferences,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [userEmailPreferences.userId],
+      references: [users.id],
+    }),
+  })
+);
+
+export const analyticsEvents = tableCreator(
+  "analytics_event",
+  {
+    id: serial("id").primaryKey(),
+    sessionId: text("sessionId").notNull(),
+    eventType: text("eventType").notNull(), // page_view, purchase_intent, purchase_completed, course_access
+    pagePath: text("pagePath").notNull(),
+    referrer: text("referrer"),
+    userAgent: text("userAgent"),
+    ipAddressHash: text("ipAddressHash"),
+    utmSource: text("utmSource"),
+    utmMedium: text("utmMedium"),
+    utmCampaign: text("utmCampaign"),
+    utmContent: text("utmContent"),
+    utmTerm: text("utmTerm"),
+    metadata: text("metadata"), // JSON string for flexible data
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("analytics_events_session_idx").on(table.sessionId),
+    index("analytics_events_type_idx").on(table.eventType),
+    index("analytics_events_campaign_idx").on(table.utmCampaign),
+    index("analytics_events_created_idx").on(table.createdAt),
+  ]
+);
+
+export const analyticsSessions = tableCreator(
+  "analytics_session",
+  {
+    id: text("id").primaryKey(),
+    firstSeen: timestamp("first_seen").notNull().defaultNow(),
+    lastSeen: timestamp("last_seen").notNull().defaultNow(),
+    referrerSource: text("referrerSource"),
+    utmCampaign: text("utmCampaign"),
+    utmSource: text("utmSource"),
+    utmMedium: text("utmMedium"),
+    utmContent: text("utmContent"),
+    utmTerm: text("utmTerm"),
+    pageViews: integer("pageViews").notNull().default(0),
+    hasPurchaseIntent: boolean("hasPurchaseIntent").notNull().default(false),
+    hasConversion: boolean("hasConversion").notNull().default(false),
+  },
+  (table) => [
+    index("analytics_sessions_campaign_idx").on(table.utmCampaign),
+    index("analytics_sessions_first_seen_idx").on(table.firstSeen),
+  ]
+);
+
+export const unsubscribeTokensRelations = relations(
+  unsubscribeTokens,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [unsubscribeTokens.userId],
+      references: [users.id],
+    }),
+  })
+);
+
+export const analyticsEventsRelations = relations(
+  analyticsEvents,
+  ({ one }) => ({
+    session: one(analyticsSessions, {
+      fields: [analyticsEvents.sessionId],
+      references: [analyticsSessions.id],
+    }),
+  })
+);
+
+export const analyticsSessionsRelations = relations(
+  analyticsSessions,
+  ({ one, many }) => ({
+    events: many(analyticsEvents),
+  })
+);
+
 export type User = typeof users.$inferSelect;
 export type Profile = typeof profiles.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
@@ -367,3 +536,16 @@ export type AffiliateReferral = typeof affiliateReferrals.$inferSelect;
 export type AffiliateReferralCreate = typeof affiliateReferrals.$inferInsert;
 export type AffiliatePayout = typeof affiliatePayouts.$inferSelect;
 export type AffiliatePayoutCreate = typeof affiliatePayouts.$inferInsert;
+export type EmailBatch = typeof emailBatches.$inferSelect;
+export type EmailBatchCreate = typeof emailBatches.$inferInsert;
+export type UserEmailPreference = typeof userEmailPreferences.$inferSelect;
+export type UserEmailPreferenceCreate =
+  typeof userEmailPreferences.$inferInsert;
+export type UnsubscribeToken = typeof unsubscribeTokens.$inferSelect;
+export type UnsubscribeTokenCreate = typeof unsubscribeTokens.$inferInsert;
+export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
+export type AnalyticsEventCreate = typeof analyticsEvents.$inferInsert;
+export type AnalyticsSession = typeof analyticsSessions.$inferSelect;
+export type AnalyticsSessionCreate = typeof analyticsSessions.$inferInsert;
+export type NewsletterSignup = typeof newsletterSignups.$inferSelect;
+export type NewsletterSignupCreate = typeof newsletterSignups.$inferInsert;

@@ -34,15 +34,15 @@ export const subscribeFn = createServerFn()
       throw new Error("recaptcha score too low");
     }
 
-    const params = new URLSearchParams();
-    params.append("email", data.email);
-    await fetch(env.MAILING_LIST_ENDPOINT, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.MAILING_LIST_PASSWORD}`,
-        "Content-Type": "application/x-www-form-urlencoded",
+    // Store in our database instead of external service
+    const { subscribeToNewsletterFn } = await import("~/fn/newsletter");
+    await subscribeToNewsletterFn({
+      data: {
+        email: data.email,
+        recaptchaToken: data.recaptchaToken,
+        subscriptionType: "newsletter",
+        source: "newsletter_section",
       },
-      body: params.toString(),
     });
   });
 

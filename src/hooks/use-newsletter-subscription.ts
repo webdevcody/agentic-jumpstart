@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { publicEnv } from "~/utils/env-public";
-import { subscribeFn } from "~/routes/-components/newsletter";
+import { subscribeToNewsletterFn } from "~/fn/newsletter";
 
 declare global {
   interface Window {
@@ -37,10 +37,12 @@ export function useNewsletterSubscription() {
             .execute(publicEnv.VITE_RECAPTCHA_KEY, { action: "submit" })
             .then(async function (token: string) {
               try {
-                await subscribeFn({
+                await subscribeToNewsletterFn({
                   data: {
                     email,
                     recaptchaToken: token,
+                    subscriptionType: "waitlist",
+                    source: "early_access",
                   },
                 });
                 setIsSubmitted(true);

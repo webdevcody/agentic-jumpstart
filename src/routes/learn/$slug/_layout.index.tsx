@@ -8,7 +8,6 @@ import { type Segment } from "~/db/schema";
 
 import { VideoPlayer } from "~/routes/learn/-components/video-player";
 
-import { Toaster } from "~/components/ui/toaster";
 
 import { unauthenticatedMiddleware } from "~/lib/auth";
 import { isAdminFn, isUserPremiumFn } from "~/fn/auth";
@@ -164,7 +163,6 @@ function RouteComponent() {
         commentId={commentId}
       />
       {/* <FloatingFeedbackButton /> */}
-      <Toaster />
     </>
   );
 }

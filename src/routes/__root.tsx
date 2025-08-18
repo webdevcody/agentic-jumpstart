@@ -19,10 +19,12 @@ import { Header } from "~/routes/-components/header";
 import { FooterSection } from "~/routes/-components/footer";
 import { ThemeProvider } from "~/components/ThemeProvider";
 import { ThemeToggle } from "~/components/theme-toggle";
+import { Toaster } from "~/components/ui/toaster";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import { env } from "~/utils/env";
 import { shouldShowEarlyAccessFn } from "~/fn/early-access";
+import { useAnalytics } from "~/hooks/use-analytics";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   {
@@ -89,6 +91,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 );
 
 function RootComponent() {
+  // Initialize analytics tracking
+  useAnalytics();
+  
   return (
     <RootDocument>
       <Outlet />
@@ -192,6 +197,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               <ThemeToggle />
             </div>
           )}
+          <Toaster />
           <TanStackRouterDevtools position="bottom-right" />
           <ReactQueryDevtools buttonPosition="bottom-left" />
           <Scripts />

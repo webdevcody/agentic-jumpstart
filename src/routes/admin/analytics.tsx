@@ -22,6 +22,9 @@ import { adminMiddleware } from "~/lib/auth";
 import { queryOptions } from "@tanstack/react-query";
 import { Progress } from "~/components/ui/progress";
 import { Badge } from "~/components/ui/badge";
+import { assertIsAdminFn } from "~/fn/auth";
+import { Page } from "./-components/page";
+import { PageHeader } from "./-components/page-header";
 
 const analyticsQuery = queryOptions({
   queryKey: ["admin", "analytics"],
@@ -29,7 +32,7 @@ const analyticsQuery = queryOptions({
 });
 
 export const Route = createFileRoute("/admin/analytics")({
-  middleware: [adminMiddleware],
+  beforeLoad: () => assertIsAdminFn(),
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(analyticsQuery);
   },
@@ -45,34 +48,22 @@ function AdminAnalytics() {
     : analytics.segmentAnalytics;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Background with subtle gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background via-theme-50/5 to-theme-100/10 dark:from-background dark:via-theme-950/10 dark:to-theme-900/20"></div>
-      
-      {/* Main content */}
-      <div className="relative z-10">
-        <div className="container mx-auto px-6 py-20 max-w-7xl">
-          {/* Header section */}
-          <div className="mb-12">
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h1 className="text-4xl font-bold mb-4">
-                  Course <span className="text-gradient">Analytics</span>
-                </h1>
-                <p className="text-description max-w-2xl">
-                  Comprehensive insights into user engagement, course performance, and revenue metrics
-                </p>
-              </div>
-            </div>
-          </div>
+    <Page>
+      <PageHeader
+        title="Course Analytics"
+        highlightedWord="Analytics"
+        description="Comprehensive insights into user engagement, course performance, and revenue metrics"
+      />
 
-          {/* Key Metrics Overview */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
+      {/* Key Metrics Overview */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
             {/* Total Users */}
             <div className="group relative">
               <div className="module-card p-6 h-full">
                 <div className="flex flex-row items-center justify-between space-y-0 mb-4">
-                  <div className="text-sm font-medium text-muted-foreground">Total Users</div>
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Total Users
+                  </div>
                   <div className="w-10 h-10 rounded-full bg-blue-500/10 dark:bg-blue-400/20 flex items-center justify-center group-hover:bg-blue-500/20 dark:group-hover:bg-blue-400/30 transition-colors duration-300">
                     <Users className="h-5 w-5 text-blue-500 dark:text-blue-400" />
                   </div>
@@ -80,7 +71,9 @@ function AdminAnalytics() {
                 <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
                   {analytics.userStats.totalUsers.toLocaleString()}
                 </div>
-                <p className="text-sm text-muted-foreground">All registered users</p>
+                <p className="text-sm text-muted-foreground">
+                  All registered users
+                </p>
               </div>
             </div>
 
@@ -88,7 +81,9 @@ function AdminAnalytics() {
             <div className="group relative">
               <div className="module-card p-6 h-full">
                 <div className="flex flex-row items-center justify-between space-y-0 mb-4">
-                  <div className="text-sm font-medium text-muted-foreground">Premium Members</div>
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Premium Members
+                  </div>
                   <div className="w-10 h-10 rounded-full bg-theme-500/10 dark:bg-theme-400/20 flex items-center justify-center group-hover:bg-theme-500/20 dark:group-hover:bg-theme-400/30 transition-colors duration-300">
                     <Award className="h-5 w-5 text-theme-500 dark:text-theme-400" />
                   </div>
@@ -106,15 +101,20 @@ function AdminAnalytics() {
             <div className="group relative">
               <div className="module-card p-6 h-full">
                 <div className="flex flex-row items-center justify-between space-y-0 mb-4">
-                  <div className="text-sm font-medium text-muted-foreground">Total Revenue</div>
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Total Revenue
+                  </div>
                   <div className="w-10 h-10 rounded-full bg-green-500/10 dark:bg-green-400/20 flex items-center justify-center group-hover:bg-green-500/20 dark:group-hover:bg-green-400/30 transition-colors duration-300">
                     <DollarSign className="h-5 w-5 text-green-500 dark:text-green-400" />
                   </div>
                 </div>
                 <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
-                  ${(analytics.overallStats.totalRevenue / 100).toLocaleString()}
+                  $
+                  {(analytics.overallStats.totalRevenue / 100).toLocaleString()}
                 </div>
-                <p className="text-sm text-muted-foreground">From affiliate referrals</p>
+                <p className="text-sm text-muted-foreground">
+                  From affiliate referrals
+                </p>
               </div>
             </div>
 
@@ -122,7 +122,9 @@ function AdminAnalytics() {
             <div className="group relative">
               <div className="module-card p-6 h-full">
                 <div className="flex flex-row items-center justify-between space-y-0 mb-4">
-                  <div className="text-sm font-medium text-muted-foreground">Avg Progress</div>
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Avg Progress
+                  </div>
                   <div className="w-10 h-10 rounded-full bg-purple-500/10 dark:bg-purple-400/20 flex items-center justify-center group-hover:bg-purple-500/20 dark:group-hover:bg-purple-400/30 transition-colors duration-300">
                     <Activity className="h-5 w-5 text-purple-500 dark:text-purple-400" />
                   </div>
@@ -130,13 +132,15 @@ function AdminAnalytics() {
                 <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors duration-300">
                   {analytics.overallStats.averageProgressPerUser}
                 </div>
-                <p className="text-sm text-muted-foreground">Segments per user</p>
+                <p className="text-sm text-muted-foreground">
+                  Segments per user
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Top Performing Content */}
-          <div className="grid gap-6 lg:grid-cols-2 mb-12">
+      {/* Top Performing Content */}
+      <div className="grid gap-6 lg:grid-cols-2 mb-12">
             {/* Most Completed Segments */}
             <div className="module-card">
               <div className="p-6 border-b border-border/50">
@@ -151,7 +155,10 @@ function AdminAnalytics() {
               <div className="p-6">
                 <div className="space-y-4">
                   {analytics.topPerformingSegments.map((segment, index) => (
-                    <div key={segment.segmentId} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div
+                      key={segment.segmentId}
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-theme-500/10 flex items-center justify-center">
                           <span className="text-sm font-semibold text-theme-600 dark:text-theme-400">
@@ -166,14 +173,18 @@ function AdminAnalytics() {
                           >
                             {segment.segmentTitle}
                           </Link>
-                          <p className="text-sm text-muted-foreground">{segment.moduleTitle}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {segment.moduleTitle}
+                          </p>
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="font-semibold text-theme-600 dark:text-theme-400">
                           {segment.completedCount}
                         </div>
-                        <div className="text-sm text-muted-foreground">completions</div>
+                        <div className="text-sm text-muted-foreground">
+                          completions
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -195,7 +206,10 @@ function AdminAnalytics() {
               <div className="p-6">
                 <div className="space-y-4">
                   {analytics.mostCommentedSegments.map((segment, index) => (
-                    <div key={segment.segmentId} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div
+                      key={segment.segmentId}
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center">
                           <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">
@@ -210,14 +224,18 @@ function AdminAnalytics() {
                           >
                             {segment.segmentTitle}
                           </Link>
-                          <p className="text-sm text-muted-foreground">{segment.moduleTitle}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {segment.moduleTitle}
+                          </p>
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="font-semibold text-orange-600 dark:text-orange-400">
                           {segment.commentCount}
                         </div>
-                        <div className="text-sm text-muted-foreground">comments</div>
+                        <div className="text-sm text-muted-foreground">
+                          comments
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -255,9 +273,9 @@ function AdminAnalytics() {
             </div>
           </div>
 
-          {/* Detailed Analytics Table */}
-          <div className="module-card">
-            <div className="p-6 border-b border-border/50">
+      {/* Detailed Analytics Table */}
+      <div className="module-card">
+        <div className="p-6 border-b border-border/50">
               <h2 className="text-2xl font-semibold mb-2">
                 {selectedModule ? "Module" : "All"} Segment Analytics
               </h2>
@@ -272,7 +290,9 @@ function AdminAnalytics() {
                     <th className="text-left p-4 font-semibold">Segment</th>
                     <th className="text-left p-4 font-semibold">Module</th>
                     <th className="text-center p-4 font-semibold">Type</th>
-                    <th className="text-center p-4 font-semibold">Completion</th>
+                    <th className="text-center p-4 font-semibold">
+                      Completion
+                    </th>
                     <th className="text-center p-4 font-semibold">Comments</th>
                     <th className="text-center p-4 font-semibold">Length</th>
                     <th className="text-center p-4 font-semibold">Actions</th>
@@ -280,25 +300,29 @@ function AdminAnalytics() {
                 </thead>
                 <tbody>
                   {filteredSegments.map((segment, index) => (
-                    <tr 
-                      key={segment.id} 
+                    <tr
+                      key={segment.id}
                       className={`border-b border-border/30 hover:bg-muted/20 transition-colors ${
                         index % 2 === 0 ? "" : "bg-muted/10"
                       }`}
                     >
                       <td className="p-4">
                         <div>
-                          <div className="font-medium text-foreground">{segment.title}</div>
+                          <div className="font-medium text-foreground">
+                            {segment.title}
+                          </div>
                           <div className="text-sm text-muted-foreground">
                             Order: {segment.order}
                           </div>
                         </div>
                       </td>
                       <td className="p-4">
-                        <div className="text-sm text-muted-foreground">{segment.moduleTitle}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {segment.moduleTitle}
+                        </div>
                       </td>
                       <td className="p-4 text-center">
-                        <Badge 
+                        <Badge
                           variant={segment.isPremium ? "default" : "secondary"}
                           className={segment.isPremium ? "bg-theme-500" : ""}
                         >
@@ -315,8 +339,8 @@ function AdminAnalytics() {
                               ({segment.completedCount}/{segment.totalUsers})
                             </div>
                           </div>
-                          <Progress 
-                            value={segment.completionRate} 
+                          <Progress
+                            value={segment.completionRate}
                             className="w-20 h-2"
                           />
                         </div>
@@ -324,13 +348,17 @@ function AdminAnalytics() {
                       <td className="p-4 text-center">
                         <div className="flex items-center justify-center gap-1">
                           <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-medium">{segment.commentCount}</span>
+                          <span className="text-sm font-medium">
+                            {segment.commentCount}
+                          </span>
                         </div>
                       </td>
                       <td className="p-4 text-center">
                         <div className="flex items-center justify-center gap-1">
                           <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{segment.length || "N/A"}</span>
+                          <span className="text-sm">
+                            {segment.length || "N/A"}
+                          </span>
                         </div>
                       </td>
                       <td className="p-4 text-center">
@@ -349,8 +377,6 @@ function AdminAnalytics() {
               </table>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+    </Page>
   );
 }

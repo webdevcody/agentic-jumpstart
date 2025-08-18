@@ -66,6 +66,8 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { assertIsAdminFn } from "~/fn/auth";
+import { Page } from "./-components/page";
+import { PageHeader } from "./-components/page-header";
 
 const payoutSchema = z.object({
   amount: z.number().min(50, "Minimum payout is $50"),
@@ -218,25 +220,16 @@ function AdminAffiliates() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Background with subtle gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background via-theme-50/5 to-theme-100/10 dark:from-background dark:via-theme-950/10 dark:to-theme-900/20"></div>
-      
-      {/* Main content */}
-      <div className="relative z-10">
-        <div className="container mx-auto px-6 py-20 max-w-7xl">
-          {/* Header section */}
-          <div className="mb-12">
-            <h1 className="text-4xl font-bold mb-4">
-              Affiliate <span className="text-gradient">Management</span>
-            </h1>
-            <p className="text-description max-w-2xl">
-              Manage affiliate accounts, view earnings, and process payouts
-            </p>
-          </div>
+    <>
+      <Page>
+        <PageHeader
+          title="Affiliate Management"
+          highlightedWord="Management"
+          description="Manage affiliate accounts, view earnings, and process payouts"
+        />
 
-          {/* Stats Overview */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
+        {/* Stats Overview */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
             {/* Total Unpaid */}
             <div className="group relative">
               <div className="module-card p-6 h-full">
@@ -302,22 +295,22 @@ function AdminAffiliates() {
             </div>
           </div>
 
-          {/* Affiliates List */}
-          <div className="module-card">
-            <div className="p-6 border-b border-border/50">
-              <h2 className="text-2xl font-semibold mb-2">All Affiliates</h2>
-              <p className="text-muted-foreground">
-                View and manage all affiliate accounts
-              </p>
-            </div>
-            <div className="p-6">
-              {affiliates.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Users className="h-16 w-16 mx-auto mb-6 opacity-30" />
-                  <p className="text-lg">No affiliates registered yet</p>
-                </div>
-              ) : (
-                <div className="space-y-6">
+        {/* Affiliates List */}
+        <div className="module-card">
+          <div className="p-6 border-b border-border/50">
+            <h2 className="text-2xl font-semibold mb-2">All Affiliates</h2>
+            <p className="text-muted-foreground">
+              View and manage all affiliate accounts
+            </p>
+          </div>
+          <div className="p-6">
+            {affiliates.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Users className="h-16 w-16 mx-auto mb-6 opacity-30" />
+                <p className="text-lg">No affiliates registered yet</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
                   {affiliates.map((affiliate) => (
                     <div
                       key={affiliate.id}
@@ -444,12 +437,11 @@ function AdminAffiliates() {
                       </div>
                     </div>
                   ))}
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      </Page>
 
       {/* Payout Dialog */}
       <Dialog
@@ -570,6 +562,6 @@ function AdminAffiliates() {
           </Form>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

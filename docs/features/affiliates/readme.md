@@ -1,27 +1,25 @@
 # Affiliate Program
 
 ## Overview
+
 The Affiliate Program allows users to earn 30% commission by referring new customers to purchase the Agentic Jumpstart course. The system now includes a GDPR-compliant discount system where affiliate codes provide customers with 10% discounts while maintaining affiliate tracking through Stripe metadata. This feature includes a complete affiliate management system with tracking, analytics, and payout management.
 
 ## Quick Links
+
 - **User Registration**: [/affiliates](http://localhost:3000/affiliates)
 - **Affiliate Dashboard**: [/affiliate-dashboard](http://localhost:3000/affiliate-dashboard)
 - **Admin Management**: [/admin/affiliates](http://localhost:3000/admin/affiliates)
 
-## How to Test
-
-### Comprehensive Testing Guide
-
-The affiliate system includes 47 documented requirements with corresponding test scenarios in `/docs/features/affiliates/tests/`. Each requirement has detailed test steps, expected results, and validation procedures.
-
 ### 1. As a New Affiliate
 
 #### Prerequisites
+
 - You need a Google account for authentication
 - The application should be running locally (`npm run dev`)
 - Database is running and migrations applied (`npm run db:migrate`)
 
 #### Registration Process
+
 1. Navigate to [/affiliates](http://localhost:3000/affiliates)
 2. If not logged in, you'll see the enhanced landing page with:
    - Modern gradient backgrounds and animations
@@ -39,6 +37,7 @@ The affiliate system includes 47 documented requirements with corresponding test
 9. You'll be redirected to your affiliate dashboard with welcome message
 
 #### Registration Validation Tests
+
 - **REQ-AF-001**: Test that any authenticated user can register
 - **REQ-AF-002**: Verify Terms of Service agreement is required
 - **REQ-AF-003**: Confirm valid payment link is required
@@ -47,12 +46,14 @@ The affiliate system includes 47 documented requirements with corresponding test
 ### 2. Using Your Affiliate Link
 
 #### Getting Your Link
+
 1. Go to [/affiliate-dashboard](http://localhost:3000/affiliate-dashboard)
 2. Your unique affiliate link is displayed prominently with enhanced styling
 3. Click the copy button to copy it to clipboard (improved UX feedback)
 4. Your 8-character affiliate code follows the format: `ABC12345`
 
 #### Testing Discount & Referral Tracking
+
 1. Open an incognito/private browser window
 2. Visit your affiliate link (e.g., `http://localhost:3000/purchase?ref=ABC12345`)
 3. The affiliate code is temporarily stored in memory (not browser storage for GDPR compliance)
@@ -65,7 +66,8 @@ The affiliate system includes 47 documented requirements with corresponding test
 10. Both the affiliate code (for tracking) and discount code (for coupon) are passed to Stripe
 
 #### Tracking System Tests
-- **REQ-AF-005**: Test unique 8-character alphanumeric code generation  
+
+- **REQ-AF-005**: Test unique 8-character alphanumeric code generation
 - **REQ-AF-008**: Verify tracking links follow format `/purchase?ref={code}`
 - **REQ-AF-009**: Confirm affiliate codes are captured from URL parameters
 - **REQ-AF-010**: Test memory-only storage (no cookies/localStorage)
@@ -73,6 +75,7 @@ The affiliate system includes 47 documented requirements with corresponding test
 - **REQ-AF-012**: Check GDPR compliance (no persistent browser storage)
 
 #### Discount System Tests
+
 - **REQ-AF-048**: Test discount dialog appears during checkout process
 - **REQ-AF-049**: Verify users can enter affiliate codes for 10% discount
 - **REQ-AF-050**: Test real-time affiliate code validation
@@ -86,12 +89,14 @@ The affiliate system includes 47 documented requirements with corresponding test
 The enhanced affiliate dashboard displays real-time statistics with improved visualizations:
 
 #### Main Statistics Cards
+
 - **Total Earnings**: Lifetime commission earned (30% of all referral sales)
 - **Unpaid Balance**: Pending payment amount (minimum $50 payout threshold)
 - **Total Referrals**: Number of successful conversions tracked
 - **Paid Out**: Amount already paid via recorded payouts
 
 #### Enhanced Features
+
 - **Detailed referral history** with sortable columns (date, amount, commission, status)
 - **Payout history** showing all recorded payments with transaction details
 - **Monthly earnings chart** with interactive data visualization
@@ -101,6 +106,7 @@ The enhanced affiliate dashboard displays real-time statistics with improved vis
 - **Responsive design** optimized for all device sizes
 
 #### Dashboard Analytics Tests
+
 - **REQ-AF-022**: Test real-time statistics display accuracy
 - **REQ-AF-023**: Verify detailed referral history functionality
 - **REQ-AF-024**: Check payout history with transaction details
@@ -109,17 +115,20 @@ The enhanced affiliate dashboard displays real-time statistics with improved vis
 ### 4. Admin Functions
 
 #### Prerequisites
+
 - Your user account must have `isAdmin: true` in the database
 
 #### Admin Dashboard
+
 1. Navigate to [/admin/affiliates](http://localhost:3000/admin/affiliates)
 2. View all affiliates with their statistics
 3. Search and filter affiliates
 4. Click on any affiliate to see detailed information
 
 #### Managing Affiliates
+
 - **Activate/Deactivate**: Toggle affiliate status
-- **Record Payout**: 
+- **Record Payout**:
   1. Click "Record Payout" for an affiliate
   2. Enter amount (minimum $50)
   3. Select payment method
@@ -130,13 +139,17 @@ The enhanced affiliate dashboard displays real-time statistics with improved vis
 ## Database Setup
 
 ### Required Tables
+
 The feature requires these database tables (automatically created by migrations):
+
 - `app_affiliate` - Stores affiliate accounts
 - `app_affiliate_referral` - Tracks individual referrals
 - `app_affiliate_payout` - Records payout history
 
 ### Seeding Test Data
+
 To create test affiliates:
+
 ```sql
 -- Create a test affiliate
 INSERT INTO app_affiliate (userId, affiliateCode, paymentLink, commissionRate)
@@ -150,18 +163,20 @@ VALUES (1, 2, 'cs_test_123', 20000, 6000);
 ## Configuration
 
 Settings are defined in `/src/config.ts`:
+
 ```typescript
 AFFILIATE_CONFIG = {
-  COMMISSION_RATE: 30,          // 30% commission
-  MINIMUM_PAYOUT: 5000,         // $50 minimum
-  AFFILIATE_CODE_LENGTH: 8,     // Code length
-  AFFILIATE_CODE_RETRY_ATTEMPTS: 10
-}
+  COMMISSION_RATE: 30, // 30% commission
+  MINIMUM_PAYOUT: 5000, // $50 minimum
+  AFFILIATE_CODE_LENGTH: 8, // Code length
+  AFFILIATE_CODE_RETRY_ATTEMPTS: 10,
+};
 ```
 
 ### Environment Variables
 
 New environment variable for discount system:
+
 ```bash
 # Stripe coupon ID for 10% affiliate discount
 STRIPE_DISCOUNT_COUPON_ID=your_stripe_discount_coupon_id
@@ -172,7 +187,9 @@ This coupon must be created in your Stripe dashboard with 10% discount rate.
 ## Integration Points
 
 ### Stripe Integration
+
 The affiliate system integrates with Stripe in multiple ways:
+
 1. **Checkout Session**: Both affiliate code (for tracking) and discount code are passed as metadata
 2. **Discount Application**: Valid affiliate codes trigger automatic 10% coupon application
 3. **Webhook Processing**: On successful payment, webhook processes the referral
@@ -180,6 +197,7 @@ The affiliate system integrates with Stripe in multiple ways:
 5. **Self-referral Prevention**: System prevents affiliates from using their own codes
 
 ### Discount Dialog Flow
+
 - **URL Parameter Capture**: Affiliate codes from `?ref={code}` are captured and stored in memory
 - **Purchase Flow**: Purchase button triggers discount dialog instead of direct checkout
 - **Code Validation**: Real-time validation against database of active affiliate codes
@@ -188,35 +206,36 @@ The affiliate system integrates with Stripe in multiple ways:
 
 ## Complete Test Suite
 
-### Automated Testing with Test Scenarios
-
-Each of the 47 requirements has a dedicated test scenario file in `/docs/features/affiliates/tests/`:
-
 #### User Registration & Eligibility (REQ-AF-001 to REQ-AF-004)
+
 - User registration eligibility testing
 - Terms of Service agreement validation
 - Payment link validation and storage
 - Duplicate registration prevention
 
 #### Affiliate Code & Tracking (REQ-AF-005 to REQ-AF-008)
+
 - Unique 8-character code generation with retry mechanism
 - Case-insensitive and URL-safe code validation
 - Tracking link format verification
 - Code uniqueness stress testing
 
 #### Code Attribution & Privacy (REQ-AF-009 to REQ-AF-012)
+
 - URL parameter capture testing (`?ref={code}`)
 - Memory-only storage validation (GDPR compliance)
 - Last-click attribution model verification
 - Browser storage absence verification (no cookies/localStorage)
 
 #### Commission System (REQ-AF-013 to REQ-AF-016)
+
 - 30% commission rate calculation accuracy
 - Net sale price commission calculation
 - Cents-based storage to avoid floating point issues
 - Self-referral prevention mechanism
 
 #### Payment & Payouts (REQ-AF-017 to REQ-AF-021)
+
 - $50 minimum payout threshold enforcement
 - Monthly payout schedule management
 - Payment link update functionality
@@ -224,30 +243,35 @@ Each of the 47 requirements has a dedicated test scenario file in `/docs/feature
 - Paid vs unpaid balance tracking
 
 #### Dashboard & Analytics (REQ-AF-022 to REQ-AF-025)
+
 - Real-time statistics accuracy
 - Detailed referral history presentation
 - Payout history with transaction tracking
 - Monthly earnings breakdown visualization
 
 #### Admin Management (REQ-AF-026 to REQ-AF-029)
+
 - Admin view of all affiliates with statistics
 - Affiliate account activation/deactivation
 - Payout recording with full audit trail
 - Comprehensive admin analytics dashboard
 
 #### Fraud Prevention (REQ-AF-030 to REQ-AF-033)
+
 - Self-referral prevention (users cannot use own codes)
 - Stripe session ID uniqueness enforcement
 - Affiliate code validation before processing
 - Active affiliate verification for commission eligibility
 
 #### Integration Requirements (REQ-AF-034 to REQ-AF-037)
+
 - Stripe webhook processing for successful payments
 - Affiliate code metadata passage to Stripe
 - Database transaction handling for race conditions
 - Invalid/duplicate referral attempt logging
 
 #### User Experience (REQ-AF-038 to REQ-AF-042)
+
 - Landing page display for non-authenticated users
 - Registration form for authenticated non-affiliates
 - Existing affiliate dashboard redirection
@@ -255,6 +279,7 @@ Each of the 47 requirements has a dedicated test scenario file in `/docs/feature
 - Terms of Service modal dialog presentation
 
 #### Data Storage (REQ-AF-044 to REQ-AF-047)
+
 - PostgreSQL storage with proper indexing
 - Referential integrity with cascade deletes
 - Creation/update timestamp audit trails
@@ -283,11 +308,13 @@ npm run test:affiliate:admin
 ### Common Issues
 
 #### "Already registered as affiliate"
+
 - User is trying to register twice
 - Check `app_affiliate` table for existing record
 - **Test Scenario**: REQ-AF-004 covers duplicate registration prevention
 
 #### Discount code validation fails
+
 1. Check if affiliate code exists and is active in database
 2. Verify `STRIPE_DISCOUNT_COUPON_ID` environment variable is set
 3. Ensure Stripe coupon exists and is active
@@ -295,6 +322,7 @@ npm run test:affiliate:admin
 5. **Test Scenario**: REQ-AF-050 covers real-time code validation
 
 #### Referral not tracked despite discount applied
+
 1. Check if affiliate code exists and is active
 2. Verify both affiliate and discount codes are passed to Stripe metadata
 3. Check Stripe webhook logs for processing errors
@@ -302,24 +330,29 @@ npm run test:affiliate:admin
 5. Verify affiliate code in Stripe checkout session metadata
 
 #### Payment link update fails
+
 - Ensure the URL is valid (must start with http:// or https://)
 - Check browser console for validation errors
 - **Test Scenario**: REQ-AF-019 covers payment link updates
 
 #### Commission calculation errors
+
 - Verify amounts are stored in cents (integers)
 - Check commission rate is exactly 30%
 - Ensure no floating point precision issues
 - **Test Scenario**: REQ-AF-013 covers commission calculations
 
 #### Webhook processing failures
+
 - Check Stripe webhook endpoint configuration
 - Verify webhook secret matches environment variable
 - Monitor webhook listener logs for errors
 - **Test Scenario**: REQ-AF-034 covers webhook processing
 
 ### Debug Mode
+
 To debug affiliate discount and tracking:
+
 1. Open browser DevTools
 2. Check Network tab during discount validation for API calls
 3. Monitor Network tab during purchase for metadata
@@ -344,6 +377,7 @@ To debug affiliate discount and tracking:
 ## API Reference
 
 ### Server Functions
+
 - `registerAffiliateFn` - Register as affiliate
 - `getAffiliateDashboardFn` - Get dashboard data
 - `checkIfUserIsAffiliateFn` - Check affiliate status
@@ -354,10 +388,12 @@ To debug affiliate discount and tracking:
 - `adminRecordPayoutFn` - Record payout (admin)
 
 ### Components
+
 - `DiscountDialog` - Modal for entering discount codes during checkout
 - `DiscountStore` - In-memory store for managing discount codes during session
 
 ### Files Changed
+
 - `/src/routes/purchase.tsx` - Updated checkout flow with discount dialog
 - `/src/components/discount-dialog.tsx` - New discount code entry component
 - `/src/stores/discount-store.ts` - New in-memory store for codes
@@ -365,4 +401,5 @@ To debug affiliate discount and tracking:
 - `/src/fn/affiliates.ts` - Contains validateAffiliateCodeFn for real-time validation
 
 ## Support
+
 For issues or questions about the affiliate program, contact the development team or check the main project documentation.
