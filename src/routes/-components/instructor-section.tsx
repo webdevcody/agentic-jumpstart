@@ -19,17 +19,17 @@ export function InstructorSection() {
                 <img
                   src="/cody.png"
                   alt="Cody - Your Instructor"
-                  className="w-32 h-32 rounded-xl object-cover"
+                  className="size-64 rounded-xl object-cover"
                 />
               </div>
             </div>
           </div>
 
           <h2 className="text-5xl font-bold mb-6">
-            Learn from a{" "}
+            Learn from{" "}
             <span className="text-theme-400">
               <br />
-              Experienced Web Developer
+              WebDevCody
             </span>
           </h2>
         </div>
@@ -95,7 +95,9 @@ export function InstructorSection() {
 
             <div className="space-y-6">
               <InstructorStatCard
-                icon={<Users className="w-6 h-6 text-theme-500 group-hover:text-theme-400 group-hover:scale-110 transition-all duration-300" />}
+                icon={
+                  <Users className="w-6 h-6 text-theme-500 group-hover:text-theme-400 group-hover:scale-110 transition-all duration-300" />
+                }
                 value="260,000+"
                 label="YouTube Subscribers"
                 glyphColor="red"
@@ -103,16 +105,22 @@ export function InstructorSection() {
               />
 
               <InstructorStatCard
-                icon={<Play className="w-6 h-6 text-theme-500 group-hover:text-theme-400 group-hover:scale-110 transition-all duration-300" />}
+                icon={
+                  <Play className="w-6 h-6 text-theme-500 group-hover:text-theme-400 group-hover:scale-110 transition-all duration-300" />
+                }
                 value="1,100+"
                 label="Educational Videos"
                 glyphColor="theme"
                 glyphPath="M8 5v14l11-7z"
-                extraGlyph={<circle cx="12" cy="12" r="2" className="animate-ping" />}
+                extraGlyph={
+                  <circle cx="12" cy="12" r="2" className="animate-ping" />
+                }
               />
 
               <InstructorStatCard
-                icon={<Award className="w-6 h-6 text-theme-500 group-hover:text-theme-400 group-hover:scale-110 transition-all duration-300" />}
+                icon={
+                  <Award className="w-6 h-6 text-theme-500 group-hover:text-theme-400 group-hover:scale-110 transition-all duration-300" />
+                }
                 value="12+ Years"
                 label="Industry Experience"
                 glyphColor="amber"

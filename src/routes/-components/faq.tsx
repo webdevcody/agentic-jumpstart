@@ -28,17 +28,65 @@ const FAQItem = ({ question, answer }: FAQItemProps) => {
   );
 };
 
-const faqData: FAQItemProps[] = [
-  {
-    question: "What AI tools will I learn to use?",
-    answer: (
-      <p className="text-muted-foreground">
-        You'll master Cursor IDE, Cursor CLI, Claude Code CLI, ChatGPT, and
-        other cutting-edge AI development tools. The course showing you how to
-        maximize your productivity with each one.
-      </p>
-    ),
-  },
+interface FAQData {
+  general: FAQItemProps[];
+  earlyAccess: FAQItemProps[];
+}
+
+const faqData: FAQData = {
+  earlyAccess: [
+    {
+      question: "When will the course be available?",
+      answer: (
+        <p className="text-muted-foreground">
+          The course is currently in development and will be launching soon. Early access subscribers will be the first to know when it's ready and will receive exclusive preview content leading up to the launch.
+        </p>
+      ),
+    },
+    {
+      question: "What do I get by signing up for early access?",
+      answer: (
+        <p className="text-muted-foreground">
+          Early access subscribers receive exclusive preview content, first access to the course when it launches, priority support, and special early bird pricing. You'll also get updates on our development progress and sneak peeks at the curriculum.
+        </p>
+      ),
+    },
+    {
+      question: "How will I be notified when the course launches?",
+      answer: (
+        <p className="text-muted-foreground">
+          You'll receive email notifications with launch details, access instructions, and exclusive early access content. We'll also provide updates throughout the development process to keep you informed of our progress.
+        </p>
+      ),
+    },
+    {
+      question: "Will early access subscribers get a discount?",
+      answer: (
+        <p className="text-muted-foreground">
+          Yes! Early access subscribers will receive exclusive early bird pricing and special launch discounts. The earlier you join our waiting list, the better the offer you'll receive when the course becomes available.
+        </p>
+      ),
+    },
+    {
+      question: "What's included in the early access preview?",
+      answer: (
+        <p className="text-muted-foreground">
+          Early access previews include sample lessons, AI development templates, exclusive prompts and configurations, behind-the-scenes development updates, and early access to our community Discord where you can connect with other future agentic developers.
+        </p>
+      ),
+    },
+  ],
+  general: [
+    {
+      question: "What AI tools will I learn to use?",
+      answer: (
+        <p className="text-muted-foreground">
+          You'll master Cursor IDE, Cursor CLI, Claude Code CLI, ChatGPT, and
+          other cutting-edge AI development tools. The course showing you how to
+          maximize your productivity with each one.
+        </p>
+      ),
+    },
   {
     question: "How is Cursor IDE different from VS Code for AI development?",
     answer: (
@@ -173,9 +221,17 @@ const faqData: FAQItemProps[] = [
       </p>
     ),
   },
-];
+  ],
+};
 
-export function FAQSection() {
+interface FAQSectionProps {
+  isEarlyAccess?: boolean;
+}
+
+export function FAQSection({ isEarlyAccess = false }: FAQSectionProps) {
+  const questionsToShow = isEarlyAccess 
+    ? [...faqData.earlyAccess, ...faqData.general.slice(0, 6)] 
+    : faqData.general;
   return (
     <section className="relative w-full py-24">
       {/* Modern AI-themed gradient background - matching hero */}
@@ -223,7 +279,7 @@ export function FAQSection() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {faqData.map((faq, index) => (
+            {questionsToShow.map((faq, index) => (
               <ScrollScale key={index} delay={0.3 + Math.floor(index / 2) * 0.1} className="h-full flex">
                 <FAQItem question={faq.question} answer={faq.answer} />
               </ScrollScale>

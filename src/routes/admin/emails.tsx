@@ -71,7 +71,7 @@ const emailFormSchema = z.object({
     .min(1, "Subject is required")
     .max(200, "Subject too long"),
   content: z.string().min(1, "Content is required"),
-  recipientType: z.enum(["all", "premium", "free"]),
+  recipientType: z.enum(["all", "premium", "free", "newsletter", "waitlist"]),
 });
 
 type EmailFormData = z.infer<typeof emailFormSchema>;
@@ -197,6 +197,10 @@ function AdminEmailsPage() {
         return usersForEmailing.premiumUsers;
       case "free":
         return usersForEmailing.freeUsers;
+      case "newsletter":
+        return usersForEmailing.newsletterUsers || 0;
+      case "waitlist":
+        return usersForEmailing.waitlistUsers || 0;
       default:
         return 0;
     }
@@ -298,68 +302,65 @@ function AdminEmailsPage() {
           title="Email Composer"
           highlightedWord="Composer"
           description="Send bulk emails to your course participants and manage email campaigns"
-        />
-
-        {/* Stats Overview */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-12">
-            {/* Total Users */}
-            <div className="group relative">
-              <div className="module-card p-6 h-full">
-                <div className="flex flex-row items-center justify-between space-y-0 mb-4">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Total Users
-                  </div>
-                  <div className="w-10 h-10 rounded-full bg-blue-500/10 dark:bg-blue-400/20 flex items-center justify-center group-hover:bg-blue-500/20 dark:group-hover:bg-blue-400/30 transition-colors duration-300">
-                    <Users className="h-5 w-5 text-blue-500 dark:text-blue-400" />
-                  </div>
+          actions={
+            <div className="grid grid-cols-5 gap-2">
+              {/* Total Users */}
+              <div className="text-center">
+                <div className="w-8 h-8 rounded-full bg-blue-500/10 dark:bg-blue-400/20 flex items-center justify-center mx-auto mb-1">
+                  <Users className="h-4 w-4 text-blue-500 dark:text-blue-400" />
                 </div>
-                <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
+                <div className="text-lg font-bold text-foreground">
                   {getRecipientCount("all")}
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Available recipients
-                </p>
+                <p className="text-xs text-muted-foreground">Total</p>
               </div>
-            </div>
 
-            {/* Premium Users */}
-            <div className="group relative">
-              <div className="module-card p-6 h-full">
-                <div className="flex flex-row items-center justify-between space-y-0 mb-4">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Premium Users
-                  </div>
-                  <div className="w-10 h-10 rounded-full bg-theme-500/10 dark:bg-theme-400/20 flex items-center justify-center group-hover:bg-theme-500/20 dark:group-hover:bg-theme-400/30 transition-colors duration-300">
-                    <CheckCircle className="h-5 w-5 text-theme-500 dark:text-theme-400" />
-                  </div>
+              {/* Premium Users */}
+              <div className="text-center">
+                <div className="w-8 h-8 rounded-full bg-theme-500/10 dark:bg-theme-400/20 flex items-center justify-center mx-auto mb-1">
+                  <CheckCircle className="h-4 w-4 text-theme-500 dark:text-theme-400" />
                 </div>
-                <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-theme-600 dark:group-hover:text-theme-400 transition-colors duration-300">
+                <div className="text-lg font-bold text-foreground">
                   {getRecipientCount("premium")}
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Premium subscribers
-                </p>
+                <p className="text-xs text-muted-foreground">Premium</p>
               </div>
-            </div>
 
-            {/* Free Users */}
-            <div className="group relative">
-              <div className="module-card p-6 h-full">
-                <div className="flex flex-row items-center justify-between space-y-0 mb-4">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Free Users
-                  </div>
-                  <div className="w-10 h-10 rounded-full bg-green-500/10 dark:bg-green-400/20 flex items-center justify-center group-hover:bg-green-500/20 dark:group-hover:bg-green-400/30 transition-colors duration-300">
-                    <Mail className="h-5 w-5 text-green-500 dark:text-green-400" />
-                  </div>
+              {/* Free Users */}
+              <div className="text-center">
+                <div className="w-8 h-8 rounded-full bg-green-500/10 dark:bg-green-400/20 flex items-center justify-center mx-auto mb-1">
+                  <Mail className="h-4 w-4 text-green-500 dark:text-green-400" />
                 </div>
-                <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
+                <div className="text-lg font-bold text-foreground">
                   {getRecipientCount("free")}
                 </div>
-                <p className="text-sm text-muted-foreground">Free tier users</p>
+                <p className="text-xs text-muted-foreground">Free</p>
+              </div>
+
+              {/* Newsletter Subscribers */}
+              <div className="text-center">
+                <div className="w-8 h-8 rounded-full bg-purple-500/10 dark:bg-purple-400/20 flex items-center justify-center mx-auto mb-1">
+                  <Mail className="h-4 w-4 text-purple-500 dark:text-purple-400" />
+                </div>
+                <div className="text-lg font-bold text-foreground">
+                  {getRecipientCount("newsletter")}
+                </div>
+                <p className="text-xs text-muted-foreground">Newsletter</p>
+              </div>
+
+              {/* Waitlist */}
+              <div className="text-center">
+                <div className="w-8 h-8 rounded-full bg-orange-500/10 dark:bg-orange-400/20 flex items-center justify-center mx-auto mb-1">
+                  <Clock className="h-4 w-4 text-orange-500 dark:text-orange-400" />
+                </div>
+                <div className="text-lg font-bold text-foreground">
+                  {getRecipientCount("waitlist")}
+                </div>
+                <p className="text-xs text-muted-foreground">Waitlist</p>
               </div>
             </div>
-          </div>
+          }
+        />
 
         {/* Main Tabs Interface */}
         <Tabs defaultValue="compose" className="w-full">
@@ -377,425 +378,422 @@ function AdminEmailsPage() {
           {/* Compose & Preview Tab */}
           <TabsContent value="compose" className="space-y-6">
             <div className="grid gap-6 lg:grid-cols-5">
-                {/* Email Composer - 60% width */}
-                <div className="lg:col-span-3 module-card">
-                  <div className="p-6 border-b border-border/50">
-                    <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
-                      <Send className="h-6 w-6 text-theme-500" />
-                      Compose Email
-                    </h2>
-                    <p className="text-muted-foreground">
-                      Create and send emails to your course participants
-                    </p>
-                  </div>
-                  <div className="p-6">
-                    <Form {...form}>
-                      <form
-                        onSubmit={form.handleSubmit(onSubmit)}
-                        className="space-y-6"
-                      >
-                        <FormField
-                          control={form.control}
-                          name="subject"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Subject</FormLabel>
+              {/* Email Composer - 60% width */}
+              <div className="lg:col-span-3 module-card">
+                <div className="p-6 border-b border-border/50">
+                  <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+                    <Send className="h-6 w-6 text-theme-500" />
+                    Compose Email
+                  </h2>
+                  <p className="text-muted-foreground">
+                    Create and send emails to your course participants
+                  </p>
+                </div>
+                <div className="p-6">
+                  <Form {...form}>
+                    <form
+                      onSubmit={form.handleSubmit(onSubmit)}
+                      className="space-y-6"
+                    >
+                      <FormField
+                        control={form.control}
+                        name="subject"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Subject</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Enter email subject..."
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="recipientType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Recipients</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
                               <FormControl>
-                                <Input
-                                  placeholder="Enter email subject..."
-                                  {...field}
-                                />
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select recipient type" />
+                                </SelectTrigger>
                               </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                              <SelectContent>
+                                <SelectItem value="all">
+                                  All Users ({getRecipientCount("all")})
+                                </SelectItem>
+                                <SelectItem value="premium">
+                                  Premium Users ({getRecipientCount("premium")})
+                                </SelectItem>
+                                <SelectItem value="free">
+                                  Free Users ({getRecipientCount("free")})
+                                </SelectItem>
+                                <SelectItem value="newsletter">
+                                  Newsletter Subscribers (
+                                  {getRecipientCount("newsletter")})
+                                </SelectItem>
+                                <SelectItem value="waitlist">
+                                  Waitlist ({getRecipientCount("waitlist")})
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                        <FormField
-                          control={form.control}
-                          name="recipientType"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Recipients</FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select recipient type" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="all">
-                                    All Users ({getRecipientCount("all")})
-                                  </SelectItem>
-                                  <SelectItem value="premium">
-                                    Premium Users (
-                                    {getRecipientCount("premium")})
-                                  </SelectItem>
-                                  <SelectItem value="free">
-                                    Free Users ({getRecipientCount("free")})
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="content"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex items-center justify-between mb-2">
-                                <FormLabel>Email Content</FormLabel>
-                                <span className="text-xs text-muted-foreground">
-                                  Supports Markdown formatting
-                                </span>
-                              </div>
-                              <FormControl>
-                                <Textarea
-                                  placeholder="Enter your email content here. You can use **bold**, *italic*, [links](url), lists, headers (#, ##), and more..."
-                                  className="min-h-64 font-mono text-sm resize-none"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <div className="mt-2 space-y-2">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() =>
-                                    setShowMarkdownGuide(!showMarkdownGuide)
-                                  }
-                                  className="text-xs flex items-center gap-1"
-                                >
-                                  <Info className="h-3 w-3" />
-                                  {showMarkdownGuide ? "Hide" : "Show"} Markdown
-                                  Guide
-                                </Button>
-                                {showMarkdownGuide && (
-                                  <div className="p-4 bg-muted/50 rounded-lg space-y-3 text-xs">
-                                    <div>
-                                      <p className="font-semibold mb-1">
-                                        Text Formatting:
-                                      </p>
-                                      <code className="block bg-background p-2 rounded">
-                                        **bold text** →{" "}
-                                        <strong>bold text</strong>
-                                        <br />
-                                        *italic text* → <em>italic text</em>
-                                        <br />
-                                        ***bold italic*** →{" "}
-                                        <strong>
-                                          <em>bold italic</em>
-                                        </strong>
-                                      </code>
-                                    </div>
-                                    <div>
-                                      <p className="font-semibold mb-1">
-                                        Headers:
-                                      </p>
-                                      <code className="block bg-background p-2 rounded">
-                                        # Heading 1<br />
-                                        ## Heading 2<br />
-                                        ### Heading 3
-                                      </code>
-                                    </div>
-                                    <div>
-                                      <p className="font-semibold mb-1">
-                                        Links & Images:
-                                      </p>
-                                      <code className="block bg-background p-2 rounded">
-                                        [Link text](https://example.com)
-                                        <br />
-                                        ![Alt text](image-url.jpg)
-                                      </code>
-                                    </div>
-                                    <div>
-                                      <p className="font-semibold mb-1">
-                                        Lists:
-                                      </p>
-                                      <code className="block bg-background p-2 rounded">
-                                        - Bullet point
-                                        <br />
-                                        - Another point
-                                        <br />
-                                        <br />
-                                        1. Numbered item
-                                        <br />
-                                        2. Second item
-                                      </code>
-                                    </div>
-                                    <div>
-                                      <p className="font-semibold mb-1">
-                                        Code:
-                                      </p>
-                                      <code className="block bg-background p-2 rounded">
-                                        `inline code`
-                                        <br />
-                                        <br />
-                                        ```
-                                        <br />
-                                        code block
-                                        <br />
-                                        multiple lines
-                                        <br />
-                                        ```
-                                      </code>
-                                    </div>
-                                    <div>
-                                      <p className="font-semibold mb-1">
-                                        Other:
-                                      </p>
-                                      <code className="block bg-background p-2 rounded">
-                                        &gt; Blockquote
-                                        <br />
-                                        --- (horizontal line)
-                                        <br />
-                                        Line break: two spaces at end
-                                      </code>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <div className="flex gap-3 pt-4">
-                          <Dialog
-                            open={testEmailOpen}
-                            onOpenChange={setTestEmailOpen}
-                          >
-                            <DialogTrigger asChild>
+                      <FormField
+                        control={form.control}
+                        name="content"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center justify-between mb-2">
+                              <FormLabel>Email Content</FormLabel>
+                              <span className="text-xs text-muted-foreground">
+                                Supports Markdown formatting
+                              </span>
+                            </div>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Enter your email content here. You can use **bold**, *italic*, [links](url), lists, headers (#, ##), and more..."
+                                className="min-h-64 font-mono text-sm resize-none"
+                                {...field}
+                              />
+                            </FormControl>
+                            <div className="mt-2 space-y-2">
                               <Button
                                 type="button"
-                                variant="outline"
-                                className="flex items-center gap-2"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  setShowMarkdownGuide(!showMarkdownGuide)
+                                }
+                                className="text-xs flex items-center gap-1"
                               >
-                                <TestTube className="h-4 w-4" />
-                                Send Test
+                                <Info className="h-3 w-3" />
+                                {showMarkdownGuide ? "Hide" : "Show"} Markdown
+                                Guide
                               </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Send Test Email</DialogTitle>
-                                <DialogDescription>
-                                  Send a test email to verify your content and
-                                  formatting.
-                                </DialogDescription>
-                              </DialogHeader>
-                              <Form {...testForm}>
-                                <form
-                                  onSubmit={testForm.handleSubmit(onTestEmail)}
-                                >
-                                  <FormField
-                                    control={testForm.control}
-                                    name="email"
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel>
-                                          Test Email Address
-                                        </FormLabel>
-                                        <FormControl>
-                                          <Input
-                                            placeholder="test@example.com"
-                                            type="email"
-                                            {...field}
-                                          />
-                                        </FormControl>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                  <DialogFooter className="mt-6">
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      onClick={() => setTestEmailOpen(false)}
-                                    >
-                                      Cancel
-                                    </Button>
-                                    <Button
-                                      type="submit"
-                                      disabled={sendTestEmail.isPending}
-                                      className="flex items-center gap-2"
-                                    >
-                                      {sendTestEmail.isPending ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                      ) : (
-                                        <Send className="h-4 w-4" />
-                                      )}
-                                      Send Test
-                                    </Button>
-                                  </DialogFooter>
-                                </form>
-                              </Form>
-                            </DialogContent>
-                          </Dialog>
+                              {showMarkdownGuide && (
+                                <div className="p-4 bg-muted/50 rounded-lg space-y-3 text-xs">
+                                  <div>
+                                    <p className="font-semibold mb-1">
+                                      Text Formatting:
+                                    </p>
+                                    <code className="block bg-background p-2 rounded">
+                                      **bold text** → <strong>bold text</strong>
+                                      <br />
+                                      *italic text* → <em>italic text</em>
+                                      <br />
+                                      ***bold italic*** →{" "}
+                                      <strong>
+                                        <em>bold italic</em>
+                                      </strong>
+                                    </code>
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold mb-1">
+                                      Headers:
+                                    </p>
+                                    <code className="block bg-background p-2 rounded">
+                                      # Heading 1<br />
+                                      ## Heading 2<br />
+                                      ### Heading 3
+                                    </code>
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold mb-1">
+                                      Links & Images:
+                                    </p>
+                                    <code className="block bg-background p-2 rounded">
+                                      [Link text](https://example.com)
+                                      <br />
+                                      ![Alt text](image-url.jpg)
+                                    </code>
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold mb-1">Lists:</p>
+                                    <code className="block bg-background p-2 rounded">
+                                      - Bullet point
+                                      <br />
+                                      - Another point
+                                      <br />
+                                      <br />
+                                      1. Numbered item
+                                      <br />
+                                      2. Second item
+                                    </code>
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold mb-1">Code:</p>
+                                    <code className="block bg-background p-2 rounded">
+                                      `inline code`
+                                      <br />
+                                      <br />
+                                      ```
+                                      <br />
+                                      code block
+                                      <br />
+                                      multiple lines
+                                      <br />
+                                      ```
+                                    </code>
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold mb-1">Other:</p>
+                                    <code className="block bg-background p-2 rounded">
+                                      &gt; Blockquote
+                                      <br />
+                                      --- (horizontal line)
+                                      <br />
+                                      Line break: two spaces at end
+                                    </code>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                          <Button
-                            type="submit"
-                            disabled={createEmailBatch.isPending}
-                            className="btn-gradient flex items-center gap-2 ml-auto"
-                          >
-                            {createEmailBatch.isPending ? (
-                              <div className="flex items-center gap-2">
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white/70"></div>
-                                <span>Sending...</span>
-                              </div>
-                            ) : (
-                              <>
-                                <Send className="h-4 w-4" />
-                                Send Email
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </form>
-                    </Form>
+                      <div className="flex gap-3 pt-4">
+                        <Dialog
+                          open={testEmailOpen}
+                          onOpenChange={setTestEmailOpen}
+                        >
+                          <DialogTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="flex items-center gap-2"
+                            >
+                              <TestTube className="h-4 w-4" />
+                              Send Test
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Send Test Email</DialogTitle>
+                              <DialogDescription>
+                                Send a test email to verify your content and
+                                formatting.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <Form {...testForm}>
+                              <form
+                                onSubmit={testForm.handleSubmit(onTestEmail)}
+                              >
+                                <FormField
+                                  control={testForm.control}
+                                  name="email"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Test Email Address</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder="test@example.com"
+                                          type="email"
+                                          {...field}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <DialogFooter className="mt-6">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setTestEmailOpen(false)}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    type="submit"
+                                    disabled={sendTestEmail.isPending}
+                                    className="flex items-center gap-2"
+                                  >
+                                    {sendTestEmail.isPending ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Send className="h-4 w-4" />
+                                    )}
+                                    Send Test
+                                  </Button>
+                                </DialogFooter>
+                              </form>
+                            </Form>
+                          </DialogContent>
+                        </Dialog>
+
+                        <Button
+                          type="submit"
+                          disabled={createEmailBatch.isPending}
+                          className="btn-gradient flex items-center gap-2 ml-auto"
+                        >
+                          {createEmailBatch.isPending ? (
+                            <div className="flex items-center gap-2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white/70"></div>
+                              <span>Sending...</span>
+                            </div>
+                          ) : (
+                            <>
+                              <Send className="h-4 w-4" />
+                              Send Email
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </div>
+              </div>
+
+              {/* Live Preview - 40% width */}
+              <div className="lg:col-span-2 module-card">
+                <div className="p-6 border-b border-border/50">
+                  <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+                    <Eye className="h-6 w-6 text-theme-500" />
+                    Live Preview
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">
+                      {getRecipientCount(form.watch("recipientType"))}{" "}
+                      recipients
+                    </Badge>
                   </div>
                 </div>
-
-                {/* Live Preview - 40% width */}
-                <div className="lg:col-span-2 module-card">
-                  <div className="p-6 border-b border-border/50">
-                    <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
-                      <Eye className="h-6 w-6 text-theme-500" />
-                      Live Preview
-                    </h2>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">
-                        {getRecipientCount(form.watch("recipientType"))}{" "}
-                        recipients
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <div className="h-64 lg:h-[500px] overflow-y-auto">
-                      {renderEmailPreview()}
-                    </div>
+                <div className="p-6">
+                  <div className="h-64 lg:h-[500px] overflow-y-auto">
+                    {renderEmailPreview()}
                   </div>
                 </div>
               </div>
-            </TabsContent>
+            </div>
+          </TabsContent>
 
           {/* Email History Tab */}
           <TabsContent value="history" className="space-y-6">
             <div className="module-card">
-                <div className="p-6 border-b border-border/50">
-                  <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
-                    <Clock className="h-6 w-6 text-theme-500" />
-                    Recent Email Batches
-                  </h2>
-                  <p className="text-muted-foreground">
-                    Track the status of your recent email campaigns
-                  </p>
-                </div>
-                <div className="p-6">
-                  <div className="space-y-4">
-                    {emailBatches && emailBatches.length > 0 ? (
-                      emailBatches.map((batch) => (
-                        <div
-                          key={batch.id}
-                          className="group relative overflow-hidden rounded-xl bg-card/60 dark:bg-card/40 border border-border/50 p-6 hover:bg-card/80 dark:hover:bg-card/60 hover:border-theme-400/30 hover:shadow-elevation-2 transition-all duration-300"
-                        >
-                          {/* Subtle hover glow effect */}
-                          <div className="absolute inset-0 bg-gradient-to-br from-theme-500/5 to-theme-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl"></div>
+              <div className="p-6 border-b border-border/50">
+                <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+                  <Clock className="h-6 w-6 text-theme-500" />
+                  Recent Email Batches
+                </h2>
+                <p className="text-muted-foreground">
+                  Track the status of your recent email campaigns
+                </p>
+              </div>
+              <div className="p-6">
+                <div className="space-y-4">
+                  {emailBatches && emailBatches.length > 0 ? (
+                    emailBatches.map((batch) => (
+                      <div
+                        key={batch.id}
+                        className="group relative overflow-hidden rounded-xl bg-card/60 dark:bg-card/40 border border-border/50 p-6 hover:bg-card/80 dark:hover:bg-card/60 hover:border-theme-400/30 hover:shadow-elevation-2 transition-all duration-300"
+                      >
+                        {/* Subtle hover glow effect */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-theme-500/5 to-theme-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl"></div>
 
-                          <div className="relative">
-                            <div className="flex items-start justify-between mb-4">
-                              <div className="space-y-1 flex-1">
-                                <h4 className="text-lg font-semibold text-foreground">
-                                  {batch.subject}
-                                </h4>
-                                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                  <Calendar className="h-4 w-4" />
-                                  {new Date(batch.createdAt).toLocaleDateString(
-                                    "en-US",
-                                    {
-                                      year: "numeric",
-                                      month: "short",
-                                      day: "numeric",
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    }
-                                  )}
-                                </p>
-                              </div>
-                              <Badge
-                                className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded-full border ${getStatusColor(batch.status)}`}
-                              >
-                                {getStatusIcon(batch.status)}
-                                {batch.status}
-                              </Badge>
+                        <div className="relative">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="space-y-1 flex-1">
+                              <h4 className="text-lg font-semibold text-foreground">
+                                {batch.subject}
+                              </h4>
+                              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                <Calendar className="h-4 w-4" />
+                                {new Date(batch.createdAt).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )}
+                              </p>
                             </div>
-
-                            <div className="grid grid-cols-2 gap-6 mb-4">
-                              <div className="space-y-1">
-                                <div className="text-sm text-muted-foreground">
-                                  Recipients
-                                </div>
-                                <div className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                                  {batch.recipientCount}
-                                </div>
-                              </div>
-                              <div className="space-y-1">
-                                <div className="text-sm text-muted-foreground">
-                                  Sent
-                                </div>
-                                <div className="text-xl font-bold text-green-600 dark:text-green-400">
-                                  {batch.sentCount}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="space-y-3">
-                              <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">
-                                  Progress
-                                </span>
-                                <span className="font-medium">
-                                  {batch.sentCount} / {batch.recipientCount}
-                                </span>
-                              </div>
-                              <Progress
-                                value={
-                                  batch.recipientCount > 0
-                                    ? (batch.sentCount / batch.recipientCount) *
-                                      100
-                                    : 0
-                                }
-                                className="h-2"
-                              />
-                            </div>
-
-                            {batch.failedCount > 0 && (
-                              <div className="mt-4 flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
-                                <XCircle className="h-4 w-4" />
-                                {batch.failedCount} failed deliveries
-                              </div>
-                            )}
+                            <Badge
+                              className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded-full border ${getStatusColor(batch.status)}`}
+                            >
+                              {getStatusIcon(batch.status)}
+                              {batch.status}
+                            </Badge>
                           </div>
+
+                          <div className="grid grid-cols-2 gap-6 mb-4">
+                            <div className="space-y-1">
+                              <div className="text-sm text-muted-foreground">
+                                Recipients
+                              </div>
+                              <div className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                                {batch.recipientCount}
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="text-sm text-muted-foreground">
+                                Sent
+                              </div>
+                              <div className="text-xl font-bold text-green-600 dark:text-green-400">
+                                {batch.sentCount}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-3">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">
+                                Progress
+                              </span>
+                              <span className="font-medium">
+                                {batch.sentCount} / {batch.recipientCount}
+                              </span>
+                            </div>
+                            <Progress
+                              value={
+                                batch.recipientCount > 0
+                                  ? (batch.sentCount / batch.recipientCount) *
+                                    100
+                                  : 0
+                              }
+                              className="h-2"
+                            />
+                          </div>
+
+                          {batch.failedCount > 0 && (
+                            <div className="mt-4 flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
+                              <XCircle className="h-4 w-4" />
+                              {batch.failedCount} failed deliveries
+                            </div>
+                          )}
                         </div>
-                      ))
-                    ) : (
-                      <div className="text-center text-muted-foreground py-12">
-                        <Mail className="h-16 w-16 mx-auto mb-6 opacity-30" />
-                        <p className="text-lg">No email batches yet</p>
-                        <p className="text-sm">
-                          Your sent emails will appear here
-                        </p>
                       </div>
-                    )}
-                  </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-muted-foreground py-12">
+                      <Mail className="h-16 w-16 mx-auto mb-6 opacity-30" />
+                      <p className="text-lg">No email batches yet</p>
+                      <p className="text-sm">
+                        Your sent emails will appear here
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
-            </TabsContent>
+            </div>
+          </TabsContent>
         </Tabs>
       </Page>
 

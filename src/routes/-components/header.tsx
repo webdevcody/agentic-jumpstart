@@ -11,6 +11,7 @@ import {
   Users,
   Mail,
   Settings,
+  Target,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "../../components/ui/sheet";
 import {
@@ -134,6 +135,24 @@ export function Header() {
                     Course Content
                   </Link>
                 )}
+                <Link
+                  to="/community"
+                  className={cn(
+                    "flex items-center",
+                    "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                    "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  )}
+                  activeProps={{
+                    className:
+                      "text-theme-600 dark:text-theme-400 bg-theme-500/15 dark:bg-theme-500/10 font-semibold",
+                  }}
+                >
+                  <Users className="h-4 w-4 mr-2 text-theme-400" />
+                  Community
+                  <span className="ml-2 px-1.5 py-0.5 text-xs bg-green-500/20 text-green-600 dark:text-green-400 rounded-md font-medium">
+                    FREE
+                  </span>
+                </Link>
                 {/* Affiliate link for non-logged in users */}
                 {!user && (
                   <Link
@@ -215,6 +234,15 @@ export function Header() {
                           >
                             <TrendingUp className="mr-2 h-4 w-4" />
                             Analytics
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to="/admin/conversions"
+                            className="flex items-center"
+                          >
+                            <Target className="mr-2 h-4 w-4" />
+                            Conversions
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -368,6 +396,17 @@ export function Header() {
                           Course Content
                         </Link>
                       )}
+                      <Link
+                        to="/community"
+                        className="flex items-center py-3 text-lg text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/50 px-3"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <Users className="mr-2 h-4 w-4 text-theme-400" />
+                        Community
+                        <span className="ml-2 px-1.5 py-0.5 text-xs bg-green-500/20 text-green-600 dark:text-green-400 rounded-md font-medium">
+                          FREE
+                        </span>
+                      </Link>
                       {/* Affiliate link for non-logged in users */}
                       {!user && (
                         <Link
@@ -422,6 +461,14 @@ export function Header() {
                             >
                               <TrendingUp className="mr-2 h-4 w-4" />
                               Analytics
+                            </Link>
+                            <Link
+                              to="/admin/conversions"
+                              className={buttonVariants({ variant: "ghost" })}
+                              onClick={() => setIsOpen(false)}
+                            >
+                              <Target className="mr-2 h-4 w-4" />
+                              Conversions
                             </Link>
                             <Link
                               to="/admin/emails"

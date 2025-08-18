@@ -24,6 +24,7 @@ import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import { env } from "~/utils/env";
 import { shouldShowEarlyAccessFn } from "~/fn/early-access";
+import { useAnalytics } from "~/hooks/use-analytics";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   {
@@ -90,6 +91,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 );
 
 function RootComponent() {
+  // Initialize analytics tracking
+  useAnalytics();
+  
   return (
     <RootDocument>
       <Outlet />

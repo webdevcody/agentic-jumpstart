@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCommentsQuery } from "~/lib/queries/comments";
 import { CommentForm } from "./comment-form";
 import { CommentList } from "./comment-list";
-import { useCommentFormVisibility } from "../hooks/use-comment-form-visibility";
+import { useCommentFormVisibility } from "~/hooks/use-comment-form-visibility";
 
 interface CommentsPanelProps {
   currentSegmentId: number;

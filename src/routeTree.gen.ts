@@ -22,6 +22,7 @@ import { Route as PurchaseRouteImport } from './routes/purchase'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CreateTestimonialRouteImport } from './routes/create-testimonial'
+import { Route as CommunityRouteImport } from './routes/community'
 import { Route as CancelRouteImport } from './routes/cancel'
 import { Route as AffiliatesRouteImport } from './routes/affiliates'
 import { Route as AffiliateDashboardRouteImport } from './routes/affiliate-dashboard'
@@ -33,6 +34,7 @@ import { Route as LearnNoSegmentsRouteImport } from './routes/learn/no-segments'
 import { Route as LearnCourseCompletedRouteImport } from './routes/learn/course-completed'
 import { Route as LearnAddRouteImport } from './routes/learn/add'
 import { Route as AdminEmailsRouteImport } from './routes/admin/emails'
+import { Route as AdminConversionsRouteImport } from './routes/admin/conversions'
 import { Route as AdminCommentsRouteImport } from './routes/admin/comments'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AdminAffiliatesRouteImport } from './routes/admin/affiliates'
@@ -98,6 +100,11 @@ const CreateTestimonialRoute = CreateTestimonialRouteImport.update({
   path: '/create-testimonial',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CommunityRoute = CommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CancelRoute = CancelRouteImport.update({
   id: '/cancel',
   path: '/cancel',
@@ -156,6 +163,11 @@ const LearnAddRoute = LearnAddRouteImport.update({
 const AdminEmailsRoute = AdminEmailsRouteImport.update({
   id: '/admin/emails',
   path: '/admin/emails',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminConversionsRoute = AdminConversionsRouteImport.update({
+  id: '/admin/conversions',
+  path: '/admin/conversions',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminCommentsRoute = AdminCommentsRouteImport.update({
@@ -222,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/affiliate-dashboard': typeof AffiliateDashboardRoute
   '/affiliates': typeof AffiliatesRoute
   '/cancel': typeof CancelRoute
+  '/community': typeof CommunityRoute
   '/create-testimonial': typeof CreateTestimonialRoute
   '/login': typeof LoginRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
@@ -235,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/admin/affiliates': typeof AdminAffiliatesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/comments': typeof AdminCommentsRoute
+  '/admin/conversions': typeof AdminConversionsRoute
   '/admin/emails': typeof AdminEmailsRoute
   '/learn/add': typeof LearnAddRoute
   '/learn/course-completed': typeof LearnCourseCompletedRoute
@@ -251,6 +265,7 @@ export interface FileRoutesByTo {
   '/affiliate-dashboard': typeof AffiliateDashboardRoute
   '/affiliates': typeof AffiliatesRoute
   '/cancel': typeof CancelRoute
+  '/community': typeof CommunityRoute
   '/create-testimonial': typeof CreateTestimonialRoute
   '/login': typeof LoginRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
@@ -264,6 +279,7 @@ export interface FileRoutesByTo {
   '/admin/affiliates': typeof AdminAffiliatesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/comments': typeof AdminCommentsRoute
+  '/admin/conversions': typeof AdminConversionsRoute
   '/admin/emails': typeof AdminEmailsRoute
   '/learn/add': typeof LearnAddRoute
   '/learn/course-completed': typeof LearnCourseCompletedRoute
@@ -280,6 +296,7 @@ export interface FileRoutesById {
   '/affiliate-dashboard': typeof AffiliateDashboardRoute
   '/affiliates': typeof AffiliatesRoute
   '/cancel': typeof CancelRoute
+  '/community': typeof CommunityRoute
   '/create-testimonial': typeof CreateTestimonialRoute
   '/login': typeof LoginRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
@@ -293,6 +310,7 @@ export interface FileRoutesById {
   '/admin/affiliates': typeof AdminAffiliatesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/comments': typeof AdminCommentsRoute
+  '/admin/conversions': typeof AdminConversionsRoute
   '/admin/emails': typeof AdminEmailsRoute
   '/learn/add': typeof LearnAddRoute
   '/learn/course-completed': typeof LearnCourseCompletedRoute
@@ -312,6 +330,7 @@ export interface FileRouteTypes {
     | '/affiliate-dashboard'
     | '/affiliates'
     | '/cancel'
+    | '/community'
     | '/create-testimonial'
     | '/login'
     | '/privacy-policy'
@@ -325,6 +344,7 @@ export interface FileRouteTypes {
     | '/admin/affiliates'
     | '/admin/analytics'
     | '/admin/comments'
+    | '/admin/conversions'
     | '/admin/emails'
     | '/learn/add'
     | '/learn/course-completed'
@@ -341,6 +361,7 @@ export interface FileRouteTypes {
     | '/affiliate-dashboard'
     | '/affiliates'
     | '/cancel'
+    | '/community'
     | '/create-testimonial'
     | '/login'
     | '/privacy-policy'
@@ -354,6 +375,7 @@ export interface FileRouteTypes {
     | '/admin/affiliates'
     | '/admin/analytics'
     | '/admin/comments'
+    | '/admin/conversions'
     | '/admin/emails'
     | '/learn/add'
     | '/learn/course-completed'
@@ -369,6 +391,7 @@ export interface FileRouteTypes {
     | '/affiliate-dashboard'
     | '/affiliates'
     | '/cancel'
+    | '/community'
     | '/create-testimonial'
     | '/login'
     | '/privacy-policy'
@@ -382,6 +405,7 @@ export interface FileRouteTypes {
     | '/admin/affiliates'
     | '/admin/analytics'
     | '/admin/comments'
+    | '/admin/conversions'
     | '/admin/emails'
     | '/learn/add'
     | '/learn/course-completed'
@@ -400,6 +424,7 @@ export interface RootRouteChildren {
   AffiliateDashboardRoute: typeof AffiliateDashboardRoute
   AffiliatesRoute: typeof AffiliatesRoute
   CancelRoute: typeof CancelRoute
+  CommunityRoute: typeof CommunityRoute
   CreateTestimonialRoute: typeof CreateTestimonialRoute
   LoginRoute: typeof LoginRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
@@ -413,6 +438,7 @@ export interface RootRouteChildren {
   AdminAffiliatesRoute: typeof AdminAffiliatesRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminCommentsRoute: typeof AdminCommentsRoute
+  AdminConversionsRoute: typeof AdminConversionsRoute
   AdminEmailsRoute: typeof AdminEmailsRoute
   LearnAddRoute: typeof LearnAddRoute
   LearnCourseCompletedRoute: typeof LearnCourseCompletedRoute
@@ -547,6 +573,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CreateTestimonialRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/community': {
+      id: '/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof CommunityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cancel': {
       id: '/cancel'
       path: '/cancel'
@@ -629,6 +662,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/emails'
       fullPath: '/admin/emails'
       preLoaderRoute: typeof AdminEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/conversions': {
+      id: '/admin/conversions'
+      path: '/admin/conversions'
+      fullPath: '/admin/conversions'
+      preLoaderRoute: typeof AdminConversionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/comments': {
@@ -747,6 +787,7 @@ const rootRouteChildren: RootRouteChildren = {
   AffiliateDashboardRoute: AffiliateDashboardRoute,
   AffiliatesRoute: AffiliatesRoute,
   CancelRoute: CancelRoute,
+  CommunityRoute: CommunityRoute,
   CreateTestimonialRoute: CreateTestimonialRoute,
   LoginRoute: LoginRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
@@ -760,6 +801,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminAffiliatesRoute: AdminAffiliatesRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminCommentsRoute: AdminCommentsRoute,
+  AdminConversionsRoute: AdminConversionsRoute,
   AdminEmailsRoute: AdminEmailsRoute,
   LearnAddRoute: LearnAddRoute,
   LearnCourseCompletedRoute: LearnCourseCompletedRoute,

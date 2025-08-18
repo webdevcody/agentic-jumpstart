@@ -26,6 +26,8 @@ import { Link } from "@tanstack/react-router";
 import { DiscountDialog } from "~/components/discount-dialog";
 import { discountStore } from "~/stores/discount-store";
 import { shouldShowEarlyAccessFn } from "~/fn/early-access";
+import { useAnalytics } from "~/hooks/use-analytics";
+import { trackPurchaseIntentFn } from "~/fn/analytics";
 
 const searchSchema = z.object({
   ref: z.string().optional(),
@@ -43,6 +45,7 @@ export const Route = createFileRoute("/purchase")({
 const checkoutSchema = z.object({
   affiliateCode: z.string().optional(),
   discountCode: z.string().optional(),
+  analyticsSessionId: z.string().optional(),
 });
 
 const checkoutFn = createServerFn()
@@ -52,15 +55,19 @@ const checkoutFn = createServerFn()
     if (!context.email) {
       throw new Error("Email is required");
     }
-    
+
     const metadata: Record<string, string> = {
       userId: context.userId.toString(),
     };
-    
+
     if (data.affiliateCode) {
       metadata.affiliateCode = data.affiliateCode;
     }
-    
+
+    if (data.analyticsSessionId) {
+      metadata.analyticsSessionId = data.analyticsSessionId;
+    }
+
     const sessionConfig: any = {
       payment_method_types: ["card"],
       line_items: [{ price: env.STRIPE_PRICE_ID, quantity: 1 }],
@@ -70,14 +77,16 @@ const checkoutFn = createServerFn()
       cancel_url: `${env.HOST_NAME}/purchase`,
       metadata,
     };
-    
+
     // Apply discount if a valid discount code is provided
     if (data.discountCode && env.STRIPE_DISCOUNT_COUPON_ID) {
-      sessionConfig.discounts = [{
-        coupon: env.STRIPE_DISCOUNT_COUPON_ID,
-      }];
+      sessionConfig.discounts = [
+        {
+          coupon: env.STRIPE_DISCOUNT_COUPON_ID,
+        },
+      ];
     }
-    
+
     const session = await stripe.checkout.sessions.create(sessionConfig);
 
     return { sessionId: session.id };
@@ -120,12 +129,12 @@ const features = [
   },
 ];
 
-
 function RouteComponent() {
   const user = useAuth();
   const continueSlug = useContinueSlug();
   const { ref } = Route.useSearch();
   const [showDiscountDialog, setShowDiscountDialog] = useState(false);
+  const { sessionId } = useAnalytics();
 
   // Store affiliate code in memory when present in URL
   useEffect(() => {
@@ -134,7 +143,21 @@ function RouteComponent() {
     }
   }, [ref]);
 
-  const handlePurchaseClick = () => {
+  const handlePurchaseClick = async () => {
+    // Track purchase intent
+    if (sessionId) {
+      try {
+        await trackPurchaseIntentFn({
+          data: {
+            sessionId,
+            buttonType: "main_purchase_button",
+          },
+        });
+      } catch (error) {
+        console.error("Failed to track purchase intent:", error);
+      }
+    }
+
     // Show discount dialog instead of going directly to checkout
     setShowDiscountDialog(true);
   };
@@ -154,13 +177,16 @@ function RouteComponent() {
     if (!stripeResolved) throw new Error("Stripe failed to initialize");
 
     try {
-      const { sessionId } = await checkoutFn({ 
-        data: { 
+      const { sessionId: stripeSessionId } = await checkoutFn({
+        data: {
           affiliateCode: appliedDiscountCode || undefined,
           discountCode: appliedDiscountCode || undefined,
-        } 
+          analyticsSessionId: sessionId, // Pass analytics session ID
+        },
       });
-      const { error } = await stripeResolved.redirectToCheckout({ sessionId });
+      const { error } = await stripeResolved.redirectToCheckout({
+        sessionId: stripeSessionId,
+      });
       if (error) throw error;
     } catch (error) {
       console.error("Payment error:", error);
@@ -284,6 +310,21 @@ function RouteComponent() {
                         ) : (
                           <a
                             href={`/api/login/google?redirect_uri=${encodeURIComponent("/purchase")}`}
+                            onClick={async () => {
+                              if (sessionId) {
+                                try {
+                                  await trackPurchaseIntentFn({
+                                    sessionId,
+                                    buttonType: "login_to_purchase_button",
+                                  });
+                                } catch (error) {
+                                  console.error(
+                                    "Failed to track purchase intent:",
+                                    error
+                                  );
+                                }
+                              }
+                            }}
                           >
                             <Button size="lg">
                               <User className="mr-2 h-4 w-4" />
@@ -315,7 +356,7 @@ function RouteComponent() {
       {/* Bottom gradient fade with theme accent - matching hero */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background via-background/80 to-transparent"></div>
       <div className="section-divider-glow-bottom"></div>
-      
+
       {/* Discount Dialog */}
       <DiscountDialog
         open={showDiscountDialog}

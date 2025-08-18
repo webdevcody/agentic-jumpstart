@@ -1,5 +1,5 @@
 import { database } from "~/db";
-import { User, users, userEmailPreferences } from "~/db/schema";
+import { User, users, userEmailPreferences, newsletterSignups } from "~/db/schema";
 import { eq, and, isNull, or, isNotNull } from "drizzle-orm";
 import { UserId } from "~/use-cases/types";
 
@@ -46,12 +46,41 @@ export async function updateUserToPremium(userId: UserId) {
     .where(eq(users.id, userId));
 }
 
+// Get newsletter subscribers for emailing
+export async function getNewsletterSubscribersForEmailing(
+  subscriptionType: "newsletter" | "waitlist" | "both"
+): Promise<Array<{ email: string }>> {
+  let whereConditions: any[] = [];
+  
+  if (subscriptionType === "newsletter") {
+    whereConditions.push(eq(newsletterSignups.subscriptionType, "newsletter"));
+  } else if (subscriptionType === "waitlist") {
+    whereConditions.push(eq(newsletterSignups.subscriptionType, "waitlist"));
+  }
+  // For "both", we don't add any filter
+  
+  const result = await database
+    .select({
+      email: newsletterSignups.email,
+    })
+    .from(newsletterSignups)
+    .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
+  
+  return result;
+}
+
 // Get users for emailing based on criteria
 // Note: All emails now include unsubscribe links, but we still respect user preferences
 export async function getUsersForEmailing(
-  recipientType: "all" | "premium" | "free",
+  recipientType: "all" | "premium" | "free" | "newsletter" | "waitlist",
   isMarketingEmail: boolean = true // Default to true since all emails now have unsubscribe
-): Promise<Array<{ id: number; email: string }>> {
+): Promise<Array<{ id?: number; email: string }>> {
+  // Handle newsletter/waitlist recipients separately
+  if (recipientType === "newsletter" || recipientType === "waitlist") {
+    const newsletterSubs = await getNewsletterSubscribersForEmailing(recipientType);
+    return newsletterSubs.map(sub => ({ email: sub.email }));
+  }
+
   // Base query with email preferences join
   let baseQuery = database
     .select({

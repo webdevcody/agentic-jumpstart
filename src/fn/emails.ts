@@ -11,7 +11,9 @@ import {
   getUsersForEmailing,
   createMissingEmailPreferences,
   getUserByEmail,
+  getNewsletterSubscribersForEmailing,
 } from "~/data-access/users";
+import { getNewsletterSignupsCount } from "~/data-access/newsletter";
 import { sendEmail, renderEmailTemplate } from "~/utils/email";
 import { EmailBatchCreate } from "~/db/schema";
 import { createUnsubscribeToken } from "~/data-access/unsubscribe-tokens";
@@ -23,7 +25,7 @@ const emailFormSchema = z.object({
     .min(1, "Subject is required")
     .max(200, "Subject too long"),
   content: z.string().min(1, "Content is required"),
-  recipientType: z.enum(["all", "premium", "free"]),
+  recipientType: z.enum(["all", "premium", "free", "newsletter", "waitlist"]),
 });
 
 const testEmailSchema = z.object({
@@ -174,11 +176,15 @@ export const getUsersForEmailingFn = createServerFn({
       const allUsers = await getUsersForEmailing("all", false);
       const premiumUsers = await getUsersForEmailing("premium", false);
       const freeUsers = await getUsersForEmailing("free", false);
+      const newsletterUsers = await getUsersForEmailing("newsletter", true);
+      const waitlistUsers = await getUsersForEmailing("waitlist", true);
 
       return {
         totalUsers: allUsers.length,
         premiumUsers: premiumUsers.length,
         freeUsers: freeUsers.length,
+        newsletterUsers: newsletterUsers.length,
+        waitlistUsers: waitlistUsers.length,
       };
     } catch (error) {
       console.error("Failed to get users for emailing:", error);
@@ -189,7 +195,7 @@ export const getUsersForEmailingFn = createServerFn({
 // Background email processing with rate limiting
 async function processBulkEmails(
   batchId: number,
-  users: Array<{ id: number; email: string }>,
+  users: Array<{ id?: number; email: string }>,
   subject: string,
   htmlContent: string,
   isMarketingEmail: boolean = true // Keep parameter for backwards compatibility but always true
@@ -209,18 +215,29 @@ async function processBulkEmails(
       // Send emails in parallel for this batch
       const promises = batch.map(async (user) => {
         try {
-          // Always generate unsubscribe token since all emails now include unsubscribe
-          const unsubscribeToken = await createUnsubscribeToken(
-            user.id,
-            user.email
-          );
-          const unsubscribeUrl = `${process.env.BASE_URL}/unsubscribe?token=${unsubscribeToken}`;
-
-          // Replace the unsubscribeUrl placeholder in the template
-          const finalHtmlContent = htmlContent.replace(
-            /{{unsubscribeUrl}}/g,
-            unsubscribeUrl
-          );
+          let finalHtmlContent = htmlContent;
+          
+          // Generate unsubscribe token if user has an ID (registered user)
+          if (user.id) {
+            const unsubscribeToken = await createUnsubscribeToken(
+              user.id,
+              user.email
+            );
+            const unsubscribeUrl = `${process.env.BASE_URL}/unsubscribe?token=${unsubscribeToken}`;
+            
+            // Replace the unsubscribeUrl placeholder in the template
+            finalHtmlContent = htmlContent.replace(
+              /{{unsubscribeUrl}}/g,
+              unsubscribeUrl
+            );
+          } else {
+            // For newsletter subscribers without user accounts, provide a generic unsubscribe
+            const unsubscribeUrl = `${process.env.BASE_URL}/unsubscribe?email=${encodeURIComponent(user.email)}`;
+            finalHtmlContent = htmlContent.replace(
+              /{{unsubscribeUrl}}/g,
+              unsubscribeUrl
+            );
+          }
 
           await sendEmail({
             to: user.email,
