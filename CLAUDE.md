@@ -25,6 +25,10 @@ This is a TanStack Start application for an online learning platform with video 
 - `npm run db:up` - Start PostgreSQL container (Docker required)
 - `npm run db:down` - Stop PostgreSQL container
 
+### Testing Operations
+
+- `npm run test` - To run the playwright test suites against my running application
+
 ### Stripe Integration
 
 - `npm run stripe:listen` - Forward Stripe webhooks to localhost:3000
