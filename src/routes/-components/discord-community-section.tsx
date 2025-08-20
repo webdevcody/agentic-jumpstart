@@ -51,7 +51,7 @@ export function DiscordCommunitySection() {
               icon={
                 <Users className="w-8 h-8 text-green-500 group-hover:text-green-400 group-hover:scale-110 transition-all duration-300" />
               }
-              title="23+ Members"
+              title="81+ Members"
               description="Join a thriving community of AI enthusiasts, from beginners to experts, all sharing knowledge and growing together."
             />
           </ScrollScale>
