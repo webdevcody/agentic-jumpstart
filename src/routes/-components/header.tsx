@@ -17,6 +17,7 @@ import {
   MoreHorizontal,
   Tag,
   LogIn,
+  Rocket,
 } from "lucide-react";
 import {
   Sheet,
@@ -88,6 +89,17 @@ const NAVIGATION_LINKS: NavLink[] = [
     priority: "primary",
   },
   {
+    to: "/launch-kits",
+    label: "Launch Kits",
+    icon: Rocket,
+    badge: {
+      text: "NEW",
+      className:
+        "ml-2 px-1.5 py-0.5 text-xs bg-theme-500/20 text-theme-600 dark:text-theme-400 rounded-md font-medium",
+    },
+    priority: "primary",
+  },
+  {
     to: "/community",
     label: "Community",
     icon: Users,
@@ -129,6 +141,7 @@ const NAVIGATION_LINKS: NavLink[] = [
 
 const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
   { to: "/admin/comments", label: "Comments", icon: MessageCircle },
+  { to: "/admin/launch-kits", label: "Launch Kits", icon: Rocket },
   { to: "/admin/affiliates", label: "Affiliates", icon: Users },
   { to: "/admin/analytics", label: "Analytics", icon: TrendingUp },
   { to: "/admin/conversions", label: "Conversions", icon: Target },

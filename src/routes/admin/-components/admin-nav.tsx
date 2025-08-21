@@ -8,6 +8,7 @@ import {
   Target,
   UserCheck,
   Settings,
+  Rocket,
 } from "lucide-react";
 
 const navigation = [
@@ -20,6 +21,11 @@ const navigation = [
     name: "Conversions",
     href: "/admin/conversions",
     icon: Target,
+  },
+  {
+    name: "Launch Kits",
+    href: "/admin/launch-kits",
+    icon: Rocket,
   },
   {
     name: "Affiliates",
