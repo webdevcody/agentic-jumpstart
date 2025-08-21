@@ -9,6 +9,7 @@ import {
   text,
   timestamp,
   uniqueIndex,
+  varchar,
 } from "drizzle-orm/pg-core";
 
 const PREFIX = "app";
@@ -346,6 +347,37 @@ export const appSettings = tableCreator(
   (table) => [index("app_settings_key_idx").on(table.key)]
 );
 
+export const agents = tableCreator(
+  "agent",
+  {
+    id: serial("id").primaryKey(),
+    name: varchar("name", { length: 255 }).notNull().unique(),
+    slug: varchar("slug", { length: 255 }).notNull().unique(),
+    description: text("description").notNull(),
+    type: varchar("type", { length: 50 }).notNull(),
+    content: text("content").notNull(),
+    authorId: serial("author_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    isPublic: boolean("is_public").default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("agents_author_idx").on(table.authorId),
+    index("agents_type_idx").on(table.type),
+    index("agents_public_idx").on(table.isPublic),
+    index("agents_slug_idx").on(table.slug),
+  ]
+);
+
+export const agentsRelations = relations(agents, ({ one }) => ({
+  author: one(users, {
+    fields: [agents.authorId],
+    references: [users.id],
+  }),
+}));
+
 export const modulesRelations = relations(modules, ({ many }) => ({
   segments: many(segments),
 }));
@@ -561,3 +593,5 @@ export type NewsletterSignup = typeof newsletterSignups.$inferSelect;
 export type NewsletterSignupCreate = typeof newsletterSignups.$inferInsert;
 export type AppSetting = typeof appSettings.$inferSelect;
 export type AppSettingCreate = typeof appSettings.$inferInsert;
+export type Agent = typeof agents.$inferSelect;
+export type AgentCreate = typeof agents.$inferInsert;

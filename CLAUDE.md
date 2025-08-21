@@ -154,3 +154,8 @@ export const toggleEarlyAccessModeFn = createServerFn({
 ## DO NOT RUN SERVER
 
 I always run my server in a separate terminal. NEVER TRY TO RUN `npm run dev`!
+
+## REMEMBER IMPORTANT
+
+- all cards should use the shadcn Card component and CardTitle, CardDescription, etc
+- pages should use the Page component and PageHeader when possible

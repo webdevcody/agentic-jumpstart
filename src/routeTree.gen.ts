@@ -30,10 +30,13 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LearnIndexRouteImport } from './routes/learn/index'
+import { Route as AgentsIndexRouteImport } from './routes/agents/index'
 import { Route as LearnNotFoundRouteImport } from './routes/learn/not-found'
 import { Route as LearnNoSegmentsRouteImport } from './routes/learn/no-segments'
 import { Route as LearnCourseCompletedRouteImport } from './routes/learn/course-completed'
 import { Route as LearnAddRouteImport } from './routes/learn/add'
+import { Route as AgentsNewRouteImport } from './routes/agents/new'
+import { Route as AgentsSlugRouteImport } from './routes/agents/$slug'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminEmailsRouteImport } from './routes/admin/emails'
 import { Route as AdminConversionsRouteImport } from './routes/admin/conversions'
@@ -147,6 +150,11 @@ const LearnIndexRoute = LearnIndexRouteImport.update({
   path: '/learn/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AgentsIndexRoute = AgentsIndexRouteImport.update({
+  id: '/agents/',
+  path: '/agents/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LearnNotFoundRoute = LearnNotFoundRouteImport.update({
   id: '/learn/not-found',
   path: '/learn/not-found',
@@ -165,6 +173,16 @@ const LearnCourseCompletedRoute = LearnCourseCompletedRouteImport.update({
 const LearnAddRoute = LearnAddRouteImport.update({
   id: '/learn/add',
   path: '/learn/add',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgentsNewRoute = AgentsNewRouteImport.update({
+  id: '/agents/new',
+  path: '/agents/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgentsSlugRoute = AgentsSlugRouteImport.update({
+  id: '/agents/$slug',
+  path: '/agents/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
@@ -264,10 +282,13 @@ export interface FileRoutesByFullPath {
   '/admin/conversions': typeof AdminConversionsRoute
   '/admin/emails': typeof AdminEmailsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/agents/$slug': typeof AgentsSlugRoute
+  '/agents/new': typeof AgentsNewRoute
   '/learn/add': typeof LearnAddRoute
   '/learn/course-completed': typeof LearnCourseCompletedRoute
   '/learn/no-segments': typeof LearnNoSegmentsRoute
   '/learn/not-found': typeof LearnNotFoundRoute
+  '/agents': typeof AgentsIndexRoute
   '/learn': typeof LearnIndexRoute
   '/learn/$slug': typeof LearnSlugLayoutRouteWithChildren
   '/learn/$slug/edit': typeof LearnSlugEditRoute
@@ -297,10 +318,13 @@ export interface FileRoutesByTo {
   '/admin/conversions': typeof AdminConversionsRoute
   '/admin/emails': typeof AdminEmailsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/agents/$slug': typeof AgentsSlugRoute
+  '/agents/new': typeof AgentsNewRoute
   '/learn/add': typeof LearnAddRoute
   '/learn/course-completed': typeof LearnCourseCompletedRoute
   '/learn/no-segments': typeof LearnNoSegmentsRoute
   '/learn/not-found': typeof LearnNotFoundRoute
+  '/agents': typeof AgentsIndexRoute
   '/learn': typeof LearnIndexRoute
   '/learn/$slug': typeof LearnSlugLayoutIndexRoute
   '/learn/$slug/edit': typeof LearnSlugEditRoute
@@ -330,10 +354,13 @@ export interface FileRoutesById {
   '/admin/conversions': typeof AdminConversionsRoute
   '/admin/emails': typeof AdminEmailsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/agents/$slug': typeof AgentsSlugRoute
+  '/agents/new': typeof AgentsNewRoute
   '/learn/add': typeof LearnAddRoute
   '/learn/course-completed': typeof LearnCourseCompletedRoute
   '/learn/no-segments': typeof LearnNoSegmentsRoute
   '/learn/not-found': typeof LearnNotFoundRoute
+  '/agents/': typeof AgentsIndexRoute
   '/learn/': typeof LearnIndexRoute
   '/learn/$slug': typeof LearnSlugRouteWithChildren
   '/learn/$slug/_layout': typeof LearnSlugLayoutRouteWithChildren
@@ -366,10 +393,13 @@ export interface FileRouteTypes {
     | '/admin/conversions'
     | '/admin/emails'
     | '/admin/settings'
+    | '/agents/$slug'
+    | '/agents/new'
     | '/learn/add'
     | '/learn/course-completed'
     | '/learn/no-segments'
     | '/learn/not-found'
+    | '/agents'
     | '/learn'
     | '/learn/$slug'
     | '/learn/$slug/edit'
@@ -399,10 +429,13 @@ export interface FileRouteTypes {
     | '/admin/conversions'
     | '/admin/emails'
     | '/admin/settings'
+    | '/agents/$slug'
+    | '/agents/new'
     | '/learn/add'
     | '/learn/course-completed'
     | '/learn/no-segments'
     | '/learn/not-found'
+    | '/agents'
     | '/learn'
     | '/learn/$slug'
     | '/learn/$slug/edit'
@@ -431,10 +464,13 @@ export interface FileRouteTypes {
     | '/admin/conversions'
     | '/admin/emails'
     | '/admin/settings'
+    | '/agents/$slug'
+    | '/agents/new'
     | '/learn/add'
     | '/learn/course-completed'
     | '/learn/no-segments'
     | '/learn/not-found'
+    | '/agents/'
     | '/learn/'
     | '/learn/$slug'
     | '/learn/$slug/_layout'
@@ -460,10 +496,13 @@ export interface RootRouteChildren {
   UnauthenticatedRoute: typeof UnauthenticatedRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
+  AgentsSlugRoute: typeof AgentsSlugRoute
+  AgentsNewRoute: typeof AgentsNewRoute
   LearnAddRoute: typeof LearnAddRoute
   LearnCourseCompletedRoute: typeof LearnCourseCompletedRoute
   LearnNoSegmentsRoute: typeof LearnNoSegmentsRoute
   LearnNotFoundRoute: typeof LearnNotFoundRoute
+  AgentsIndexRoute: typeof AgentsIndexRoute
   LearnIndexRoute: typeof LearnIndexRoute
   LearnSlugRoute: typeof LearnSlugRouteWithChildren
 }
@@ -656,6 +695,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LearnIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/agents/': {
+      id: '/agents/'
+      path: '/agents'
+      fullPath: '/agents'
+      preLoaderRoute: typeof AgentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/learn/not-found': {
       id: '/learn/not-found'
       path: '/learn/not-found'
@@ -682,6 +728,20 @@ declare module '@tanstack/react-router' {
       path: '/learn/add'
       fullPath: '/learn/add'
       preLoaderRoute: typeof LearnAddRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agents/new': {
+      id: '/agents/new'
+      path: '/agents/new'
+      fullPath: '/agents/new'
+      preLoaderRoute: typeof AgentsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agents/$slug': {
+      id: '/agents/$slug'
+      path: '/agents/$slug'
+      fullPath: '/agents/$slug'
+      preLoaderRoute: typeof AgentsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/settings': {
@@ -855,10 +915,13 @@ const rootRouteChildren: RootRouteChildren = {
   UnauthenticatedRoute: UnauthenticatedRoute,
   UnauthorizedRoute: UnauthorizedRoute,
   UnsubscribeRoute: UnsubscribeRoute,
+  AgentsSlugRoute: AgentsSlugRoute,
+  AgentsNewRoute: AgentsNewRoute,
   LearnAddRoute: LearnAddRoute,
   LearnCourseCompletedRoute: LearnCourseCompletedRoute,
   LearnNoSegmentsRoute: LearnNoSegmentsRoute,
   LearnNotFoundRoute: LearnNotFoundRoute,
+  AgentsIndexRoute: AgentsIndexRoute,
   LearnIndexRoute: LearnIndexRoute,
   LearnSlugRoute: LearnSlugRouteWithChildren,
 }

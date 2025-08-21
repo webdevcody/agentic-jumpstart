@@ -2,6 +2,7 @@ import {
   getAllAppSettings,
   setAppSetting,
   isEarlyAccessMode as checkEarlyAccessMode,
+  isAgentsFeatureEnabled as checkAgentsFeatureEnabled,
 } from "~/data-access/app-settings";
 
 export async function getAppSettingsUseCase() {
@@ -23,4 +24,8 @@ export async function getEarlyAccessModeUseCase() {
 
 export async function toggleEarlyAccessModeUseCase(enabled: boolean) {
   await setAppSetting("EARLY_ACCESS_MODE", enabled.toString());
+}
+
+export async function getAgentsFeatureEnabledUseCase() {
+  return checkAgentsFeatureEnabled();
 }

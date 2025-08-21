@@ -38,3 +38,8 @@ export async function isEarlyAccessMode() {
   const setting = await getAppSetting(FLAGS.EARLY_ACCESS_MODE);
   return setting?.value === "true";
 }
+
+export async function isAgentsFeatureEnabled() {
+  const setting = await getAppSetting(FLAGS.AGENTS_FEATURE);
+  return setting?.value === "true";
+}

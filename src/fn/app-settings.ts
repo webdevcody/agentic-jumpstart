@@ -4,6 +4,7 @@ import {
   getAppSettingsUseCase,
   toggleEarlyAccessModeUseCase,
   getEarlyAccessModeUseCase,
+  getAgentsFeatureEnabledUseCase,
 } from "~/use-cases/app-settings";
 
 export const getAppSettingsFn = createServerFn({ method: "GET" })
@@ -24,4 +25,10 @@ export const getEarlyAccessModeFn = createServerFn({ method: "GET" })
   .middleware([unauthenticatedMiddleware])
   .handler(async () => {
     return getEarlyAccessModeUseCase();
+  });
+
+export const getAgentsFeatureEnabledFn = createServerFn({ method: "GET" })
+  .middleware([unauthenticatedMiddleware])
+  .handler(async () => {
+    return getAgentsFeatureEnabledUseCase();
   });

@@ -274,10 +274,10 @@ function RouteComponent() {
                       <div>
                         <div className="text-muted-foreground/70 mb-2">
                           Regular price{" "}
-                          <span className="line-through">$299.99</span>
+                          <span className="line-through">$499.99</span>
                         </div>
                         <div className="text-6xl font-bold text-foreground mb-2">
-                          $199.00
+                          $349.99
                         </div>
                         <div className="text-theme-500 dark:text-theme-400 font-medium">
                           Limited Time Offer

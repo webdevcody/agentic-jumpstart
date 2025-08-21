@@ -63,10 +63,6 @@ for cmd in curl jq; do
   fi
 done
 
-echo "$TRANSCRIPT_PATH" > out.txt
-
-echo "$PROMPT" > original.txt
-
 # Convert PROMPT to a simple sentence using GPT-4
 SIMPLE_MESSAGE="$PROMPT"
 if [[ -n "$OPENAI_KEY" && -n "$PROMPT" ]]; then
