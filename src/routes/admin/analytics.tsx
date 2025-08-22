@@ -16,6 +16,16 @@ import { queryOptions } from "@tanstack/react-query";
 import { Progress } from "~/components/ui/progress";
 import { Badge } from "~/components/ui/badge";
 import { PageHeader } from "./-components/page-header";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import { StatsCard } from "~/components/stats-card";
+import { AppCard } from "~/components/app-card";
+import { Page } from "./-components/page";
 
 export const Route = createFileRoute("/admin/analytics")({
   loader: ({ context }) => {
@@ -110,7 +120,7 @@ function AdminAnalytics() {
     : analytics?.segmentAnalytics;
 
   return (
-    <>
+    <Page>
       <PageHeader
         title="Course Analytics"
         highlightedWord="Analytics"
@@ -122,121 +132,59 @@ function AdminAnalytics() {
         className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12 animate-in fade-in slide-in-from-bottom-2 duration-500"
         style={{ animationDelay: "0.1s", animationFillMode: "both" }}
       >
-        <>
-          {/* Total Users */}
-          <div
-            className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-            style={{ animationDelay: "0.2s", animationFillMode: "both" }}
-          >
-            <div className="module-card p-6 h-full">
-              <div className="flex flex-row items-center justify-between space-y-0 mb-4">
-                <div className="text-sm font-medium text-muted-foreground">
-                  Total Users
-                </div>
-                <div className="w-10 h-10 rounded-full bg-blue-500/10 dark:bg-blue-400/20 flex items-center justify-center group-hover:bg-blue-500/20 dark:group-hover:bg-blue-400/30 transition-colors duration-300">
-                  <Users className="h-5 w-5 text-blue-500 dark:text-blue-400" />
-                </div>
-              </div>
-              <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
-                {isLoading ? (
-                  <CountSkeleton />
-                ) : (
-                  analytics?.userStats.totalUsers.toLocaleString()
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                All registered users
-              </p>
-            </div>
-          </div>
+        <StatsCard
+          icon={Users}
+          iconColor="text-blue-500 dark:text-blue-400"
+          iconBgColor="bg-blue-500/10 dark:bg-blue-400/20"
+          title="Total Users"
+          value={isLoading ? null : analytics?.userStats.totalUsers}
+          description="All registered users"
+          hoverColor="group-hover:text-blue-600 dark:group-hover:text-blue-400"
+          animationDelay="0.2s"
+        />
 
-          {/* Premium Members */}
-          <div
-            className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-            style={{ animationDelay: "0.3s", animationFillMode: "both" }}
-          >
-            <div className="module-card p-6 h-full">
-              <div className="flex flex-row items-center justify-between space-y-0 mb-4">
-                <div className="text-sm font-medium text-muted-foreground">
-                  Premium Members
-                </div>
-                <div className="w-10 h-10 rounded-full bg-theme-500/10 dark:bg-theme-400/20 flex items-center justify-center group-hover:bg-theme-500/20 dark:group-hover:bg-theme-400/30 transition-colors duration-300">
-                  <Award className="h-5 w-5 text-theme-500 dark:text-theme-400" />
-                </div>
-              </div>
-              <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-theme-600 dark:group-hover:text-theme-400 transition-colors duration-300">
-                {isLoading ? (
-                  <CountSkeleton />
-                ) : (
-                  analytics?.userStats.premiumUsers.toLocaleString()
-                )}
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                {isLoading ? (
-                  <PercentageSkeleton />
-                ) : (
-                  analytics?.userStats.conversionRate + "%"
-                )}{" "}
-                conversion rate
-              </div>
-            </div>
-          </div>
+        <StatsCard
+          icon={Award}
+          iconColor="text-theme-500 dark:text-theme-400"
+          iconBgColor="bg-theme-500/10 dark:bg-theme-400/20"
+          title="Premium Members"
+          value={isLoading ? null : analytics?.userStats.premiumUsers}
+          description={
+            isLoading
+              ? null
+              : `${analytics?.userStats.conversionRate}% conversion rate`
+          }
+          hoverColor="group-hover:text-theme-600 dark:group-hover:text-theme-400"
+          animationDelay="0.3s"
+        />
 
-          {/* Revenue */}
-          <div
-            className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-            style={{ animationDelay: "0.4s", animationFillMode: "both" }}
-          >
-            <div className="module-card p-6 h-full">
-              <div className="flex flex-row items-center justify-between space-y-0 mb-4">
-                <div className="text-sm font-medium text-muted-foreground">
-                  Total Revenue
-                </div>
-                <div className="w-10 h-10 rounded-full bg-green-500/10 dark:bg-green-400/20 flex items-center justify-center group-hover:bg-green-500/20 dark:group-hover:bg-green-400/30 transition-colors duration-300">
-                  <DollarSign className="h-5 w-5 text-green-500 dark:text-green-400" />
-                </div>
-              </div>
-              <div className="flex items-center gap-2 text-3xl font-bold text-foreground mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
-                $
-                {isLoading ? (
-                  <CountSkeleton />
-                ) : (
-                  (
-                    (analytics?.overallStats.totalRevenue || 0) / 100
-                  ).toLocaleString()
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                From affiliate referrals
-              </p>
-            </div>
-          </div>
+        <StatsCard
+          icon={DollarSign}
+          iconColor="text-green-500 dark:text-green-400"
+          iconBgColor="bg-green-500/10 dark:bg-green-400/20"
+          title="Total Revenue"
+          value={
+            isLoading
+              ? null
+              : `$${((analytics?.overallStats.totalRevenue || 0) / 100).toLocaleString()}`
+          }
+          description="From affiliate referrals"
+          hoverColor="group-hover:text-green-600 dark:group-hover:text-green-400"
+          animationDelay="0.4s"
+        />
 
-          {/* Average Progress */}
-          <div
-            className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-            style={{ animationDelay: "0.5s", animationFillMode: "both" }}
-          >
-            <div className="module-card p-6 h-full">
-              <div className="flex flex-row items-center justify-between space-y-0 mb-4">
-                <div className="text-sm font-medium text-muted-foreground">
-                  Avg Progress
-                </div>
-                <div className="w-10 h-10 rounded-full bg-purple-500/10 dark:bg-purple-400/20 flex items-center justify-center group-hover:bg-purple-500/20 dark:group-hover:bg-purple-400/30 transition-colors duration-300">
-                  <Activity className="h-5 w-5 text-purple-500 dark:text-purple-400" />
-                </div>
-              </div>
-              <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors duration-300">
-                {isLoading ? (
-                  <CountSkeleton />
-                ) : (
-                  analytics?.overallStats.averageProgressPerUser
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">Segments per user</p>
-            </div>
-          </div>
-        </>
+        <StatsCard
+          icon={Activity}
+          iconColor="text-purple-500 dark:text-purple-400"
+          iconBgColor="bg-purple-500/10 dark:bg-purple-400/20"
+          title="Avg Progress"
+          value={
+            isLoading ? null : analytics?.overallStats.averageProgressPerUser
+          }
+          description="Segments per user"
+          hoverColor="group-hover:text-purple-600 dark:group-hover:text-purple-400"
+          animationDelay="0.5s"
+        />
       </div>
 
       {/* Top Performing Content */}
@@ -245,116 +193,102 @@ function AdminAnalytics() {
         style={{ animationDelay: "0.6s", animationFillMode: "both" }}
       >
         {/* Most Completed Segments */}
-        <div
-          className="module-card animate-in fade-in slide-in-from-bottom-2 duration-500"
+        <AppCard
+          icon={TrendingUp}
+          iconColor="theme"
+          title="Top Performing Segments"
+          description="Segments with highest completion rates"
+          className="animate-in fade-in slide-in-from-bottom-2 duration-500"
           style={{ animationDelay: "0.7s", animationFillMode: "both" }}
         >
-          <div className="p-6 border-b border-border/50">
-            <h2 className="text-xl font-semibold mb-2 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-theme-500" />
-              Top Performing Segments
-            </h2>
-            <p className="text-muted-foreground text-sm">
-              Segments with highest completion rates
-            </p>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              {isLoading
-                ? [...Array(5)].map((_, idx) => <SegmentSkeleton key={idx} />)
-                : analytics?.topPerformingSegments.map((segment, index) => (
-                    <div
-                      key={segment.segmentId}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-theme-500/10 flex items-center justify-center">
-                          <span className="text-sm font-semibold text-theme-600 dark:text-theme-400">
-                            #{index + 1}
-                          </span>
-                        </div>
-                        <div>
-                          <Link
-                            to="/learn/$slug"
-                            params={{ slug: segment.segmentSlug }}
-                            className="font-medium text-foreground hover:text-theme-600 dark:hover:text-theme-400 transition-colors"
-                          >
-                            {segment.segmentTitle}
-                          </Link>
-                          <p className="text-sm text-muted-foreground">
-                            {segment.moduleTitle}
-                          </p>
-                        </div>
+          <div className="space-y-4">
+            {isLoading
+              ? [...Array(5)].map((_, idx) => <SegmentSkeleton key={idx} />)
+              : analytics?.topPerformingSegments.map((segment, index) => (
+                  <div
+                    key={segment.segmentId}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-theme-500/10 flex items-center justify-center">
+                        <span className="text-sm font-semibold text-theme-600 dark:text-theme-400">
+                          #{index + 1}
+                        </span>
                       </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-theme-600 dark:text-theme-400">
-                          {segment.completedCount}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          completions
-                        </div>
+                      <div>
+                        <Link
+                          to="/learn/$slug"
+                          params={{ slug: segment.segmentSlug }}
+                          className="font-medium text-foreground hover:text-theme-600 dark:hover:text-theme-400 transition-colors"
+                        >
+                          {segment.segmentTitle}
+                        </Link>
+                        <p className="text-sm text-muted-foreground">
+                          {segment.moduleTitle}
+                        </p>
                       </div>
                     </div>
-                  ))}
-            </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-theme-600 dark:text-theme-400">
+                        {segment.completedCount}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        completions
+                      </div>
+                    </div>
+                  </div>
+                ))}
           </div>
-        </div>
+        </AppCard>
 
         {/* Most Commented Segments */}
-        <div
-          className="module-card animate-in fade-in slide-in-from-bottom-2 duration-500"
+        <AppCard
+          icon={MessageSquare}
+          iconColor="orange"
+          title="Most Discussed Segments"
+          description="Segments generating the most engagement"
+          className="animate-in fade-in slide-in-from-bottom-2 duration-500"
           style={{ animationDelay: "0.8s", animationFillMode: "both" }}
         >
-          <div className="p-6 border-b border-border/50">
-            <h2 className="text-xl font-semibold mb-2 flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-orange-500" />
-              Most Discussed Segments
-            </h2>
-            <p className="text-muted-foreground text-sm">
-              Segments generating the most engagement
-            </p>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              {isLoading
-                ? [...Array(5)].map((_, idx) => <SegmentSkeleton key={idx} />)
-                : analytics?.mostCommentedSegments.map((segment, index) => (
-                    <div
-                      key={segment.segmentId}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center">
-                          <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">
-                            #{index + 1}
-                          </span>
-                        </div>
-                        <div>
-                          <Link
-                            to="/learn/$slug"
-                            params={{ slug: segment.segmentSlug }}
-                            className="font-medium text-foreground hover:text-theme-600 dark:hover:text-theme-400 transition-colors"
-                          >
-                            {segment.segmentTitle}
-                          </Link>
-                          <p className="text-sm text-muted-foreground">
-                            {segment.moduleTitle}
-                          </p>
-                        </div>
+          <div className="space-y-4">
+            {isLoading
+              ? [...Array(5)].map((_, idx) => <SegmentSkeleton key={idx} />)
+              : analytics?.mostCommentedSegments.map((segment, index) => (
+                  <div
+                    key={segment.segmentId}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center">
+                        <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">
+                          #{index + 1}
+                        </span>
                       </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-orange-600 dark:text-orange-400">
-                          {segment.commentCount}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          comments
-                        </div>
+                      <div>
+                        <Link
+                          to="/learn/$slug"
+                          params={{ slug: segment.segmentSlug }}
+                          className="font-medium text-foreground hover:text-theme-600 dark:hover:text-theme-400 transition-colors"
+                        >
+                          {segment.segmentTitle}
+                        </Link>
+                        <p className="text-sm text-muted-foreground">
+                          {segment.moduleTitle}
+                        </p>
                       </div>
                     </div>
-                  ))}
-            </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-orange-600 dark:text-orange-400">
+                        {segment.commentCount}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        comments
+                      </div>
+                    </div>
+                  </div>
+                ))}
           </div>
-        </div>
+        </AppCard>
       </div>
 
       {/* Module Filter */}
@@ -510,6 +444,6 @@ function AdminAnalytics() {
           </table>
         </div>
       </div>
-    </>
+    </Page>
   );
 }

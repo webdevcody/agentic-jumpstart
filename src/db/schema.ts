@@ -382,18 +382,12 @@ export const launchKits = tableCreator(
     repositoryUrl: text("repository_url").notNull(),
     demoUrl: text("demo_url"),
     imageUrl: text("image_url"),
-    difficulty: varchar("difficulty", { length: 50 }).notNull().default("beginner"), // beginner, intermediate, advanced
-    authorId: serial("author_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
     cloneCount: integer("clone_count").notNull().default(0),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => [
-    index("launch_kits_author_idx").on(table.authorId),
-    index("launch_kits_difficulty_idx").on(table.difficulty),
     index("launch_kits_active_idx").on(table.isActive),
     index("launch_kits_slug_idx").on(table.slug),
     index("launch_kits_created_idx").on(table.createdAt),
@@ -666,11 +660,7 @@ export const analyticsSessionsRelations = relations(
   })
 );
 
-export const launchKitsRelations = relations(launchKits, ({ one, many }) => ({
-  author: one(users, {
-    fields: [launchKits.authorId],
-    references: [users.id],
-  }),
+export const launchKitsRelations = relations(launchKits, ({ many }) => ({
   tags: many(launchKitTagRelations),
   comments: many(launchKitComments),
   analytics: many(launchKitAnalytics),

@@ -43,3 +43,13 @@ export async function isAgentsFeatureEnabled() {
   const setting = await getAppSetting(FLAGS.AGENTS_FEATURE);
   return setting?.value === "true";
 }
+
+export async function isLaunchKitsFeatureEnabled() {
+  const setting = await getAppSetting(FLAGS.LAUNCH_KITS_FEATURE);
+  return setting?.value === "true";
+}
+
+export async function isAffiliatesFeatureEnabled() {
+  const setting = await getAppSetting(FLAGS.AFFILIATES_FEATURE);
+  return setting?.value === "true";
+}

@@ -9,6 +9,7 @@ import {
   UserCheck,
   Settings,
   Rocket,
+  ExternalLink,
 } from "lucide-react";
 
 const navigation = [
@@ -73,6 +74,18 @@ export function AdminNav() {
             Admin Panel
           </h2>
           <div className="h-px bg-gradient-to-r from-theme-500/20 via-theme-400/30 to-transparent"></div>
+        </div>
+        
+        {/* View Site Link */}
+        <div className="mb-6">
+          <Link
+            to="/"
+            className="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group relative text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-border/40"
+          >
+            <ExternalLink className="mr-3 h-4 w-4 transition-colors duration-200 text-muted-foreground group-hover:text-theme-400" />
+            <span className="relative z-10">View Site</span>
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-theme-500 rounded-r-full transition-all duration-200 group-hover:h-6 opacity-0 group-hover:opacity-100"></div>
+          </Link>
         </div>
         
         <ul className="space-y-1">

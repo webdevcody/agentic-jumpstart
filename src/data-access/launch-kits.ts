@@ -32,7 +32,6 @@ function generateSlug(name: string): string {
 // Launch Kits
 export async function getAllLaunchKits(filters?: {
   tags?: string[];
-  difficulty?: string;
   search?: string;
 }) {
   let query = database
@@ -45,34 +44,41 @@ export async function getAllLaunchKits(filters?: {
       repositoryUrl: launchKits.repositoryUrl,
       demoUrl: launchKits.demoUrl,
       imageUrl: launchKits.imageUrl,
-      difficulty: launchKits.difficulty,
       cloneCount: launchKits.cloneCount,
       createdAt: launchKits.createdAt,
-      authorName: users.email,
     })
-    .from(launchKits)
-    .leftJoin(users, eq(launchKits.authorId, users.id))
-    .where(eq(launchKits.isActive, true));
+    .from(launchKits);
+
+  let whereConditions = [eq(launchKits.isActive, true)];
 
   if (filters?.search) {
-    query = query.where(
-      and(
-        eq(launchKits.isActive, true),
-        like(launchKits.name, `%${filters.search}%`)
-      )
-    );
+    whereConditions.push(like(launchKits.name, `%${filters.search}%`));
   }
 
-  if (filters?.difficulty) {
-    query = query.where(
-      and(
-        eq(launchKits.isActive, true),
-        eq(launchKits.difficulty, filters.difficulty)
-      )
-    );
+  if (filters?.tags && filters.tags.length > 0) {
+    // Filter by tags - kit must have at least one of the selected tags
+    const tagConditions = database
+      .select({ launchKitId: launchKitTagRelations.launchKitId })
+      .from(launchKitTagRelations)
+      .innerJoin(launchKitTags, eq(launchKitTagRelations.tagId, launchKitTags.id))
+      .where(inArray(launchKitTags.slug, filters.tags));
+
+    whereConditions.push(inArray(launchKits.id, tagConditions));
   }
 
-  return query.orderBy(desc(launchKits.createdAt));
+  query = query.where(and(...whereConditions));
+
+  const kits = await query.orderBy(desc(launchKits.createdAt));
+
+  // Get tags for each kit
+  const kitsWithTags = await Promise.all(
+    kits.map(async (kit) => {
+      const tags = await getLaunchKitTags(kit.id);
+      return { ...kit, tags };
+    })
+  );
+
+  return kitsWithTags;
 }
 
 export async function getLaunchKitBySlug(slug: string) {
@@ -86,14 +92,11 @@ export async function getLaunchKitBySlug(slug: string) {
       repositoryUrl: launchKits.repositoryUrl,
       demoUrl: launchKits.demoUrl,
       imageUrl: launchKits.imageUrl,
-      difficulty: launchKits.difficulty,
       cloneCount: launchKits.cloneCount,
       createdAt: launchKits.createdAt,
       updatedAt: launchKits.updatedAt,
-      authorName: users.email,
     })
     .from(launchKits)
-    .leftJoin(users, eq(launchKits.authorId, users.id))
     .where(and(eq(launchKits.slug, slug), eq(launchKits.isActive, true)))
     .limit(1);
   return result[0];
@@ -165,10 +168,21 @@ export async function getAllTags() {
 }
 
 export async function getTagsByCategory() {
-  return database
+  const tags = await database
     .select()
     .from(launchKitTags)
     .orderBy(asc(launchKitTags.category), asc(launchKitTags.name));
+
+  // Group tags by category
+  const groupedTags = tags.reduce((acc, tag) => {
+    if (!acc[tag.category]) {
+      acc[tag.category] = [];
+    }
+    acc[tag.category].push(tag);
+    return acc;
+  }, {} as Record<string, typeof tags>);
+
+  return groupedTags;
 }
 
 export async function createTag(data: Omit<LaunchKitTagCreate, 'slug'> & { name: string }) {
@@ -179,6 +193,14 @@ export async function createTag(data: Omit<LaunchKitTagCreate, 'slug'> & { name:
       ...data,
       slug,
     })
+    .returning();
+  return result[0];
+}
+
+export async function deleteTag(id: number) {
+  const result = await database
+    .delete(launchKitTags)
+    .where(eq(launchKitTags.id, id))
     .returning();
   return result[0];
 }

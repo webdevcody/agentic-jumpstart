@@ -17,6 +17,45 @@ async function main() {
 
   console.log(`Seeded EARLY_ACCESS_MODE with value: ${earlyAccessMode}`);
 
+  // Seed agents feature flag
+  const agentsFeature = "true";
+  await database
+    .insert(appSettings)
+    .values({
+      key: FLAGS.AGENTS_FEATURE,
+      value: agentsFeature,
+      updatedAt: new Date(),
+    })
+    .onConflictDoNothing();
+
+  console.log(`Seeded AGENTS_FEATURE with value: ${agentsFeature}`);
+
+  // Seed launch kits feature flag
+  const launchKitsFeature = "true";
+  await database
+    .insert(appSettings)
+    .values({
+      key: FLAGS.LAUNCH_KITS_FEATURE,
+      value: launchKitsFeature,
+      updatedAt: new Date(),
+    })
+    .onConflictDoNothing();
+
+  console.log(`Seeded LAUNCH_KITS_FEATURE with value: ${launchKitsFeature}`);
+
+  // Seed affiliates feature flag
+  const affiliatesFeature = "true";
+  await database
+    .insert(appSettings)
+    .values({
+      key: FLAGS.AFFILIATES_FEATURE,
+      value: affiliatesFeature,
+      updatedAt: new Date(),
+    })
+    .onConflictDoNothing();
+
+  console.log(`Seeded AFFILIATES_FEATURE with value: ${affiliatesFeature}`);
+
   const moduleData = [
     {
       title: "Getting Started",

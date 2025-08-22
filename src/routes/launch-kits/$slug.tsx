@@ -118,14 +118,6 @@ function LaunchKitDetailPage() {
     });
   };
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'beginner': return 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-200';
-      case 'intermediate': return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-200';
-      case 'advanced': return 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-200';
-      default: return 'bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-200';
-    }
-  };
 
   if (isLoading || !launchKit) {
     return (
@@ -160,9 +152,6 @@ function LaunchKitDetailPage() {
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">
                   <CardTitle className="text-3xl">{launchKit.name}</CardTitle>
-                  <Badge className={`${getDifficultyColor(launchKit.difficulty)} border`}>
-                    {launchKit.difficulty}
-                  </Badge>
                 </div>
                 <CardDescription className="text-lg leading-relaxed mb-4">
                   {launchKit.description}
@@ -170,10 +159,6 @@ function LaunchKitDetailPage() {
                 
                 {/* Meta Info */}
                 <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <User className="h-4 w-4" />
-                    {launchKit.authorName}
-                  </span>
                   <span className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
                     {new Date(launchKit.createdAt).toLocaleDateString()}

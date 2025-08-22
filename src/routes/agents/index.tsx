@@ -65,7 +65,7 @@ function AgentsListPage() {
             {isAuthenticated && (
               <Link to="/agents/new">
                 <Button size="lg">
-                  <Plus className="mr-1 h-5 w-5" />
+                  <Plus className="h-5 w-5" />
                   Upload Agent
                 </Button>
               </Link>

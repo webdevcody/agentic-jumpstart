@@ -40,7 +40,7 @@ import { useAuth } from "~/hooks/use-auth";
 import { ModeToggle } from "~/components/ModeToggle";
 import { useQuery } from "@tanstack/react-query";
 import { checkIfUserIsAffiliateFn } from "~/fn/affiliates";
-import { getAgentsFeatureEnabledFn } from "~/fn/app-settings";
+import { getAgentsFeatureEnabledFn, getAffiliatesFeatureEnabledFn, getLaunchKitsFeatureEnabledFn } from "~/fn/app-settings";
 
 interface NavLink {
   to: string;
@@ -55,6 +55,8 @@ interface NavLink {
     continueSlug: string | null;
     affiliateStatus?: { isAffiliate: boolean };
     agentsFeatureEnabled?: boolean;
+    affiliatesFeatureEnabled?: boolean;
+    launchKitsFeatureEnabled?: boolean;
   }) => boolean;
   params?: any;
   priority?: "primary" | "secondary";
@@ -97,6 +99,7 @@ const NAVIGATION_LINKS: NavLink[] = [
       className:
         "ml-2 px-1.5 py-0.5 text-xs bg-theme-500/20 text-theme-600 dark:text-theme-400 rounded-md font-medium",
     },
+    condition: ({ launchKitsFeatureEnabled }) => !!launchKitsFeatureEnabled,
     priority: "primary",
   },
   {
@@ -126,15 +129,15 @@ const NAVIGATION_LINKS: NavLink[] = [
     to: "/affiliates",
     label: "Affiliate Program",
     icon: DollarSign,
-    condition: ({ user }) => !user,
+    condition: ({ user, affiliatesFeatureEnabled }) => !user && !!affiliatesFeatureEnabled,
     priority: "secondary",
   },
   {
     to: "/affiliates",
     label: "Become an Affiliate",
     icon: DollarSign,
-    condition: ({ user, affiliateStatus }) =>
-      user && !user.isAdmin && !affiliateStatus?.isAffiliate,
+    condition: ({ user, affiliateStatus, affiliatesFeatureEnabled }) =>
+      user && !user.isAdmin && !affiliateStatus?.isAffiliate && !!affiliatesFeatureEnabled,
     priority: "secondary",
   },
 ];
@@ -153,6 +156,8 @@ function getFilteredNavLinks(data: {
   continueSlug: string | null;
   affiliateStatus?: { isAffiliate: boolean };
   agentsFeatureEnabled?: boolean;
+  affiliatesFeatureEnabled?: boolean;
+  launchKitsFeatureEnabled?: boolean;
 }) {
   return NAVIGATION_LINKS.filter(
     (link) => !link.condition || link.condition(data)
@@ -329,11 +334,25 @@ export function Header() {
     queryFn: () => getAgentsFeatureEnabledFn(),
   });
 
+  // Check if affiliates feature is enabled
+  const { data: affiliatesFeatureEnabled } = useQuery({
+    queryKey: ["affiliatesFeatureEnabled"],
+    queryFn: () => getAffiliatesFeatureEnabledFn(),
+  });
+
+  // Check if launch kits feature is enabled
+  const { data: launchKitsFeatureEnabled } = useQuery({
+    queryKey: ["launchKitsFeatureEnabled"],
+    queryFn: () => getLaunchKitsFeatureEnabledFn(),
+  });
+
   const navData = {
     user,
     continueSlug,
     affiliateStatus,
     agentsFeatureEnabled,
+    affiliatesFeatureEnabled,
+    launchKitsFeatureEnabled,
   };
 
   const filteredNavLinks = getFilteredNavLinks(navData);

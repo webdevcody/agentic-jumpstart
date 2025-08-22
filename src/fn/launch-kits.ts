@@ -9,10 +9,13 @@ import {
   updateLaunchKitUseCase,
   deleteLaunchKitUseCase,
   getAllLaunchKitsUseCase,
+  getLaunchKitByIdUseCase,
   getLaunchKitBySlugUseCase,
   cloneLaunchKitUseCase,
   createTagUseCase,
   getAllTagsUseCase,
+  getTagsByCategoryUseCase,
+  deleteTagUseCase,
   getLaunchKitCommentsUseCase,
   createLaunchKitCommentUseCase,
   updateLaunchKitCommentUseCase,
@@ -32,7 +35,6 @@ export const getAllLaunchKitsFn = createServerFn({
   .middleware([unauthenticatedMiddleware])
   .validator((data: {
     tags?: string[];
-    difficulty?: string;
     search?: string;
   }) => data)
   .handler(async ({ data }) => {
@@ -46,6 +48,15 @@ export const getLaunchKitBySlugFn = createServerFn({
   .validator((data: { slug: string }) => data)
   .handler(async ({ data }) => {
     return getLaunchKitBySlugUseCase(data.slug);
+  });
+
+export const getLaunchKitByIdFn = createServerFn({
+  method: "POST",
+})
+  .middleware([adminMiddleware])
+  .validator((data: { id: number }) => data)
+  .handler(async ({ data }) => {
+    return getLaunchKitByIdUseCase(data.id);
   });
 
 export const trackLaunchKitViewFn = createServerFn({
@@ -118,6 +129,23 @@ export const getAllTagsFn = createServerFn({
   .middleware([unauthenticatedMiddleware])
   .handler(async () => {
     return getAllTagsUseCase();
+  });
+
+export const getTagsByCategoryFn = createServerFn({
+  method: "GET",
+})
+  .middleware([unauthenticatedMiddleware])
+  .handler(async () => {
+    return getTagsByCategoryUseCase();
+  });
+
+export const deleteTagFn = createServerFn({
+  method: "POST",
+})
+  .middleware([adminMiddleware])
+  .validator((data: { id: number }) => data)
+  .handler(async ({ data, context }) => {
+    return deleteTagUseCase(context.userId, data.id);
   });
 
 // Comments

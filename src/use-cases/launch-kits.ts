@@ -7,7 +7,9 @@ import {
   updateLaunchKit,
   incrementCloneCount,
   getAllTags,
+  getTagsByCategory,
   createTag,
+  deleteTag,
   getLaunchKitTags,
   setLaunchKitTags,
   getLaunchKitComments,
@@ -28,7 +30,6 @@ export type CreateLaunchKitInput = {
   repositoryUrl: string;
   demoUrl?: string;
   imageUrl?: string;
-  difficulty: "beginner" | "intermediate" | "advanced";
   tagIds?: number[];
 };
 
@@ -73,10 +74,6 @@ export async function createLaunchKitUseCase(
     throw new PublicError("Demo URL must be a valid URL");
   }
 
-  if (!["beginner", "intermediate", "advanced"].includes(data.difficulty)) {
-    throw new PublicError("Invalid difficulty level");
-  }
-
   // Create launch kit
   const launchKit = await createLaunchKit({
     name: data.name,
@@ -85,8 +82,6 @@ export async function createLaunchKitUseCase(
     repositoryUrl: data.repositoryUrl,
     demoUrl: data.demoUrl,
     imageUrl: data.imageUrl,
-    difficulty: data.difficulty,
-    authorId: userId,
   });
 
   // Set tags if provided
@@ -131,10 +126,6 @@ export async function updateLaunchKitUseCase(
     throw new PublicError("Demo URL must be a valid URL");
   }
 
-  if (data.difficulty !== undefined && !["beginner", "intermediate", "advanced"].includes(data.difficulty)) {
-    throw new PublicError("Invalid difficulty level");
-  }
-
   // Update launch kit
   const updatedLaunchKit = await updateLaunchKit(launchKitId, data);
 
@@ -165,10 +156,24 @@ export async function deleteLaunchKitUseCase(userId: UserId, launchKitId: number
 // Public Launch Kit Access
 export async function getAllLaunchKitsUseCase(filters?: {
   tags?: string[];
-  difficulty?: string;
   search?: string;
 }) {
   return getAllLaunchKits(filters);
+}
+
+export async function getLaunchKitByIdUseCase(id: number) {
+  const launchKit = await getLaunchKitById(id);
+  if (!launchKit) {
+    throw new PublicError("Launch kit not found");
+  }
+
+  // Get tags for the launch kit
+  const tags = await getLaunchKitTags(launchKit.id);
+
+  return {
+    ...launchKit,
+    tags,
+  };
 }
 
 export async function getLaunchKitBySlugUseCase(slug: string) {
@@ -238,6 +243,20 @@ export async function createTagUseCase(userId: UserId, data: CreateTagInput) {
 
 export async function getAllTagsUseCase() {
   return getAllTags();
+}
+
+export async function getTagsByCategoryUseCase() {
+  return getTagsByCategory();
+}
+
+export async function deleteTagUseCase(userId: UserId, tagId: number) {
+  // Validate user is admin
+  const user = await getUser(userId);
+  if (!user?.isAdmin) {
+    throw new PublicError("Only admins can delete tags");
+  }
+
+  return deleteTag(tagId);
 }
 
 // Comments
