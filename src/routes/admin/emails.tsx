@@ -58,6 +58,7 @@ import {
   getUsersForEmailingFn,
 } from "~/fn/emails";
 import { PageHeader } from "./-components/page-header";
+import { Page } from "./-components/page";
 
 // Skeleton components
 function CountSkeleton() {
@@ -369,7 +370,7 @@ function AdminEmailsPage() {
   };
 
   return (
-    <>
+    <Page>
       <PageHeader
         title="Email Composer"
         highlightedWord="Composer"
@@ -964,6 +965,6 @@ function AdminEmailsPage() {
           </Form>
         </DialogContent>
       </Dialog>
-    </>
+    </Page>
   );
 }

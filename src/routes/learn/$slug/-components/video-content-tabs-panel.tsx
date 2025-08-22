@@ -19,7 +19,9 @@ export function VideoContentTabsPanel({
   defaultTab,
   commentId,
 }: VideoContentTabsPanelProps) {
-  const [activeTab, setActiveTab] = useState<"content" | "transcripts" | "comments">(defaultTab || "content");
+  const [activeTab, setActiveTab] = useState<
+    "content" | "transcripts" | "comments"
+  >(defaultTab || "comments");
 
   // Set active tab when defaultTab changes (from URL params)
   useEffect(() => {
@@ -32,6 +34,18 @@ export function VideoContentTabsPanel({
     <div className="module-card overflow-hidden">
       {/* Tab Headers */}
       <div className="flex border-b border-gray-200 dark:border-gray-700">
+        <button
+          onClick={() => setActiveTab("comments")}
+          className={cn(
+            "flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 border-b-2 cursor-pointer",
+            activeTab === "comments"
+              ? "border-theme-500 text-theme-600 dark:text-theme-400 bg-theme-50 dark:bg-theme-950/30"
+              : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          )}
+        >
+          <MessageSquare className="h-4 w-4" />
+          Discussion
+        </button>
         <button
           onClick={() => setActiveTab("content")}
           className={cn(
@@ -55,18 +69,6 @@ export function VideoContentTabsPanel({
         >
           <FileText className="h-4 w-4" />
           Transcripts
-        </button>
-        <button
-          onClick={() => setActiveTab("comments")}
-          className={cn(
-            "flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 border-b-2 cursor-pointer",
-            activeTab === "comments"
-              ? "border-theme-500 text-theme-600 dark:text-theme-400 bg-theme-50 dark:bg-theme-950/30"
-              : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
-          )}
-        >
-          <MessageSquare className="h-4 w-4" />
-          Discussion
         </button>
       </div>
 

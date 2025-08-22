@@ -30,11 +30,13 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LearnIndexRouteImport } from './routes/learn/index'
+import { Route as LaunchKitsIndexRouteImport } from './routes/launch-kits/index'
 import { Route as AgentsIndexRouteImport } from './routes/agents/index'
 import { Route as LearnNotFoundRouteImport } from './routes/learn/not-found'
 import { Route as LearnNoSegmentsRouteImport } from './routes/learn/no-segments'
 import { Route as LearnCourseCompletedRouteImport } from './routes/learn/course-completed'
 import { Route as LearnAddRouteImport } from './routes/learn/add'
+import { Route as LaunchKitsSlugRouteImport } from './routes/launch-kits/$slug'
 import { Route as AgentsNewRouteImport } from './routes/agents/new'
 import { Route as AgentsSlugRouteImport } from './routes/agents/$slug'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
@@ -43,9 +45,12 @@ import { Route as AdminConversionsRouteImport } from './routes/admin/conversions
 import { Route as AdminCommentsRouteImport } from './routes/admin/comments'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AdminAffiliatesRouteImport } from './routes/admin/affiliates'
+import { Route as AdminLaunchKitsIndexRouteImport } from './routes/admin/launch-kits/index'
 import { Route as LearnSlugEditRouteImport } from './routes/learn/$slug/edit'
 import { Route as LearnSlugLayoutRouteImport } from './routes/learn/$slug/_layout'
 import { Route as LearnSlugLayoutIndexRouteImport } from './routes/learn/$slug/_layout.index'
+import { Route as AdminLaunchKitsCreateIndexRouteImport } from './routes/admin/launch-kits/create/index'
+import { Route as AdminLaunchKitsEditIdRouteImport } from './routes/admin/launch-kits/edit/$id'
 import { ServerRoute as ApiLogoutServerRouteImport } from './routes/api/logout'
 import { ServerRoute as ApiStripeWebhookServerRouteImport } from './routes/api/stripe/webhook'
 import { ServerRoute as ApiLoginGoogleIndexServerRouteImport } from './routes/api/login/google/index'
@@ -150,6 +155,11 @@ const LearnIndexRoute = LearnIndexRouteImport.update({
   path: '/learn/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LaunchKitsIndexRoute = LaunchKitsIndexRouteImport.update({
+  id: '/launch-kits/',
+  path: '/launch-kits/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AgentsIndexRoute = AgentsIndexRouteImport.update({
   id: '/agents/',
   path: '/agents/',
@@ -173,6 +183,11 @@ const LearnCourseCompletedRoute = LearnCourseCompletedRouteImport.update({
 const LearnAddRoute = LearnAddRouteImport.update({
   id: '/learn/add',
   path: '/learn/add',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LaunchKitsSlugRoute = LaunchKitsSlugRouteImport.update({
+  id: '/launch-kits/$slug',
+  path: '/launch-kits/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AgentsNewRoute = AgentsNewRouteImport.update({
@@ -215,6 +230,11 @@ const AdminAffiliatesRoute = AdminAffiliatesRouteImport.update({
   path: '/affiliates',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminLaunchKitsIndexRoute = AdminLaunchKitsIndexRouteImport.update({
+  id: '/launch-kits/',
+  path: '/launch-kits/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const LearnSlugEditRoute = LearnSlugEditRouteImport.update({
   id: '/edit',
   path: '/edit',
@@ -228,6 +248,17 @@ const LearnSlugLayoutIndexRoute = LearnSlugLayoutIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => LearnSlugLayoutRoute,
+} as any)
+const AdminLaunchKitsCreateIndexRoute =
+  AdminLaunchKitsCreateIndexRouteImport.update({
+    id: '/launch-kits/create/',
+    path: '/launch-kits/create/',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
+const AdminLaunchKitsEditIdRoute = AdminLaunchKitsEditIdRouteImport.update({
+  id: '/launch-kits/edit/$id',
+  path: '/launch-kits/edit/$id',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const ApiLogoutServerRoute = ApiLogoutServerRouteImport.update({
   id: '/api/logout',
@@ -284,14 +315,19 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/agents/$slug': typeof AgentsSlugRoute
   '/agents/new': typeof AgentsNewRoute
+  '/launch-kits/$slug': typeof LaunchKitsSlugRoute
   '/learn/add': typeof LearnAddRoute
   '/learn/course-completed': typeof LearnCourseCompletedRoute
   '/learn/no-segments': typeof LearnNoSegmentsRoute
   '/learn/not-found': typeof LearnNotFoundRoute
   '/agents': typeof AgentsIndexRoute
+  '/launch-kits': typeof LaunchKitsIndexRoute
   '/learn': typeof LearnIndexRoute
   '/learn/$slug': typeof LearnSlugLayoutRouteWithChildren
   '/learn/$slug/edit': typeof LearnSlugEditRoute
+  '/admin/launch-kits': typeof AdminLaunchKitsIndexRoute
+  '/admin/launch-kits/edit/$id': typeof AdminLaunchKitsEditIdRoute
+  '/admin/launch-kits/create': typeof AdminLaunchKitsCreateIndexRoute
   '/learn/$slug/': typeof LearnSlugLayoutIndexRoute
 }
 export interface FileRoutesByTo {
@@ -320,14 +356,19 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/agents/$slug': typeof AgentsSlugRoute
   '/agents/new': typeof AgentsNewRoute
+  '/launch-kits/$slug': typeof LaunchKitsSlugRoute
   '/learn/add': typeof LearnAddRoute
   '/learn/course-completed': typeof LearnCourseCompletedRoute
   '/learn/no-segments': typeof LearnNoSegmentsRoute
   '/learn/not-found': typeof LearnNotFoundRoute
   '/agents': typeof AgentsIndexRoute
+  '/launch-kits': typeof LaunchKitsIndexRoute
   '/learn': typeof LearnIndexRoute
   '/learn/$slug': typeof LearnSlugLayoutIndexRoute
   '/learn/$slug/edit': typeof LearnSlugEditRoute
+  '/admin/launch-kits': typeof AdminLaunchKitsIndexRoute
+  '/admin/launch-kits/edit/$id': typeof AdminLaunchKitsEditIdRoute
+  '/admin/launch-kits/create': typeof AdminLaunchKitsCreateIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -356,15 +397,20 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/agents/$slug': typeof AgentsSlugRoute
   '/agents/new': typeof AgentsNewRoute
+  '/launch-kits/$slug': typeof LaunchKitsSlugRoute
   '/learn/add': typeof LearnAddRoute
   '/learn/course-completed': typeof LearnCourseCompletedRoute
   '/learn/no-segments': typeof LearnNoSegmentsRoute
   '/learn/not-found': typeof LearnNotFoundRoute
   '/agents/': typeof AgentsIndexRoute
+  '/launch-kits/': typeof LaunchKitsIndexRoute
   '/learn/': typeof LearnIndexRoute
   '/learn/$slug': typeof LearnSlugRouteWithChildren
   '/learn/$slug/_layout': typeof LearnSlugLayoutRouteWithChildren
   '/learn/$slug/edit': typeof LearnSlugEditRoute
+  '/admin/launch-kits/': typeof AdminLaunchKitsIndexRoute
+  '/admin/launch-kits/edit/$id': typeof AdminLaunchKitsEditIdRoute
+  '/admin/launch-kits/create/': typeof AdminLaunchKitsCreateIndexRoute
   '/learn/$slug/_layout/': typeof LearnSlugLayoutIndexRoute
 }
 export interface FileRouteTypes {
@@ -395,14 +441,19 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/agents/$slug'
     | '/agents/new'
+    | '/launch-kits/$slug'
     | '/learn/add'
     | '/learn/course-completed'
     | '/learn/no-segments'
     | '/learn/not-found'
     | '/agents'
+    | '/launch-kits'
     | '/learn'
     | '/learn/$slug'
     | '/learn/$slug/edit'
+    | '/admin/launch-kits'
+    | '/admin/launch-kits/edit/$id'
+    | '/admin/launch-kits/create'
     | '/learn/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -431,14 +482,19 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/agents/$slug'
     | '/agents/new'
+    | '/launch-kits/$slug'
     | '/learn/add'
     | '/learn/course-completed'
     | '/learn/no-segments'
     | '/learn/not-found'
     | '/agents'
+    | '/launch-kits'
     | '/learn'
     | '/learn/$slug'
     | '/learn/$slug/edit'
+    | '/admin/launch-kits'
+    | '/admin/launch-kits/edit/$id'
+    | '/admin/launch-kits/create'
   id:
     | '__root__'
     | '/'
@@ -466,15 +522,20 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/agents/$slug'
     | '/agents/new'
+    | '/launch-kits/$slug'
     | '/learn/add'
     | '/learn/course-completed'
     | '/learn/no-segments'
     | '/learn/not-found'
     | '/agents/'
+    | '/launch-kits/'
     | '/learn/'
     | '/learn/$slug'
     | '/learn/$slug/_layout'
     | '/learn/$slug/edit'
+    | '/admin/launch-kits/'
+    | '/admin/launch-kits/edit/$id'
+    | '/admin/launch-kits/create/'
     | '/learn/$slug/_layout/'
   fileRoutesById: FileRoutesById
 }
@@ -498,11 +559,13 @@ export interface RootRouteChildren {
   UnsubscribeRoute: typeof UnsubscribeRoute
   AgentsSlugRoute: typeof AgentsSlugRoute
   AgentsNewRoute: typeof AgentsNewRoute
+  LaunchKitsSlugRoute: typeof LaunchKitsSlugRoute
   LearnAddRoute: typeof LearnAddRoute
   LearnCourseCompletedRoute: typeof LearnCourseCompletedRoute
   LearnNoSegmentsRoute: typeof LearnNoSegmentsRoute
   LearnNotFoundRoute: typeof LearnNotFoundRoute
   AgentsIndexRoute: typeof AgentsIndexRoute
+  LaunchKitsIndexRoute: typeof LaunchKitsIndexRoute
   LearnIndexRoute: typeof LearnIndexRoute
   LearnSlugRoute: typeof LearnSlugRouteWithChildren
 }
@@ -695,6 +758,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LearnIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/launch-kits/': {
+      id: '/launch-kits/'
+      path: '/launch-kits'
+      fullPath: '/launch-kits'
+      preLoaderRoute: typeof LaunchKitsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/agents/': {
       id: '/agents/'
       path: '/agents'
@@ -728,6 +798,13 @@ declare module '@tanstack/react-router' {
       path: '/learn/add'
       fullPath: '/learn/add'
       preLoaderRoute: typeof LearnAddRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/launch-kits/$slug': {
+      id: '/launch-kits/$slug'
+      path: '/launch-kits/$slug'
+      fullPath: '/launch-kits/$slug'
+      preLoaderRoute: typeof LaunchKitsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/agents/new': {
@@ -786,6 +863,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAffiliatesRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/launch-kits/': {
+      id: '/admin/launch-kits/'
+      path: '/launch-kits'
+      fullPath: '/admin/launch-kits'
+      preLoaderRoute: typeof AdminLaunchKitsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/learn/$slug/edit': {
       id: '/learn/$slug/edit'
       path: '/edit'
@@ -806,6 +890,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/learn/$slug/'
       preLoaderRoute: typeof LearnSlugLayoutIndexRouteImport
       parentRoute: typeof LearnSlugLayoutRoute
+    }
+    '/admin/launch-kits/create/': {
+      id: '/admin/launch-kits/create/'
+      path: '/launch-kits/create'
+      fullPath: '/admin/launch-kits/create'
+      preLoaderRoute: typeof AdminLaunchKitsCreateIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/launch-kits/edit/$id': {
+      id: '/admin/launch-kits/edit/$id'
+      path: '/launch-kits/edit/$id'
+      fullPath: '/admin/launch-kits/edit/$id'
+      preLoaderRoute: typeof AdminLaunchKitsEditIdRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
   }
 }
@@ -856,6 +954,9 @@ interface AdminRouteRouteChildren {
   AdminConversionsRoute: typeof AdminConversionsRoute
   AdminEmailsRoute: typeof AdminEmailsRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminLaunchKitsIndexRoute: typeof AdminLaunchKitsIndexRoute
+  AdminLaunchKitsEditIdRoute: typeof AdminLaunchKitsEditIdRoute
+  AdminLaunchKitsCreateIndexRoute: typeof AdminLaunchKitsCreateIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
@@ -865,6 +966,9 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminConversionsRoute: AdminConversionsRoute,
   AdminEmailsRoute: AdminEmailsRoute,
   AdminSettingsRoute: AdminSettingsRoute,
+  AdminLaunchKitsIndexRoute: AdminLaunchKitsIndexRoute,
+  AdminLaunchKitsEditIdRoute: AdminLaunchKitsEditIdRoute,
+  AdminLaunchKitsCreateIndexRoute: AdminLaunchKitsCreateIndexRoute,
 }
 
 const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
@@ -917,11 +1021,13 @@ const rootRouteChildren: RootRouteChildren = {
   UnsubscribeRoute: UnsubscribeRoute,
   AgentsSlugRoute: AgentsSlugRoute,
   AgentsNewRoute: AgentsNewRoute,
+  LaunchKitsSlugRoute: LaunchKitsSlugRoute,
   LearnAddRoute: LearnAddRoute,
   LearnCourseCompletedRoute: LearnCourseCompletedRoute,
   LearnNoSegmentsRoute: LearnNoSegmentsRoute,
   LearnNotFoundRoute: LearnNotFoundRoute,
   AgentsIndexRoute: AgentsIndexRoute,
+  LaunchKitsIndexRoute: LaunchKitsIndexRoute,
   LearnIndexRoute: LearnIndexRoute,
   LearnSlugRoute: LearnSlugRouteWithChildren,
 }

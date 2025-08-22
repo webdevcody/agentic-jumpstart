@@ -47,7 +47,7 @@ function CreateAgentPage() {
   return (
     <Page>
       <PageHeader
-        title="Create New Agent"
+        title="Upload New Agent"
         highlightedWord="New"
         description="Share your agents, command, or hook with the community."
       />
