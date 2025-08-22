@@ -5,6 +5,7 @@ import {
   deleteBlogPostUseCase,
   getBlogPostBySlugUseCase,
   getBlogPostsUseCase,
+  getBlogPostByIdUseCase,
   getPublishedBlogPostsUseCase,
   updateBlogPostUseCase,
   trackBlogPostViewUseCase,
@@ -38,6 +39,15 @@ export const getBlogPostsFn = createServerFn({
   .validator((data: BlogPostFilters) => data)
   .handler(async ({ data }: { data: BlogPostFilters }) => {
     return getBlogPostsUseCase(data);
+  });
+
+export const getBlogPostByIdFn = createServerFn({
+  method: "POST",
+})
+  .middleware([adminMiddleware])
+  .validator((data: { id: number }) => data)
+  .handler(async ({ data }: { data: { id: number } }) => {
+    return getBlogPostByIdUseCase(data.id);
   });
 
 export const createBlogPostFn = createServerFn({

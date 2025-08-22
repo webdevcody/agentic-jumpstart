@@ -22,7 +22,10 @@ export type CreateBlogPostInput = {
   tags?: string[];
 };
 
-export type UpdateBlogPostInput = Partial<CreateBlogPostInput>;
+export type UpdateBlogPostInput = Partial<CreateBlogPostInput> & {
+  tags?: string[] | string;
+  publishedAt?: Date;
+};
 
 export { type BlogPostFilters };
 
@@ -48,6 +51,14 @@ export async function getBlogPostsUseCase(filters: BlogPostFilters = {}) {
   return getBlogPosts(filters);
 }
 
+export async function getBlogPostByIdUseCase(id: number) {
+  const blogPost = await getBlogPostById(id);
+  if (!blogPost) {
+    throw new PublicError("Blog post not found");
+  }
+  return blogPost;
+}
+
 export async function createBlogPostUseCase(
   userId: UserId,
   data: CreateBlogPostInput
@@ -63,7 +74,7 @@ export async function createBlogPostUseCase(
   }
 
   // Parse tags if provided
-  const tagsString = data.tags && data.tags.length > 0 
+  const tagsString = data.tags && Array.isArray(data.tags) && data.tags.length > 0 
     ? JSON.stringify(data.tags) 
     : null;
 
@@ -105,8 +116,14 @@ export async function updateBlogPostUseCase(
 
   // Parse tags if provided
   const updateData = { ...data };
-  if (data.tags) {
-    updateData.tags = JSON.stringify(data.tags);
+  if (data.tags !== undefined) {
+    // Handle both array and string inputs for tags
+    if (Array.isArray(data.tags)) {
+      updateData.tags = data.tags.length > 0 ? JSON.stringify(data.tags) : null;
+    } else if (typeof data.tags === 'string') {
+      // If it's already a string, use it as is (could be JSON or empty)
+      updateData.tags = data.tags || null;
+    }
   }
 
   // If publishing for the first time, set publishedAt

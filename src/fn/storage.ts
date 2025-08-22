@@ -16,3 +16,30 @@ export const getPresignedUploadUrlFn = createServerFn({ method: "POST" })
 
     return { presignedUrl, videoKey: data.videoKey };
   });
+
+export const getPresignedImageUploadUrlFn = createServerFn({ method: "POST" })
+  .middleware([adminMiddleware])
+  .validator(
+    z.object({
+      imageKey: z.string(),
+    })
+  )
+  .handler(async ({ data }) => {
+    const { storage } = getStorage();
+    const presignedUrl = await storage.getPresignedUploadUrl(data.imageKey);
+
+    return { presignedUrl, imageKey: data.imageKey };
+  });
+
+export const getImageUrlFn = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      imageKey: z.string(),
+    })
+  )
+  .handler(async ({ data }) => {
+    const { storage } = getStorage();
+    const imageUrl = await storage.getPresignedUrl(data.imageKey);
+
+    return { imageUrl };
+  });

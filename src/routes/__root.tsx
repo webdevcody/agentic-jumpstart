@@ -19,10 +19,9 @@ import { Header } from "~/routes/-components/header";
 import { FooterSection } from "~/routes/-components/footer";
 import { ThemeProvider } from "~/components/ThemeProvider";
 import { ThemeToggle } from "~/components/theme-toggle";
-import { Toaster } from "~/components/ui/toaster";
+import { Toaster } from "sonner";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
-import { env } from "~/utils/env";
 import { shouldShowEarlyAccessFn } from "~/fn/early-access";
 import { useAnalytics } from "~/hooks/use-analytics";
 

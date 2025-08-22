@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -8,12 +8,29 @@ import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { AppCard } from "~/components/app-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Badge } from "~/components/ui/badge";
-import { X, Eye, Save, Send } from "lucide-react";
+import {
+  X,
+  Save,
+  Send,
+  FileText,
+  Settings,
+  Image,
+  Tags,
+  Upload,
+  Trash2,
+} from "lucide-react";
 import { cn } from "~/lib/utils";
 import { MarkdownRenderer } from "~/components/markdown-renderer";
+import { toast } from "sonner";
+import { useDropzone } from "react-dropzone";
+import {
+  uploadImageWithPresignedUrl,
+  type UploadProgress,
+} from "~/utils/storage/helpers";
+import { generateRandomUUID } from "~/utils/uuid";
 
 type BlogPostFormData = {
   title: string;
@@ -22,6 +39,7 @@ type BlogPostFormData = {
   isPublished: boolean;
   featuredImage: string;
   tags: string;
+  image?: File;
 };
 
 type BlogPost = {
@@ -47,7 +65,12 @@ export function BlogPostForm({ blogPost }: BlogPostFormProps) {
   const [tags, setTags] = useState<string[]>(
     blogPost?.tags ? JSON.parse(blogPost.tags) : []
   );
-  
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(
+    null
+  );
+  const [isUploading, setIsUploading] = useState(false);
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -56,6 +79,7 @@ export function BlogPostForm({ blogPost }: BlogPostFormProps) {
     handleSubmit,
     watch,
     setValue,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<BlogPostFormData>({
     defaultValues: {
@@ -68,13 +92,49 @@ export function BlogPostForm({ blogPost }: BlogPostFormProps) {
     },
   });
 
+  // Reset form when blogPost changes
+  useEffect(() => {
+    if (blogPost) {
+      reset({
+        title: blogPost.title,
+        content: blogPost.content,
+        excerpt: blogPost.excerpt || "",
+        isPublished: blogPost.isPublished,
+        featuredImage: blogPost.featuredImage || "",
+        tags: blogPost.tags || "",
+      });
+      setTags(blogPost.tags ? JSON.parse(blogPost.tags) : []);
+    }
+  }, [blogPost, reset]);
+
   const content = watch("content");
   const title = watch("title");
+  const isPublished = watch("isPublished");
+
+  // Dropzone configuration
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: {
+      "image/*": [".jpeg", ".jpg", ".png", ".webp", ".gif"],
+    },
+    maxFiles: 1,
+    onDrop: (acceptedFiles) => {
+      if (acceptedFiles.length > 0) {
+        setSelectedImage(acceptedFiles[0]);
+        setValue("image", acceptedFiles[0]);
+      }
+    },
+  });
+
+  const removeImage = () => {
+    setSelectedImage(null);
+    setValue("image", undefined);
+  };
 
   const createMutation = useMutation({
     mutationFn: createBlogPostFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "blog-posts"] });
+      toast.success("Blog post created successfully!");
       navigate({ to: "/admin/blog" });
     },
   });
@@ -83,6 +143,7 @@ export function BlogPostForm({ blogPost }: BlogPostFormProps) {
     mutationFn: updateBlogPostFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "blog-posts"] });
+      toast.success("Blog post updated successfully!");
       navigate({ to: "/admin/blog" });
     },
   });
@@ -111,73 +172,84 @@ export function BlogPostForm({ blogPost }: BlogPostFormProps) {
   };
 
   const onSubmit = async (data: BlogPostFormData) => {
-    const formData = {
-      ...data,
-      tags: tags,
-      excerpt: data.excerpt || undefined,
-      featuredImage: data.featuredImage || undefined,
-    };
+    try {
+      setIsUploading(true);
+      let imageKey = data.featuredImage;
 
-    if (blogPost) {
-      await updateMutation.mutateAsync({
-        data: { id: blogPost.id, updates: formData },
-      });
-    } else {
-      await createMutation.mutateAsync({ data: formData });
+      // Upload image if one is selected
+      if (data.image) {
+        const extension = data.image.name.split(".").pop() || "jpg";
+        imageKey = `blog-images/${generateRandomUUID()}.${extension}`;
+
+        await uploadImageWithPresignedUrl(imageKey, data.image, (progress) =>
+          setUploadProgress(progress)
+        );
+      }
+
+      const formData = {
+        ...data,
+        tags: tags,
+        excerpt: data.excerpt || undefined,
+        featuredImage: imageKey || undefined,
+      };
+
+      if (blogPost) {
+        await updateMutation.mutateAsync({
+          data: { id: blogPost.id, updates: formData },
+        });
+      } else {
+        await createMutation.mutateAsync({ data: formData });
+      }
+    } catch (error) {
+      console.error("Failed to submit blog post:", error);
+      toast.error("Failed to save blog post. Please try again.");
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(null);
     }
-  };
-
-  const openPreview = () => {
-    if (!title || !content) return;
-    
-    // Create a preview URL with the current content
-    const previewData = {
-      title,
-      content,
-      slug: title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-'),
-    };
-    
-    // Open in new tab (this would need a preview route)
-    window.open(`/blog/preview?data=${encodeURIComponent(JSON.stringify(previewData))}`, '_blank');
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-start">
         {/* Main content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              {...register("title", {
-                required: "Title is required",
-                minLength: {
-                  value: 5,
-                  message: "Title must be at least 5 characters",
-                },
-              })}
-              placeholder="Enter blog post title..."
-              className={cn(errors.title && "border-destructive")}
-            />
-            {errors.title && (
-              <p className="text-sm text-destructive">{errors.title.message}</p>
-            )}
-          </div>
-
           {/* Content */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Content</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <AppCard
+            icon={FileText}
+            iconColor="blue"
+            title="Content"
+            className="h-fit"
+          >
+            <div className="space-y-6">
+              {/* Title */}
+              <div className="space-y-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  {...register("title", {
+                    required: "Title is required",
+                    minLength: {
+                      value: 5,
+                      message: "Title must be at least 5 characters",
+                    },
+                  })}
+                  placeholder="Enter blog post title..."
+                  className={cn(errors.title && "border-destructive")}
+                />
+                {errors.title && (
+                  <p className="text-sm text-destructive">
+                    {errors.title.message}
+                  </p>
+                )}
+              </div>
+
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList>
                   <TabsTrigger value="write">Write</TabsTrigger>
                   <TabsTrigger value="preview">Preview</TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="write" className="mt-4">
                   <Textarea
                     {...register("content", {
@@ -189,7 +261,7 @@ export function BlogPostForm({ blogPost }: BlogPostFormProps) {
                     })}
                     placeholder="Write your blog post content in Markdown..."
                     className={cn(
-                      "min-h-[400px] font-mono",
+                      "min-h-[500px] font-mono",
                       errors.content && "border-destructive"
                     )}
                   />
@@ -199,109 +271,143 @@ export function BlogPostForm({ blogPost }: BlogPostFormProps) {
                     </p>
                   )}
                 </TabsContent>
-                
+
                 <TabsContent value="preview" className="mt-4">
-                  <div className="min-h-[400px] p-4 border rounded-md bg-background">
+                  <div className="min-h-[500px] p-4 border rounded-md bg-background">
                     {content ? (
                       <MarkdownRenderer content={content} />
                     ) : (
                       <p className="text-muted-foreground">
-                        No content to preview. Write some content in the Write tab.
+                        No content to preview. Write some content in the Write
+                        tab.
                       </p>
                     )}
                   </div>
                 </TabsContent>
               </Tabs>
-            </CardContent>
-          </Card>
+            </div>
+          </AppCard>
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-6 lg:sticky lg:top-6">
           {/* Publish settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Publish</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <AppCard icon={Settings} iconColor="green" title="Publish">
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <Label htmlFor="isPublished">Published</Label>
                 <Switch
                   id="isPublished"
                   {...register("isPublished")}
-                  onCheckedChange={(checked) => setValue("isPublished", checked)}
+                  checked={isPublished}
+                  onCheckedChange={(checked) =>
+                    setValue("isPublished", checked)
+                  }
                 />
               </div>
-              
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={openPreview}
-                  disabled={!title || !content}
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  Preview
-                </Button>
-                
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={isSubmitting}
-                  className="flex-1"
-                >
-                  {isSubmitting ? (
-                    "Saving..."
-                  ) : blogPost ? (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Update
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4 mr-2" />
-                      Create
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </AppCard>
 
           {/* Excerpt */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Excerpt</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                {...register("excerpt")}
-                placeholder="Brief description of the post..."
-                className="min-h-[100px]"
-              />
-            </CardContent>
-          </Card>
+          <AppCard icon={FileText} iconColor="orange" title="Excerpt">
+            <Textarea
+              {...register("excerpt")}
+              placeholder="Brief description of the post..."
+              className="min-h-[100px]"
+            />
+          </AppCard>
 
           {/* Featured Image */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Featured Image</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Input
-                {...register("featuredImage")}
-                placeholder="Image URL..."
-              />
-            </CardContent>
-          </Card>
+          <AppCard icon={Image} iconColor="purple" title="Featured Image">
+            <div className="space-y-4">
+              {/* Image URL input (fallback) */}
+              <div className="space-y-2">
+                <Label htmlFor="featuredImage">Image URL (optional)</Label>
+                <Input
+                  id="featuredImage"
+                  {...register("featuredImage")}
+                  placeholder="Or enter image URL manually..."
+                />
+              </div>
+
+              {/* Dropzone */}
+              <div className="space-y-2">
+                <Label>Upload Image</Label>
+                {!selectedImage && (
+                  <div
+                    {...getRootProps()}
+                    className={cn(
+                      "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
+                      isDragActive
+                        ? "border-primary bg-primary/5"
+                        : "border-muted-foreground/25 hover:border-muted-foreground/50"
+                    )}
+                  >
+                    <input {...getInputProps()} />
+                    <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      {isDragActive
+                        ? "Drop the image here..."
+                        : "Drag & drop an image here, or click to select"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Supports: JPEG, PNG, WebP, GIF
+                    </p>
+                  </div>
+                )}
+
+                {/* Selected image preview */}
+                {selectedImage && (
+                  <div className="space-y-2">
+                    <div className="relative bg-muted rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <Image className="h-8 w-8 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm font-medium">
+                              {selectedImage.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {(selectedImage.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={removeImage}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      {/* Upload progress */}
+                      {uploadProgress && (
+                        <div className="mt-3">
+                          <div className="flex justify-between text-xs mb-1">
+                            <span>Uploading...</span>
+                            <span>{uploadProgress.percentage}%</span>
+                          </div>
+                          <div className="w-full bg-muted-foreground/20 rounded-full h-2">
+                            <div
+                              className="bg-primary h-2 rounded-full transition-all"
+                              style={{ width: `${uploadProgress.percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </AppCard>
 
           {/* Tags */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Tags</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+          <AppCard icon={Tags} iconColor="yellow" title="Tags">
+            <div className="space-y-3">
               <div className="flex gap-2">
                 <Input
                   value={tagInput}
@@ -320,11 +426,15 @@ export function BlogPostForm({ blogPost }: BlogPostFormProps) {
                   Add
                 </Button>
               </div>
-              
+
               {tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                    <Badge
+                      key={tag}
+                      variant="secondary"
+                      className="flex items-center gap-1"
+                    >
                       {tag}
                       <button
                         type="button"
@@ -337,9 +447,34 @@ export function BlogPostForm({ blogPost }: BlogPostFormProps) {
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </AppCard>
         </div>
+      </div>
+
+      {/* Action button at the bottom */}
+      <div className="flex justify-end pt-6 border-t">
+        <Button
+          type="submit"
+          disabled={isSubmitting || isUploading}
+          className="min-w-[120px]"
+        >
+          {isUploading ? (
+            "Uploading image..."
+          ) : isSubmitting ? (
+            "Saving..."
+          ) : blogPost ? (
+            <>
+              <Save className="h-4 w-4 mr-2" />
+              Update Post
+            </>
+          ) : (
+            <>
+              <Send className="h-4 w-4 mr-2" />
+              Create Post
+            </>
+          )}
+        </Button>
       </div>
     </form>
   );

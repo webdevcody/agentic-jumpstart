@@ -1,0 +1,17 @@
+{
+  "name": "vibert",
+  "type": "module",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "bun dev --port 1337 api/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "hono": "^4.8.12"
+  }
+}

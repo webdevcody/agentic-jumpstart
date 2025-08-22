@@ -2,12 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { getBlogPostBySlugFn, trackBlogPostViewFn } from "~/fn/blog";
+import { isAdminFn } from "~/fn/auth";
 import { queryOptions } from "@tanstack/react-query";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { Calendar, User, ArrowLeft, Share2 } from "lucide-react";
+import { Calendar, User, ArrowLeft, Share2, Edit } from "lucide-react";
 import { NotFound } from "~/components/NotFound";
 import { MarkdownRenderer } from "~/components/markdown-renderer";
+import { BlogImage } from "~/components/blog-image";
 
 export const Route = createFileRoute("/blog/$slug")({
   loader: ({ context, params }) => {
@@ -20,6 +22,13 @@ const blogPostQuery = (slug: string) =>
   queryOptions({
     queryKey: ["blog", "post", slug],
     queryFn: () => getBlogPostBySlugFn({ data: { slug } }),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+const isAdminQuery = () =>
+  queryOptions({
+    queryKey: ["auth", "isAdmin"],
+    queryFn: () => isAdminFn(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -49,6 +58,7 @@ function hashIP() {
 function BlogPost() {
   const { slug } = Route.useParams();
   const { data: blogPost, isLoading, error } = useQuery(blogPostQuery(slug));
+  const { data: isAdmin } = useQuery(isAdminQuery());
 
   // Track blog post view
   useEffect(() => {
@@ -117,14 +127,23 @@ function BlogPost() {
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
-      {/* Back button */}
-      <div className="mb-8">
+      {/* Back button and admin edit button */}
+      <div className="mb-8 flex justify-between items-center">
         <Link to="/blog">
           <Button variant="ghost" size="sm" className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back to Blog
           </Button>
         </Link>
+        
+        {isAdmin && blogPost && (
+          <Link to="/admin/blog/$id/edit" params={{ id: blogPost.id.toString() }}>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Edit className="h-4 w-4" />
+              Edit
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Article header */}
@@ -183,8 +202,8 @@ function BlogPost() {
         {/* Featured image */}
         {blogPost.featuredImage && (
           <div className="w-full h-64 md:h-96 overflow-hidden rounded-lg">
-            <img
-              src={blogPost.featuredImage}
+            <BlogImage
+              imageKey={blogPost.featuredImage}
               alt={blogPost.title}
               className="w-full h-full object-cover"
             />

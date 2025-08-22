@@ -218,6 +218,13 @@
       "when": 1755830554612,
       "tag": "0030_cooing_rattler",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1755834627443,
+      "tag": "0031_amazing_black_widow",
+      "breakpoints": true
     }
   ]
 }

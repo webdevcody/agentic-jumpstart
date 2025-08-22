@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Local Claude Agent – Settings</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --fg: #0f172a;
+        --muted: #64748b;
+        --border: #e2e8f0;
+        --card: #f8fafc;
+        --primary: #0ea5e9;
+        --primary-foreground: #ffffff;
+        --ring: rgba(14, 165, 233, 0.35);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0b1220;
+          --fg: #e5e7eb;
+          --muted: #94a3b8;
+          --border: #1f2937;
+          --card: #0f172a;
+          --primary: #38bdf8;
+          --primary-foreground: #0b1220;
+          --ring: rgba(56, 189, 248, 0.35);
+        }
+      }
+      body {
+        color-scheme: light dark;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        margin: 0;
+        padding: 24px;
+        max-width: 720px;
+        background: var(--bg);
+        color: var(--fg);
+      }
+      h1 { font-size: 20px; margin: 0 0 14px; font-weight: 700; }
+      .row { margin: 14px 0; }
+      .grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+      .field {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px;
+      }
+      label { font-weight: 600; }
+      input[type="password"], input[type="text"] {
+        width: 100%;
+        padding: 10px 0 0 0;
+        box-sizing: border-box;
+        border: none;
+        outline: none;
+        background: transparent;
+        color: var(--fg);
+      }
+      .field:focus-within { box-shadow: 0 0 0 3px var(--ring); }
+      .controls { display: flex; gap: 8px; align-items: center; }
+      button {
+        cursor: pointer;
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--primary);
+        color: var(--primary-foreground);
+        font-weight: 600;
+      }
+      button:hover { filter: brightness(0.98); }
+      .muted { color: var(--muted); font-size: 12px; }
+      .ok { color: #16a34a; }
+      .error { color: #dc2626; }
+    </style>
+  </head>
+  <body>
+    <h1>Local Headless Claude – Settings</h1>
+    <div class="row grid field">
+      <label for="agentUrl">Local Agent URL</label>
+      <input id="agentUrl" type="text" placeholder="http://localhost:11434/agent" />
+      <div class="muted">Set the HTTP endpoint for your locally running headless Claude instance.</div>
+    </div>
+    <div class="row grid field">
+      <label for="authToken">Auth Token (optional)</label>
+      <input id="authToken" type="password" placeholder="secret-token" />
+      <div class="muted">If your endpoint requires auth, it will be sent as Authorization: Bearer &lt;token&gt;.</div>
+    </div>
+    <div class="controls">
+      <button id="save">Save</button>
+      <button id="toggle">Show</button>
+      <span id="status" class="muted"></span>
+    </div>
+    <script src="options.js" type="module"></script>
+  </body>
+</html>
