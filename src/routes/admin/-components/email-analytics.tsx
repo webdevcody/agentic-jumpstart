@@ -101,9 +101,9 @@ export function EmailAnalytics({
                 <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {chartData.length > 0
-                  ? chartData.reduce((sum, item) => sum + item.count, 0)
-                  : 0}
+                {chartData
+                  .reduce((sum, item) => sum + item.count, 0)
+                  .toLocaleString()}
               </div>
               <p className="text-sm text-blue-600/80 dark:text-blue-400/80">
                 Total Signups
@@ -116,11 +116,10 @@ export function EmailAnalytics({
               </div>
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                 {chartData.length > 0
-                  ? Math.round(
-                      chartData.reduce((sum, item) => sum + item.count, 0) /
-                        chartData.length
-                    )
-                  : 0}
+                  ? (
+                      chartData.reduce((sum, item) => sum + item.count, 0) / 30
+                    ).toFixed(1)
+                  : "0"}
               </div>
               <p className="text-sm text-green-600/80 dark:text-green-400/80">
                 Daily Average
@@ -133,8 +132,10 @@ export function EmailAnalytics({
               </div>
               <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                 {chartData.length > 0
-                  ? Math.max(...chartData.map((item) => item.count))
-                  : 0}
+                  ? Math.max(
+                      ...chartData.map((item) => item.count)
+                    ).toLocaleString()
+                  : "0"}
               </div>
               <p className="text-sm text-purple-600/80 dark:text-purple-400/80">
                 Peak Day

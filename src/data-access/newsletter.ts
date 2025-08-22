@@ -42,7 +42,7 @@ export async function getNewsletterSignupByEmail(
     .from(newsletterSignups)
     .where(eq(newsletterSignups.email, email))
     .limit(1);
-  
+
   return signup || null;
 }
 
@@ -95,15 +95,15 @@ export async function getNewsletterSignupsCount(): Promise<{
   total: number;
 }> {
   const allSignups = await database.select().from(newsletterSignups);
-  
+
   const newsletter = allSignups.filter(
     (signup) => signup.subscriptionType === "newsletter"
   ).length;
-  
+
   const waitlist = allSignups.filter(
     (signup) => signup.subscriptionType === "waitlist"
   ).length;
-  
+
   return {
     newsletter,
     waitlist,
@@ -124,7 +124,7 @@ export async function getEmailSignupAnalytics(
   const result = await database
     .select({
       date: sql<string>`DATE(${newsletterSignups.createdAt})`,
-      count: sql<number>`COUNT(*)`,
+      count: sql<number>`CAST(COUNT(*) AS INTEGER)`,
     })
     .from(newsletterSignups)
     .where(
@@ -140,16 +140,17 @@ export async function getEmailSignupAnalytics(
   // Fill in missing dates with 0 count
   const dailyData: Array<{ date: string; count: number }> = [];
   const currentDate = new Date(startDate);
-  
+
   while (currentDate < endDate) {
-    const dateStr = currentDate.toISOString().split('T')[0];
-    const existing = result.find(r => r.date === dateStr);
+    const dateStr = currentDate.toISOString().split("T")[0];
+    const existing = result.find((r) => r.date === dateStr);
     dailyData.push({
       date: dateStr,
-      count: existing ? existing.count : 0,
+      count: existing ? Number(existing.count) : 0,
     });
     currentDate.setDate(currentDate.getDate() + 1);
   }
 
+  console.log(dailyData);
   return dailyData;
 }
