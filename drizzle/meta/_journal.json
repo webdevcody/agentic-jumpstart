@@ -204,6 +204,13 @@
       "when": 1755750500255,
       "tag": "0028_rapid_morbius",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1756118073000,
+      "tag": "0029_blog_posts_and_analytics",
+      "breakpoints": true
     }
   ]
 }

@@ -530,6 +530,56 @@ export const analyticsSessions = tableCreator(
   ]
 );
 
+export const blogPosts = tableCreator(
+  "blog_post",
+  {
+    id: serial("id").primaryKey(),
+    title: text("title").notNull(),
+    slug: text("slug").notNull().unique(),
+    content: text("content").notNull(),
+    excerpt: text("excerpt"),
+    isPublished: boolean("isPublished").notNull().default(false),
+    authorId: serial("authorId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    featuredImage: text("featuredImage"),
+    tags: text("tags"), // JSON array of tags as string
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    publishedAt: timestamp("published_at"),
+  },
+  (table) => [
+    index("blog_posts_slug_idx").on(table.slug),
+    index("blog_posts_author_idx").on(table.authorId),
+    index("blog_posts_published_idx").on(table.isPublished, table.publishedAt),
+    index("blog_posts_created_idx").on(table.createdAt),
+  ]
+);
+
+export const blogPostViews = tableCreator(
+  "blog_post_view",
+  {
+    id: serial("id").primaryKey(),
+    blogPostId: serial("blogPostId")
+      .notNull()
+      .references(() => blogPosts.id, { onDelete: "cascade" }),
+    sessionId: text("sessionId").notNull(),
+    ipAddressHash: text("ipAddressHash"),
+    userAgent: text("userAgent"),
+    referrer: text("referrer"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("blog_post_views_post_idx").on(table.blogPostId),
+    index("blog_post_views_session_idx").on(table.sessionId),
+    index("blog_post_views_created_idx").on(table.createdAt),
+    uniqueIndex("blog_post_views_session_post_unique").on(
+      table.sessionId,
+      table.blogPostId
+    ),
+  ]
+);
+
 export const unsubscribeTokensRelations = relations(
   unsubscribeTokens,
   ({ one }) => ({
@@ -556,6 +606,21 @@ export const analyticsSessionsRelations = relations(
     events: many(analyticsEvents),
   })
 );
+
+export const blogPostsRelations = relations(blogPosts, ({ one, many }) => ({
+  author: one(users, {
+    fields: [blogPosts.authorId],
+    references: [users.id],
+  }),
+  views: many(blogPostViews),
+}));
+
+export const blogPostViewsRelations = relations(blogPostViews, ({ one }) => ({
+  blogPost: one(blogPosts, {
+    fields: [blogPostViews.blogPostId],
+    references: [blogPosts.id],
+  }),
+}));
 
 export type User = typeof users.$inferSelect;
 export type Profile = typeof profiles.$inferSelect;
@@ -595,3 +660,7 @@ export type AppSetting = typeof appSettings.$inferSelect;
 export type AppSettingCreate = typeof appSettings.$inferInsert;
 export type Agent = typeof agents.$inferSelect;
 export type AgentCreate = typeof agents.$inferInsert;
+export type BlogPost = typeof blogPosts.$inferSelect;
+export type BlogPostCreate = typeof blogPosts.$inferInsert;
+export type BlogPostView = typeof blogPostViews.$inferSelect;
+export type BlogPostViewCreate = typeof blogPostViews.$inferInsert;

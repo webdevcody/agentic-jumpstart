@@ -73,6 +73,12 @@ const NAVIGATION_LINKS: NavLink[] = [
     priority: "primary",
   },
   {
+    to: "/blog",
+    label: "Blog",
+    icon: Video,
+    priority: "primary",
+  },
+  {
     to: "/learn/$slug",
     label: "Course Content",
     icon: Video,
@@ -129,6 +135,7 @@ const NAVIGATION_LINKS: NavLink[] = [
 
 const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
   { to: "/admin/comments", label: "Comments", icon: MessageCircle },
+  { to: "/admin/blog", label: "Blog", icon: Video },
   { to: "/admin/affiliates", label: "Affiliates", icon: Users },
   { to: "/admin/analytics", label: "Analytics", icon: TrendingUp },
   { to: "/admin/conversions", label: "Conversions", icon: Target },

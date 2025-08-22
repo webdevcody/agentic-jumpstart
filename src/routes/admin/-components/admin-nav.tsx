@@ -8,6 +8,7 @@ import {
   Target,
   UserCheck,
   Settings,
+  FileText,
 } from "lucide-react";
 
 const navigation = [
@@ -15,6 +16,11 @@ const navigation = [
     name: "Analytics",
     href: "/admin/analytics",
     icon: BarChart3,
+  },
+  {
+    name: "Blog",
+    href: "/admin/blog",
+    icon: FileText,
   },
   {
     name: "Conversions",

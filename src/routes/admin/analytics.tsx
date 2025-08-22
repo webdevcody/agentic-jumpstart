@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { getAnalyticsDashboardDataFn } from "~/fn/analytics";
+import { getBlogAnalyticsFn } from "~/fn/blog";
 import {
   TrendingUp,
   Users,
@@ -11,6 +12,8 @@ import {
   Clock,
   Activity,
   DollarSign,
+  FileText,
+  Eye,
 } from "lucide-react";
 import { queryOptions } from "@tanstack/react-query";
 import { Progress } from "~/components/ui/progress";
@@ -20,6 +23,7 @@ import { PageHeader } from "./-components/page-header";
 export const Route = createFileRoute("/admin/analytics")({
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(analyticsQuery);
+    context.queryClient.ensureQueryData(blogAnalyticsQuery);
   },
   component: AdminAnalytics,
 });
@@ -27,6 +31,11 @@ export const Route = createFileRoute("/admin/analytics")({
 const analyticsQuery = queryOptions({
   queryKey: ["admin", "analytics"],
   queryFn: () => getAnalyticsDashboardDataFn(),
+});
+
+const blogAnalyticsQuery = queryOptions({
+  queryKey: ["admin", "blog-analytics"],
+  queryFn: () => getBlogAnalyticsFn(),
 });
 
 // Atomic skeleton components
@@ -103,6 +112,7 @@ function TableRowSkeleton() {
 
 function AdminAnalytics() {
   const { data: analytics, isLoading } = useQuery(analyticsQuery);
+  const { data: blogAnalytics, isLoading: blogLoading } = useQuery(blogAnalyticsQuery);
   const [selectedModule, setSelectedModule] = useState<number | null>(null);
 
   const filteredSegments = selectedModule
@@ -353,6 +363,113 @@ function AdminAnalytics() {
                     </div>
                   ))}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Blog Analytics */}
+      <div
+        className="mb-12 animate-in fade-in slide-in-from-bottom-2 duration-500"
+        style={{ animationDelay: "0.8s", animationFillMode: "both" }}
+      >
+        <div className="module-card">
+          <div className="p-6 border-b border-border/50">
+            <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+              <FileText className="h-6 w-6 text-theme-500" />
+              Blog Analytics
+            </h2>
+            <p className="text-muted-foreground">
+              Performance metrics for your blog posts
+            </p>
+          </div>
+          <div className="p-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+              {/* Total Posts */}
+              <div className="text-center">
+                <div className="text-3xl font-bold text-theme-600 dark:text-theme-400 mb-2">
+                  {blogLoading ? (
+                    <CountSkeleton />
+                  ) : (
+                    blogAnalytics?.totalPosts || 0
+                  )}
+                </div>
+                <div className="text-sm text-muted-foreground">Total Posts</div>
+              </div>
+              
+              {/* Published Posts */}
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
+                  {blogLoading ? (
+                    <CountSkeleton />
+                  ) : (
+                    blogAnalytics?.publishedPosts || 0
+                  )}
+                </div>
+                <div className="text-sm text-muted-foreground">Published</div>
+              </div>
+              
+              {/* Total Views */}
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                  {blogLoading ? (
+                    <CountSkeleton />
+                  ) : (
+                    blogAnalytics?.totalViews || 0
+                  )}
+                </div>
+                <div className="text-sm text-muted-foreground">Total Views</div>
+              </div>
+              
+              {/* Avg Views per Post */}
+              <div className="text-center">
+                <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">
+                  {blogLoading ? (
+                    <CountSkeleton />
+                  ) : (
+                    Math.round((blogAnalytics?.totalViews || 0) / (blogAnalytics?.publishedPosts || 1))
+                  )}
+                </div>
+                <div className="text-sm text-muted-foreground">Avg Views/Post</div>
+              </div>
+            </div>
+            
+            {/* Most Viewed Posts */}
+            {blogAnalytics?.mostViewedPosts && blogAnalytics.mostViewedPosts.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Eye className="h-5 w-5 text-blue-500" />
+                  Most Viewed Posts
+                </h3>
+                <div className="space-y-3">
+                  {blogAnalytics.mostViewedPosts.slice(0, 5).map((post, index) => (
+                    <div key={post.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+                          <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                            #{index + 1}
+                          </span>
+                        </div>
+                        <div>
+                          <Link
+                            to="/blog/$slug"
+                            params={{ slug: post.slug }}
+                            className="font-medium text-foreground hover:text-theme-600 dark:hover:text-theme-400 transition-colors"
+                          >
+                            {post.title}
+                          </Link>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold text-blue-600 dark:text-blue-400">
+                          {post.viewCount}
+                        </div>
+                        <div className="text-sm text-muted-foreground">views</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
