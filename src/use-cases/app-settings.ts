@@ -3,6 +3,8 @@ import {
   setAppSetting,
   isEarlyAccessMode as checkEarlyAccessMode,
   isAgentsFeatureEnabled as checkAgentsFeatureEnabled,
+  isLaunchKitsFeatureEnabled as checkLaunchKitsFeatureEnabled,
+  isAffiliatesFeatureEnabled as checkAffiliatesFeatureEnabled,
 } from "~/data-access/app-settings";
 
 export async function getAppSettingsUseCase() {
@@ -28,4 +30,24 @@ export async function toggleEarlyAccessModeUseCase(enabled: boolean) {
 
 export async function getAgentsFeatureEnabledUseCase() {
   return checkAgentsFeatureEnabled();
+}
+
+export async function toggleAgentsFeatureUseCase(enabled: boolean) {
+  await setAppSetting("AGENTS_FEATURE", enabled.toString());
+}
+
+export async function getLaunchKitsFeatureEnabledUseCase() {
+  return checkLaunchKitsFeatureEnabled();
+}
+
+export async function toggleLaunchKitsFeatureUseCase(enabled: boolean) {
+  await setAppSetting("LAUNCH_KITS_FEATURE", enabled.toString());
+}
+
+export async function getAffiliatesFeatureEnabledUseCase() {
+  return checkAffiliatesFeatureEnabled();
+}
+
+export async function toggleAffiliatesFeatureUseCase(enabled: boolean) {
+  await setAppSetting("AFFILIATES_FEATURE", enabled.toString());
 }

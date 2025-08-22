@@ -43,6 +43,7 @@ import { AllCommentsWithDetails } from "~/data-access/comments";
 import { Switch } from "~/components/ui/switch";
 import { Label } from "~/components/ui/label";
 import { PageHeader } from "./-components/page-header";
+import { Page } from "./-components/page";
 
 // Skeleton component for count cards
 function CountSkeleton() {
@@ -177,7 +178,7 @@ function AdminComments() {
   const pendingComments = totalComments - (addressedComments ?? 0);
 
   return (
-    <>
+    <Page>
       <PageHeader
         title="Comment Management"
         highlightedWord="Management"
@@ -381,7 +382,7 @@ function AdminComments() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </Page>
   );
 }
 

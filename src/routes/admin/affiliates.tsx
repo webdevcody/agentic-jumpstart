@@ -51,6 +51,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { PageHeader } from "./-components/page-header";
+import { Page } from "./-components/page";
 
 // Skeleton components
 function CountSkeleton() {
@@ -232,306 +233,293 @@ function AdminAffiliates() {
   ) || { totalUnpaid: 0, totalPaid: 0, totalEarnings: 0, activeCount: 0 };
 
   return (
-    <>
-      <>
-        <PageHeader
-          title="Affiliate Management"
-          highlightedWord="Management"
-          description="Manage affiliate accounts, view earnings, and process payouts"
-        />
+    <Page>
+      <PageHeader
+        title="Affiliate Management"
+        highlightedWord="Management"
+        description="Manage affiliate accounts, view earnings, and process payouts"
+      />
 
-        {/* Stats Overview */}
+      {/* Stats Overview */}
+      <div
+        className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12 animate-in fade-in slide-in-from-bottom-2 duration-500"
+        style={{ animationDelay: "0.1s", animationFillMode: "both" }}
+      >
+        {/* Total Unpaid */}
         <div
-          className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12 animate-in fade-in slide-in-from-bottom-2 duration-500"
-          style={{ animationDelay: "0.1s", animationFillMode: "both" }}
+          className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
+          style={{ animationDelay: "0.2s", animationFillMode: "both" }}
         >
-          {/* Total Unpaid */}
-          <div
-            className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-            style={{ animationDelay: "0.2s", animationFillMode: "both" }}
-          >
-            <div className="module-card p-6 h-full">
-              <div className="flex flex-row items-center justify-between space-y-0 mb-4">
-                <div className="text-sm font-medium text-muted-foreground">
-                  Total Unpaid
-                </div>
-                <div className="w-10 h-10 rounded-full bg-orange-500/10 dark:bg-orange-400/20 flex items-center justify-center group-hover:bg-orange-500/20 dark:group-hover:bg-orange-400/30 transition-colors duration-300">
-                  <AlertCircle className="h-5 w-5 text-orange-500 dark:text-orange-400" />
-                </div>
+          <div className="module-card p-6 h-full">
+            <div className="flex flex-row items-center justify-between space-y-0 mb-4">
+              <div className="text-sm font-medium text-muted-foreground">
+                Total Unpaid
               </div>
-              <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors duration-300">
-                {isLoading ? (
-                  <CountSkeleton />
-                ) : (
-                  formatCurrency(totals.totalUnpaid)
-                )}
+              <div className="w-10 h-10 rounded-full bg-orange-500/10 dark:bg-orange-400/20 flex items-center justify-center group-hover:bg-orange-500/20 dark:group-hover:bg-orange-400/30 transition-colors duration-300">
+                <AlertCircle className="h-5 w-5 text-orange-500 dark:text-orange-400" />
               </div>
-              <p className="text-sm text-muted-foreground">Pending payouts</p>
             </div>
-          </div>
-
-          {/* Total Paid */}
-          <div
-            className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-            style={{ animationDelay: "0.3s", animationFillMode: "both" }}
-          >
-            <div className="module-card p-6 h-full">
-              <div className="flex flex-row items-center justify-between space-y-0 mb-4">
-                <div className="text-sm font-medium text-muted-foreground">
-                  Total Paid
-                </div>
-                <div className="w-10 h-10 rounded-full bg-green-500/10 dark:bg-green-400/20 flex items-center justify-center group-hover:bg-green-500/20 dark:group-hover:bg-green-400/30 transition-colors duration-300">
-                  <CheckCircle className="h-5 w-5 text-green-500 dark:text-green-400" />
-                </div>
-              </div>
-              <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
-                {isLoading ? (
-                  <CountSkeleton />
-                ) : (
-                  formatCurrency(totals.totalPaid)
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">Lifetime payouts</p>
+            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors duration-300">
+              {isLoading ? (
+                <CountSkeleton />
+              ) : (
+                formatCurrency(totals.totalUnpaid)
+              )}
             </div>
-          </div>
-
-          {/* Total Earnings */}
-          <div
-            className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-            style={{ animationDelay: "0.4s", animationFillMode: "both" }}
-          >
-            <div className="module-card p-6 h-full">
-              <div className="flex flex-row items-center justify-between space-y-0 mb-4">
-                <div className="text-sm font-medium text-muted-foreground">
-                  Total Earnings
-                </div>
-                <div className="w-10 h-10 rounded-full bg-theme-500/10 dark:bg-theme-400/20 flex items-center justify-center group-hover:bg-theme-500/20 dark:group-hover:bg-theme-400/30 transition-colors duration-300">
-                  <DollarSign className="h-5 w-5 text-theme-500 dark:text-theme-400" />
-                </div>
-              </div>
-              <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-theme-600 dark:group-hover:text-theme-400 transition-colors duration-300">
-                {isLoading ? (
-                  <CountSkeleton />
-                ) : (
-                  formatCurrency(totals.totalEarnings)
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Generated for affiliates
-              </p>
-            </div>
-          </div>
-
-          {/* Active Affiliates */}
-          <div
-            className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-            style={{ animationDelay: "0.5s", animationFillMode: "both" }}
-          >
-            <div className="module-card p-6 h-full">
-              <div className="flex flex-row items-center justify-between space-y-0 mb-4">
-                <div className="text-sm font-medium text-muted-foreground">
-                  Active Affiliates
-                </div>
-                <div className="w-10 h-10 rounded-full bg-blue-500/10 dark:bg-blue-400/20 flex items-center justify-center group-hover:bg-blue-500/20 dark:group-hover:bg-blue-400/30 transition-colors duration-300">
-                  <Users className="h-5 w-5 text-blue-500 dark:text-blue-400" />
-                </div>
-              </div>
-              <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
-                {isLoading ? <CountSkeleton /> : totals.activeCount}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                of {isLoading ? "..." : affiliates?.length || 0} total
-              </p>
-            </div>
+            <p className="text-sm text-muted-foreground">Pending payouts</p>
           </div>
         </div>
 
-        {/* Affiliates List */}
+        {/* Total Paid */}
         <div
-          className="module-card animate-in fade-in slide-in-from-bottom-2 duration-500"
-          style={{ animationDelay: "0.6s", animationFillMode: "both" }}
+          className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
+          style={{ animationDelay: "0.3s", animationFillMode: "both" }}
         >
-          <div className="p-6 border-b border-border/50">
-            <h2 className="text-2xl font-semibold mb-2">All Affiliates</h2>
-            <p className="text-muted-foreground">
-              View and manage all affiliate accounts
+          <div className="module-card p-6 h-full">
+            <div className="flex flex-row items-center justify-between space-y-0 mb-4">
+              <div className="text-sm font-medium text-muted-foreground">
+                Total Paid
+              </div>
+              <div className="w-10 h-10 rounded-full bg-green-500/10 dark:bg-green-400/20 flex items-center justify-center group-hover:bg-green-500/20 dark:group-hover:bg-green-400/30 transition-colors duration-300">
+                <CheckCircle className="h-5 w-5 text-green-500 dark:text-green-400" />
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
+              {isLoading ? <CountSkeleton /> : formatCurrency(totals.totalPaid)}
+            </div>
+            <p className="text-sm text-muted-foreground">Lifetime payouts</p>
+          </div>
+        </div>
+
+        {/* Total Earnings */}
+        <div
+          className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
+          style={{ animationDelay: "0.4s", animationFillMode: "both" }}
+        >
+          <div className="module-card p-6 h-full">
+            <div className="flex flex-row items-center justify-between space-y-0 mb-4">
+              <div className="text-sm font-medium text-muted-foreground">
+                Total Earnings
+              </div>
+              <div className="w-10 h-10 rounded-full bg-theme-500/10 dark:bg-theme-400/20 flex items-center justify-center group-hover:bg-theme-500/20 dark:group-hover:bg-theme-400/30 transition-colors duration-300">
+                <DollarSign className="h-5 w-5 text-theme-500 dark:text-theme-400" />
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-theme-600 dark:group-hover:text-theme-400 transition-colors duration-300">
+              {isLoading ? (
+                <CountSkeleton />
+              ) : (
+                formatCurrency(totals.totalEarnings)
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Generated for affiliates
             </p>
           </div>
-          <div className="p-6">
-            {isLoading ? (
-              <div className="space-y-6">
-                {[...Array(3)].map((_, idx) => (
-                  <AffiliateCardSkeleton key={idx} />
-                ))}
+        </div>
+
+        {/* Active Affiliates */}
+        <div
+          className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
+          style={{ animationDelay: "0.5s", animationFillMode: "both" }}
+        >
+          <div className="module-card p-6 h-full">
+            <div className="flex flex-row items-center justify-between space-y-0 mb-4">
+              <div className="text-sm font-medium text-muted-foreground">
+                Active Affiliates
               </div>
-            ) : affiliates?.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Users className="h-16 w-16 mx-auto mb-6 opacity-30" />
-                <p className="text-lg">No affiliates registered yet</p>
+              <div className="w-10 h-10 rounded-full bg-blue-500/10 dark:bg-blue-400/20 flex items-center justify-center group-hover:bg-blue-500/20 dark:group-hover:bg-blue-400/30 transition-colors duration-300">
+                <Users className="h-5 w-5 text-blue-500 dark:text-blue-400" />
               </div>
-            ) : (
-              <div className="space-y-6">
-                {affiliates?.map((affiliate, index) => (
-                  <div
-                    key={affiliate.id}
-                    className="group relative overflow-hidden rounded-xl bg-card/60 dark:bg-card/40 border border-border/50 p-6 hover:bg-card/80 dark:hover:bg-card/60 hover:border-theme-400/30 hover:shadow-elevation-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2"
-                    style={{
-                      animationDelay: `${0.7 + index * 0.1}s`,
-                      animationFillMode: "both",
-                      animationDuration: "500ms",
-                    }}
-                  >
-                    {/* Subtle hover glow effect */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-theme-500/5 to-theme-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl"></div>
+            </div>
+            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
+              {isLoading ? <CountSkeleton /> : totals.activeCount}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              of {isLoading ? "..." : affiliates?.length || 0} total
+            </p>
+          </div>
+        </div>
+      </div>
 
-                    <div className="relative flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-3">
-                          <span className="text-lg font-semibold text-foreground">
-                            {affiliate.userName ||
-                              affiliate.userEmail ||
-                              "Unknown User"}
+      {/* Affiliates List */}
+      <div
+        className="module-card animate-in fade-in slide-in-from-bottom-2 duration-500"
+        style={{ animationDelay: "0.6s", animationFillMode: "both" }}
+      >
+        <div className="p-6 border-b border-border/50">
+          <h2 className="text-2xl font-semibold mb-2">All Affiliates</h2>
+          <p className="text-muted-foreground">
+            View and manage all affiliate accounts
+          </p>
+        </div>
+        <div className="p-6">
+          {isLoading ? (
+            <div className="space-y-6">
+              {[...Array(3)].map((_, idx) => (
+                <AffiliateCardSkeleton key={idx} />
+              ))}
+            </div>
+          ) : affiliates?.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Users className="h-16 w-16 mx-auto mb-6 opacity-30" />
+              <p className="text-lg">No affiliates registered yet</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {affiliates?.map((affiliate, index) => (
+                <div
+                  key={affiliate.id}
+                  className="group relative overflow-hidden rounded-xl bg-card/60 dark:bg-card/40 border border-border/50 p-6 hover:bg-card/80 dark:hover:bg-card/60 hover:border-theme-400/30 hover:shadow-elevation-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2"
+                  style={{
+                    animationDelay: `${0.7 + index * 0.1}s`,
+                    animationFillMode: "both",
+                    animationDuration: "500ms",
+                  }}
+                >
+                  {/* Subtle hover glow effect */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-theme-500/5 to-theme-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl"></div>
+
+                  <div className="relative flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="text-lg font-semibold text-foreground">
+                          {affiliate.userName ||
+                            affiliate.userEmail ||
+                            "Unknown User"}
+                        </span>
+                        {affiliate.isActive ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
+                            <CheckCircle className="h-3.5 w-3.5" />
+                            Active
                           </span>
-                          {affiliate.isActive ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
-                              <CheckCircle className="h-3.5 w-3.5" />
-                              Active
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">
-                              <XCircle className="h-3.5 w-3.5" />
-                              Inactive
-                            </span>
-                          )}
-                          <span className="px-2 py-1 text-xs font-mono bg-muted rounded border">
-                            {affiliate.affiliateCode}
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">
+                            <XCircle className="h-3.5 w-3.5" />
+                            Inactive
                           </span>
-                        </div>
+                        )}
+                        <span className="px-2 py-1 text-xs font-mono bg-muted rounded border">
+                          {affiliate.affiliateCode}
+                        </span>
+                      </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                          <div className="space-y-1">
-                            <div className="text-sm text-muted-foreground">
-                              Unpaid Balance
-                            </div>
-                            <div className="text-xl font-bold text-orange-600 dark:text-orange-400">
-                              {formatCurrency(affiliate.unpaidBalance)}
-                            </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        <div className="space-y-1">
+                          <div className="text-sm text-muted-foreground">
+                            Unpaid Balance
                           </div>
-                          <div className="space-y-1">
-                            <div className="text-sm text-muted-foreground">
-                              Total Paid
-                            </div>
-                            <div className="text-xl font-bold text-green-600 dark:text-green-400">
-                              {formatCurrency(affiliate.paidAmount)}
-                            </div>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="text-sm text-muted-foreground">
-                              Total Earnings
-                            </div>
-                            <div className="text-xl font-bold text-theme-600 dark:text-theme-400">
-                              {formatCurrency(affiliate.totalEarnings)}
-                            </div>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="text-sm text-muted-foreground">
-                              Sales Count
-                            </div>
-                            <div className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                              {affiliate.totalReferrals}
-                            </div>
+                          <div className="text-xl font-bold text-orange-600 dark:text-orange-400">
+                            {formatCurrency(affiliate.unpaidBalance)}
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-6 mt-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            <span>
-                              Joined {formatDate(affiliate.createdAt)}
-                            </span>
+                        <div className="space-y-1">
+                          <div className="text-sm text-muted-foreground">
+                            Total Paid
                           </div>
-                          <div className="flex items-center gap-2">
-                            <CreditCard className="h-4 w-4" />
-                            <span>
-                              Last sale {formatDate(affiliate.lastReferralDate)}
-                            </span>
+                          <div className="text-xl font-bold text-green-600 dark:text-green-400">
+                            {formatCurrency(affiliate.paidAmount)}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-sm text-muted-foreground">
+                            Total Earnings
+                          </div>
+                          <div className="text-xl font-bold text-theme-600 dark:text-theme-400">
+                            {formatCurrency(affiliate.totalEarnings)}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-sm text-muted-foreground">
+                            Sales Count
+                          </div>
+                          <div className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                            {affiliate.totalReferrals}
                           </div>
                         </div>
                       </div>
 
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="relative z-10"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
-                          <DropdownMenuItem
-                            onClick={() =>
-                              window.open(affiliate.paymentLink, "_blank")
-                            }
-                          >
-                            <ExternalLink className="mr-2 h-4 w-4" />
-                            View Payment Link
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              copyToClipboard(affiliate.paymentLink)
-                            }
-                          >
-                            <Copy className="mr-2 h-4 w-4" />
-                            Copy Payment Link
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => openPayoutDialog(affiliate)}
-                            disabled={affiliate.unpaidBalance < 5000}
-                            className={
-                              affiliate.unpaidBalance < 5000 ? "opacity-50" : ""
-                            }
-                          >
-                            <DollarSign className="mr-2 h-4 w-4" />
-                            Record Payout
-                            {affiliate.unpaidBalance < 5000 && (
-                              <span className="ml-auto text-xs text-muted-foreground">
-                                Min $50
-                              </span>
-                            )}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              handleToggleStatus(
-                                affiliate.id,
-                                affiliate.isActive
-                              )
-                            }
-                          >
-                            {affiliate.isActive ? (
-                              <>
-                                <XCircle className="mr-2 h-4 w-4" />
-                                Deactivate
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Activate
-                              </>
-                            )}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="flex items-center gap-6 mt-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          <span>Joined {formatDate(affiliate.createdAt)}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="h-4 w-4" />
+                          <span>
+                            Last sale {formatDate(affiliate.lastReferralDate)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="relative z-10"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuItem
+                          onClick={() =>
+                            window.open(affiliate.paymentLink, "_blank")
+                          }
+                        >
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          View Payment Link
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => copyToClipboard(affiliate.paymentLink)}
+                        >
+                          <Copy className="mr-2 h-4 w-4" />
+                          Copy Payment Link
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => openPayoutDialog(affiliate)}
+                          disabled={affiliate.unpaidBalance < 5000}
+                          className={
+                            affiliate.unpaidBalance < 5000 ? "opacity-50" : ""
+                          }
+                        >
+                          <DollarSign className="mr-2 h-4 w-4" />
+                          Record Payout
+                          {affiliate.unpaidBalance < 5000 && (
+                            <span className="ml-auto text-xs text-muted-foreground">
+                              Min $50
+                            </span>
+                          )}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            handleToggleStatus(affiliate.id, affiliate.isActive)
+                          }
+                        >
+                          {affiliate.isActive ? (
+                            <>
+                              <XCircle className="mr-2 h-4 w-4" />
+                              Deactivate
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Activate
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      </>
+      </div>
 
       <Dialog
         open={payoutAffiliateId !== null}
@@ -656,6 +644,6 @@ function AdminAffiliates() {
           </Form>
         </DialogContent>
       </Dialog>
-    </>
+    </Page>
   );
 }

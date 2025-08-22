@@ -11,6 +11,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { Page } from "./-components/page";
 
 export const Route = createFileRoute("/admin/conversions")({
   component: ConversionsPage,
@@ -59,7 +60,7 @@ function ConversionsPage() {
   };
 
   return (
-    <>
+    <Page>
       <PageHeader
         title="Conversion Analytics"
         highlightedWord="Conversion"
@@ -238,6 +239,6 @@ function ConversionsPage() {
           </div>
         </div>
       </div>
-    </>
+    </Page>
   );
 }
