@@ -46,7 +46,35 @@ export const profiles = tableCreator("profile", {
   imageId: text("imageId"),
   image: text("image"),
   bio: text("bio").notNull().default(""),
+  twitterHandle: text("twitterHandle"),
+  githubHandle: text("githubHandle"),
+  websiteUrl: text("websiteUrl"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+export const projects = tableCreator(
+  "project",
+  {
+    id: serial("id").primaryKey(),
+    userId: serial("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    imageUrl: text("imageUrl"),
+    projectUrl: text("projectUrl"),
+    repositoryUrl: text("repositoryUrl"),
+    technologies: text("technologies"), // JSON string of tech stack
+    order: integer("order").notNull().default(0),
+    isVisible: boolean("isVisible").notNull().default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("projects_user_order_idx").on(table.userId, table.order),
+    index("projects_user_visible_idx").on(table.userId, table.isVisible),
+  ]
+);
 
 export const sessions = tableCreator(
   "session",
@@ -497,6 +525,33 @@ export const agentsRelations = relations(agents, ({ one }) => ({
   }),
 }));
 
+export const projectsRelations = relations(projects, ({ one }) => ({
+  user: one(users, {
+    fields: [projects.userId],
+    references: [users.id],
+  }),
+  profile: one(profiles, {
+    fields: [projects.userId],
+    references: [profiles.userId],
+  }),
+}));
+
+export const usersRelations = relations(users, ({ one, many }) => ({
+  profile: one(profiles, {
+    fields: [users.id],
+    references: [profiles.userId],
+  }),
+  accounts: many(accounts),
+}));
+
+export const profilesRelations = relations(profiles, ({ one, many }) => ({
+  user: one(users, {
+    fields: [profiles.userId],
+    references: [users.id],
+  }),
+  projects: many(projects),
+}));
+
 export const modulesRelations = relations(modules, ({ many }) => ({
   segments: many(segments),
 }));
@@ -839,6 +894,8 @@ export type AppSetting = typeof appSettings.$inferSelect;
 export type AppSettingCreate = typeof appSettings.$inferInsert;
 export type Agent = typeof agents.$inferSelect;
 export type AgentCreate = typeof agents.$inferInsert;
+export type Project = typeof projects.$inferSelect;
+export type ProjectCreate = typeof projects.$inferInsert;
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type BlogPostCreate = typeof blogPosts.$inferInsert;
 export type BlogPostView = typeof blogPostViews.$inferSelect;

@@ -225,6 +225,13 @@
       "when": 1755834627443,
       "tag": "0031_amazing_black_widow",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1755837791549,
+      "tag": "0032_naive_talisman",
+      "breakpoints": true
     }
   ]
 }

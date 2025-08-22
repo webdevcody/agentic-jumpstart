@@ -102,13 +102,13 @@ export class R2Storage implements IStorage {
     );
   }
 
-  async getPresignedUploadUrl(key: string) {
+  async getPresignedUploadUrl(key: string, contentType: string = "video/mp4") {
     return await getSignedUrl(
       this.client,
       new PutObjectCommand({
         Bucket: this.bucket,
         Key: key,
-        ContentType: "video/mp4",
+        ContentType: contentType,
       }),
       { expiresIn: 60 * 60 } // 1 hour
     );

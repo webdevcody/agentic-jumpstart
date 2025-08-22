@@ -13,7 +13,7 @@ import {
   getUserByEmail,
   getNewsletterSubscribersForEmailing,
 } from "~/data-access/users";
-import { getNewsletterSignupsCount } from "~/data-access/newsletter";
+import { getNewsletterSignupsCount, getEmailSignupAnalytics } from "~/data-access/newsletter";
 import { sendEmail, renderEmailTemplate } from "~/utils/email";
 import { EmailBatchCreate } from "~/db/schema";
 import { createUnsubscribeToken } from "~/data-access/unsubscribe-tokens";
@@ -289,3 +289,22 @@ async function processBulkEmails(
     });
   }
 }
+
+// Get email signup analytics
+export const getEmailAnalyticsFn = createServerFn({
+  method: "GET",
+})
+  .middleware([adminMiddleware])
+  .validator(z.object({ 
+    year: z.number(),
+    month: z.number(),
+    type: z.enum(["waitlist", "newsletter"]).default("waitlist")
+  }))
+  .handler(async ({ data }) => {
+    try {
+      return await getEmailSignupAnalytics(data.year, data.month, data.type);
+    } catch (error) {
+      console.error("Failed to get email analytics:", error);
+      throw new Error("Failed to get email analytics");
+    }
+  });

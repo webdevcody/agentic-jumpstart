@@ -12,6 +12,7 @@ import {
   Rocket,
   ExternalLink,
   Home,
+  LogOut,
 } from "lucide-react";
 
 const navigation = [
@@ -20,6 +21,12 @@ const navigation = [
     href: "/admin/analytics",
     icon: Home,
     description: "Overview & Analytics",
+  },
+  {
+    name: "Users",
+    href: "/admin/users",
+    icon: Users,
+    description: "Manage users",
   },
   {
     name: "Blog",
@@ -69,7 +76,7 @@ export function AdminNav() {
   const location = useLocation();
 
   return (
-    <nav className="w-64 relative">
+    <nav className="w-64 relative h-full flex flex-col">
       {/* Sophisticated gradient background matching header */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-background"></div>
 
@@ -82,7 +89,7 @@ export function AdminNav() {
       {/* Glass morphism overlay with better contrast */}
       <div className="absolute inset-0 backdrop-blur-md bg-white/85 dark:bg-background/20 border-r border-border/60"></div>
 
-      <div className="relative z-10 p-6">
+      <div className="relative z-10 p-6 h-full flex flex-col">
         {/* View Site Link at the top */}
         <div className="mb-6">
           <Link
@@ -91,15 +98,14 @@ export function AdminNav() {
           >
             <ExternalLink className="mr-3 h-4 w-4 transition-colors duration-200 text-theme-500 group-hover:text-theme-600 dark:group-hover:text-theme-400" />
             <span className="relative z-10 font-semibold">View Site</span>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-theme-500/60">→</div>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-theme-500/60">
+              →
+            </div>
           </Link>
         </div>
 
         {/* Admin Panel Header - now clickable */}
-        <Link
-          to="/admin/analytics"
-          className="block mb-8 group"
-        >
+        <Link to="/admin/analytics" className="block mb-8 group">
           <h2 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2 cursor-pointer transition-colors duration-200 group-hover:text-theme-500">
             <div className="w-2 h-2 rounded-full bg-theme-500 animate-pulse"></div>
             Admin Panel
@@ -107,7 +113,8 @@ export function AdminNav() {
           <div className="h-px bg-gradient-to-r from-theme-500/20 via-theme-400/30 to-transparent"></div>
         </Link>
 
-        <ul className="space-y-1">
+        {/* Navigation links - flex-1 to take available space */}
+        <ul className="space-y-1 flex-1">
           {navigation.map((item) => {
             const isActive = location.pathname === item.href;
             return (
@@ -135,9 +142,16 @@ export function AdminNav() {
                           : "text-muted-foreground group-hover:text-theme-400"
                       )}
                     />
-                    <span className={cn("relative z-10", isActive && "font-semibold")}>{item.name}</span>
+                    <span
+                      className={cn(
+                        "relative z-10",
+                        isActive && "font-semibold"
+                      )}
+                    >
+                      {item.name}
+                    </span>
                   </div>
-                  
+
                   {item.description && (
                     <span className="text-xs text-muted-foreground/70 ml-7 mt-0.5">
                       {item.description}
@@ -152,19 +166,15 @@ export function AdminNav() {
           })}
         </ul>
 
-        {/* Decorative bottom element */}
+        {/* Sign Out Button - stays at bottom */}
         <div className="mt-8 pt-6 border-t border-border/40">
-          <div className="flex items-center justify-center space-x-1 opacity-40">
-            <div className="w-1 h-1 rounded-full bg-theme-400 animate-pulse"></div>
-            <div
-              className="w-1 h-1 rounded-full bg-theme-500 animate-pulse"
-              style={{ animationDelay: "0.5s" }}
-            ></div>
-            <div
-              className="w-1 h-1 rounded-full bg-theme-600 animate-pulse"
-              style={{ animationDelay: "1s" }}
-            ></div>
-          </div>
+          <a
+            href="/api/logout"
+            className="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group relative text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          >
+            <LogOut className="mr-3 h-4 w-4 transition-colors duration-200 text-muted-foreground group-hover:text-red-500" />
+            <span className="relative z-10">Sign Out</span>
+          </a>
         </div>
       </div>
     </nav>

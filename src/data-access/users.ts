@@ -1,5 +1,10 @@
 import { database } from "~/db";
-import { User, users, userEmailPreferences, newsletterSignups } from "~/db/schema";
+import {
+  User,
+  users,
+  userEmailPreferences,
+  newsletterSignups,
+} from "~/db/schema";
 import { eq, and, isNull, or, isNotNull } from "drizzle-orm";
 import { UserId } from "~/use-cases/types";
 
@@ -51,21 +56,21 @@ export async function getNewsletterSubscribersForEmailing(
   subscriptionType: "newsletter" | "waitlist" | "both"
 ): Promise<Array<{ email: string }>> {
   let whereConditions: any[] = [];
-  
+
   if (subscriptionType === "newsletter") {
     whereConditions.push(eq(newsletterSignups.subscriptionType, "newsletter"));
   } else if (subscriptionType === "waitlist") {
     whereConditions.push(eq(newsletterSignups.subscriptionType, "waitlist"));
   }
   // For "both", we don't add any filter
-  
+
   const result = await database
     .select({
       email: newsletterSignups.email,
     })
     .from(newsletterSignups)
     .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
-  
+
   return result;
 }
 
@@ -77,8 +82,9 @@ export async function getUsersForEmailing(
 ): Promise<Array<{ id?: number; email: string }>> {
   // Handle newsletter/waitlist recipients separately
   if (recipientType === "newsletter" || recipientType === "waitlist") {
-    const newsletterSubs = await getNewsletterSubscribersForEmailing(recipientType);
-    return newsletterSubs.map(sub => ({ email: sub.email }));
+    const newsletterSubs =
+      await getNewsletterSubscribersForEmailing(recipientType);
+    return newsletterSubs.map((sub) => ({ email: sub.email }));
   }
 
   // Base query with email preferences join
@@ -92,7 +98,7 @@ export async function getUsersForEmailing(
 
   // Filter by user type
   let whereConditions: any[] = [];
-  
+
   switch (recipientType) {
     case "premium":
       whereConditions.push(eq(users.isPremium, true));
@@ -132,10 +138,11 @@ export async function getUsersForEmailing(
   }
 
   const result = await baseQuery;
-  
+
   // Filter out null emails just in case
-  return result.filter((user): user is { id: number; email: string } => 
-    user.email !== null && user.email !== undefined
+  return result.filter(
+    (user): user is { id: number; email: string } =>
+      user.email !== null && user.email !== undefined
   );
 }
 
@@ -155,13 +162,25 @@ export async function createMissingEmailPreferences(): Promise<number> {
   }
 
   // Create default preferences for all users without them
-  const defaultPreferences = usersWithoutPrefs.map(user => ({
+  const defaultPreferences = usersWithoutPrefs.map((user) => ({
     userId: user.id,
     allowCourseUpdates: true,
     allowPromotional: true,
   }));
 
   await database.insert(userEmailPreferences).values(defaultPreferences);
-  
+
   return usersWithoutPrefs.length;
+}
+
+// Get all users with their profile information for admin
+export async function getAllUsersWithProfiles() {
+  const usersWithProfiles = await database.query.users.findMany({
+    with: {
+      profile: true,
+    },
+    orderBy: (users, { desc }) => [desc(users.id)],
+  });
+
+  return usersWithProfiles;
 }

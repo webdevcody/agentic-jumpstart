@@ -13,6 +13,7 @@ import { ResearchSourcesSection } from "./-components/research-sources";
 import { InstructorSection } from "./-components/instructor-section";
 import { DiscordCommunitySection } from "./-components/discord-community-section";
 import { shouldShowEarlyAccessFn } from "~/fn/early-access";
+import { NewsletterSection } from "./-components/newsletter";
 
 const loaderFn = createServerFn().handler(async () => {
   const segments = await getSegmentsUseCase();
@@ -47,6 +48,7 @@ function Home() {
           />
         </div>
       )}
+      {!shouldShowEarlyAccess && <NewsletterSection />}
       <InstructorSection />
       {!shouldShowEarlyAccess && <TestimonialsSection />}
       {!shouldShowEarlyAccess && <PricingSection />}

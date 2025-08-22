@@ -33,6 +33,8 @@ import { Route as LearnIndexRouteImport } from './routes/learn/index'
 import { Route as LaunchKitsIndexRouteImport } from './routes/launch-kits/index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as AgentsIndexRouteImport } from './routes/agents/index'
+import { Route as ProfileEditRouteImport } from './routes/profile/edit'
+import { Route as ProfileUserIdRouteImport } from './routes/profile/$userId'
 import { Route as LearnNotFoundRouteImport } from './routes/learn/not-found'
 import { Route as LearnNoSegmentsRouteImport } from './routes/learn/no-segments'
 import { Route as LearnCourseCompletedRouteImport } from './routes/learn/course-completed'
@@ -41,6 +43,7 @@ import { Route as LaunchKitsSlugRouteImport } from './routes/launch-kits/$slug'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as AgentsNewRouteImport } from './routes/agents/new'
 import { Route as AgentsSlugRouteImport } from './routes/agents/$slug'
+import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminEmailsRouteImport } from './routes/admin/emails'
 import { Route as AdminConversionsRouteImport } from './routes/admin/conversions'
@@ -175,6 +178,16 @@ const AgentsIndexRoute = AgentsIndexRouteImport.update({
   path: '/agents/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileEditRoute = ProfileEditRouteImport.update({
+  id: '/profile/edit',
+  path: '/profile/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileUserIdRoute = ProfileUserIdRouteImport.update({
+  id: '/profile/$userId',
+  path: '/profile/$userId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LearnNotFoundRoute = LearnNotFoundRouteImport.update({
   id: '/learn/not-found',
   path: '/learn/not-found',
@@ -214,6 +227,11 @@ const AgentsSlugRoute = AgentsSlugRouteImport.update({
   id: '/agents/$slug',
   path: '/agents/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
   id: '/settings',
@@ -343,6 +361,7 @@ export interface FileRoutesByFullPath {
   '/admin/conversions': typeof AdminConversionsRoute
   '/admin/emails': typeof AdminEmailsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/agents/$slug': typeof AgentsSlugRoute
   '/agents/new': typeof AgentsNewRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -351,6 +370,8 @@ export interface FileRoutesByFullPath {
   '/learn/course-completed': typeof LearnCourseCompletedRoute
   '/learn/no-segments': typeof LearnNoSegmentsRoute
   '/learn/not-found': typeof LearnNotFoundRoute
+  '/profile/$userId': typeof ProfileUserIdRoute
+  '/profile/edit': typeof ProfileEditRoute
   '/agents': typeof AgentsIndexRoute
   '/blog': typeof BlogIndexRoute
   '/launch-kits': typeof LaunchKitsIndexRoute
@@ -389,6 +410,7 @@ export interface FileRoutesByTo {
   '/admin/conversions': typeof AdminConversionsRoute
   '/admin/emails': typeof AdminEmailsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/agents/$slug': typeof AgentsSlugRoute
   '/agents/new': typeof AgentsNewRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -397,6 +419,8 @@ export interface FileRoutesByTo {
   '/learn/course-completed': typeof LearnCourseCompletedRoute
   '/learn/no-segments': typeof LearnNoSegmentsRoute
   '/learn/not-found': typeof LearnNotFoundRoute
+  '/profile/$userId': typeof ProfileUserIdRoute
+  '/profile/edit': typeof ProfileEditRoute
   '/agents': typeof AgentsIndexRoute
   '/blog': typeof BlogIndexRoute
   '/launch-kits': typeof LaunchKitsIndexRoute
@@ -435,6 +459,7 @@ export interface FileRoutesById {
   '/admin/conversions': typeof AdminConversionsRoute
   '/admin/emails': typeof AdminEmailsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/agents/$slug': typeof AgentsSlugRoute
   '/agents/new': typeof AgentsNewRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -443,6 +468,8 @@ export interface FileRoutesById {
   '/learn/course-completed': typeof LearnCourseCompletedRoute
   '/learn/no-segments': typeof LearnNoSegmentsRoute
   '/learn/not-found': typeof LearnNotFoundRoute
+  '/profile/$userId': typeof ProfileUserIdRoute
+  '/profile/edit': typeof ProfileEditRoute
   '/agents/': typeof AgentsIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/launch-kits/': typeof LaunchKitsIndexRoute
@@ -484,6 +511,7 @@ export interface FileRouteTypes {
     | '/admin/conversions'
     | '/admin/emails'
     | '/admin/settings'
+    | '/admin/users'
     | '/agents/$slug'
     | '/agents/new'
     | '/blog/$slug'
@@ -492,6 +520,8 @@ export interface FileRouteTypes {
     | '/learn/course-completed'
     | '/learn/no-segments'
     | '/learn/not-found'
+    | '/profile/$userId'
+    | '/profile/edit'
     | '/agents'
     | '/blog'
     | '/launch-kits'
@@ -530,6 +560,7 @@ export interface FileRouteTypes {
     | '/admin/conversions'
     | '/admin/emails'
     | '/admin/settings'
+    | '/admin/users'
     | '/agents/$slug'
     | '/agents/new'
     | '/blog/$slug'
@@ -538,6 +569,8 @@ export interface FileRouteTypes {
     | '/learn/course-completed'
     | '/learn/no-segments'
     | '/learn/not-found'
+    | '/profile/$userId'
+    | '/profile/edit'
     | '/agents'
     | '/blog'
     | '/launch-kits'
@@ -575,6 +608,7 @@ export interface FileRouteTypes {
     | '/admin/conversions'
     | '/admin/emails'
     | '/admin/settings'
+    | '/admin/users'
     | '/agents/$slug'
     | '/agents/new'
     | '/blog/$slug'
@@ -583,6 +617,8 @@ export interface FileRouteTypes {
     | '/learn/course-completed'
     | '/learn/no-segments'
     | '/learn/not-found'
+    | '/profile/$userId'
+    | '/profile/edit'
     | '/agents/'
     | '/blog/'
     | '/launch-kits/'
@@ -625,6 +661,8 @@ export interface RootRouteChildren {
   LearnCourseCompletedRoute: typeof LearnCourseCompletedRoute
   LearnNoSegmentsRoute: typeof LearnNoSegmentsRoute
   LearnNotFoundRoute: typeof LearnNotFoundRoute
+  ProfileUserIdRoute: typeof ProfileUserIdRoute
+  ProfileEditRoute: typeof ProfileEditRoute
   AgentsIndexRoute: typeof AgentsIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
   LaunchKitsIndexRoute: typeof LaunchKitsIndexRoute
@@ -841,6 +879,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgentsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/edit': {
+      id: '/profile/edit'
+      path: '/profile/edit'
+      fullPath: '/profile/edit'
+      preLoaderRoute: typeof ProfileEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/$userId': {
+      id: '/profile/$userId'
+      path: '/profile/$userId'
+      fullPath: '/profile/$userId'
+      preLoaderRoute: typeof ProfileUserIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/learn/not-found': {
       id: '/learn/not-found'
       path: '/learn/not-found'
@@ -896,6 +948,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/agents/$slug'
       preLoaderRoute: typeof AgentsSlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/admin/settings': {
       id: '/admin/settings'
@@ -1051,6 +1110,7 @@ interface AdminRouteRouteChildren {
   AdminConversionsRoute: typeof AdminConversionsRoute
   AdminEmailsRoute: typeof AdminEmailsRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
   AdminBlogNewRoute: typeof AdminBlogNewRoute
   AdminBlogIndexRoute: typeof AdminBlogIndexRoute
   AdminLaunchKitsIndexRoute: typeof AdminLaunchKitsIndexRoute
@@ -1066,6 +1126,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminConversionsRoute: AdminConversionsRoute,
   AdminEmailsRoute: AdminEmailsRoute,
   AdminSettingsRoute: AdminSettingsRoute,
+  AdminUsersRoute: AdminUsersRoute,
   AdminBlogNewRoute: AdminBlogNewRoute,
   AdminBlogIndexRoute: AdminBlogIndexRoute,
   AdminLaunchKitsIndexRoute: AdminLaunchKitsIndexRoute,
@@ -1130,6 +1191,8 @@ const rootRouteChildren: RootRouteChildren = {
   LearnCourseCompletedRoute: LearnCourseCompletedRoute,
   LearnNoSegmentsRoute: LearnNoSegmentsRoute,
   LearnNotFoundRoute: LearnNotFoundRoute,
+  ProfileUserIdRoute: ProfileUserIdRoute,
+  ProfileEditRoute: ProfileEditRoute,
   AgentsIndexRoute: AgentsIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
   LaunchKitsIndexRoute: LaunchKitsIndexRoute,
