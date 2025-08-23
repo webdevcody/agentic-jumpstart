@@ -117,13 +117,16 @@ export async function getEmailSignupAnalytics(
   month: number,
   subscriptionType: "newsletter" | "waitlist" = "waitlist"
 ): Promise<Array<{ date: string; count: number }>> {
-  // Calculate the start and end of the month
+  // Calculate the start and end of the month in Eastern timezone
+  // This ensures we're getting data for the correct month as viewed by the user
   const startDate = new Date(year, month - 1, 1);
   const endDate = new Date(year, month, 1);
 
   const result = await database
     .select({
-      date: sql<string>`DATE(${newsletterSignups.createdAt})`,
+      // Convert UTC timestamp to Eastern time before extracting the date
+      // This ensures signups are counted for the correct day as seen by Eastern time users
+      date: sql<string>`DATE(${newsletterSignups.createdAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York')`,
       count: sql<number>`CAST(COUNT(*) AS INTEGER)`,
     })
     .from(newsletterSignups)
@@ -134,8 +137,8 @@ export async function getEmailSignupAnalytics(
         lt(newsletterSignups.createdAt, endDate)
       )
     )
-    .groupBy(sql`DATE(${newsletterSignups.createdAt})`)
-    .orderBy(sql`DATE(${newsletterSignups.createdAt})`);
+    .groupBy(sql`DATE(${newsletterSignups.createdAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York')`)
+    .orderBy(sql`DATE(${newsletterSignups.createdAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York')`);
 
   // Fill in missing dates with 0 count
   const dailyData: Array<{ date: string; count: number }> = [];
@@ -151,6 +154,5 @@ export async function getEmailSignupAnalytics(
     currentDate.setDate(currentDate.getDate() + 1);
   }
 
-  console.log(dailyData);
   return dailyData;
 }
