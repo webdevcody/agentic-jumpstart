@@ -72,7 +72,11 @@ const navigation = [
   },
 ];
 
-export function AdminNav() {
+interface AdminNavProps {
+  onItemClick?: () => void;
+}
+
+export function AdminNav({ onItemClick }: AdminNavProps = {}) {
   const location = useLocation();
 
   return (
@@ -94,6 +98,7 @@ export function AdminNav() {
         <div className="mb-6">
           <Link
             to="/"
+            onClick={onItemClick}
             className="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group relative bg-theme-500/10 hover:bg-theme-500/20 border border-theme-500/30 text-theme-600 dark:text-theme-400 hover:text-theme-700 dark:hover:text-theme-300"
           >
             <ExternalLink className="mr-3 h-4 w-4 transition-colors duration-200 text-theme-500 group-hover:text-theme-600 dark:group-hover:text-theme-400" />
@@ -105,7 +110,7 @@ export function AdminNav() {
         </div>
 
         {/* Admin Panel Header - now clickable */}
-        <Link to="/admin/analytics" className="block mb-8 group">
+        <Link to="/admin/analytics" onClick={onItemClick} className="block mb-8 group">
           <h2 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2 cursor-pointer transition-colors duration-200 group-hover:text-theme-500">
             <div className="w-2 h-2 rounded-full bg-theme-500 animate-pulse"></div>
             Admin Panel
@@ -121,6 +126,7 @@ export function AdminNav() {
               <li key={item.name}>
                 <Link
                   to={item.href}
+                  onClick={onItemClick}
                   className={cn(
                     "flex flex-col px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group relative",
                     isActive
@@ -170,6 +176,7 @@ export function AdminNav() {
         <div className="mt-8 pt-6 border-t border-border/40">
           <a
             href="/api/logout"
+            onClick={onItemClick}
             className="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group relative text-muted-foreground hover:text-foreground hover:bg-muted/50"
           >
             <LogOut className="mr-3 h-4 w-4 transition-colors duration-200 text-muted-foreground group-hover:text-red-500" />
