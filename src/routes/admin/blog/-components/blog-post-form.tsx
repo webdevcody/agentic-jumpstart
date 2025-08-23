@@ -21,6 +21,8 @@ import {
   Tags,
   Upload,
   Trash2,
+  Edit,
+  Eye,
 } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { MarkdownRenderer } from "~/components/markdown-renderer";
@@ -213,15 +215,15 @@ export function BlogPostForm({ blogPost }: BlogPostFormProps) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-start">
         {/* Main content */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6 h-full">
           {/* Content */}
           <AppCard
             icon={FileText}
             iconColor="blue"
             title="Content"
-            className="h-fit"
+            className="h-full flex flex-col"
           >
-            <div className="space-y-6">
+            <div className="flex flex-col flex-1 space-y-6">
               {/* Title */}
               <div className="space-y-2">
                 <Label htmlFor="title">Title</Label>
@@ -244,13 +246,23 @@ export function BlogPostForm({ blogPost }: BlogPostFormProps) {
                 )}
               </div>
 
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList>
-                  <TabsTrigger value="write">Write</TabsTrigger>
-                  <TabsTrigger value="preview">Preview</TabsTrigger>
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="flex flex-col flex-1"
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="write" className="flex items-center gap-2">
+                    <Edit className="h-4 w-4" />
+                    Write
+                  </TabsTrigger>
+                  <TabsTrigger value="preview" className="flex items-center gap-2">
+                    <Eye className="h-4 w-4" />
+                    Preview
+                  </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="write" className="mt-4">
+                <TabsContent value="write" className="mt-4 flex-1">
                   <Textarea
                     {...register("content", {
                       required: "Content is required",
@@ -261,7 +273,7 @@ export function BlogPostForm({ blogPost }: BlogPostFormProps) {
                     })}
                     placeholder="Write your blog post content in Markdown..."
                     className={cn(
-                      "min-h-[500px] font-mono",
+                      "h-full min-h-[500px] font-mono resize-none",
                       errors.content && "border-destructive"
                     )}
                   />
@@ -272,8 +284,8 @@ export function BlogPostForm({ blogPost }: BlogPostFormProps) {
                   )}
                 </TabsContent>
 
-                <TabsContent value="preview" className="mt-4">
-                  <div className="min-h-[500px] p-4 border rounded-md bg-background">
+                <TabsContent value="preview" className="mt-4 flex-1">
+                  <div className="h-full min-h-[500px] p-4 border rounded-md bg-background overflow-auto">
                     {content ? (
                       <MarkdownRenderer content={content} />
                     ) : (

@@ -268,9 +268,7 @@ function buildPrompt(userPrompt, pageContext) {
 
   const url = safeString(pageContext?.url) || "<unknown>";
   const path = safeString(pageContext?.path) || "<unknown>";
-  const contextBlock = `Context:\n- URL: ${url}\n- Path: ${path}`;
-  if (!userPrompt) return contextBlock;
-  return `${userPrompt}\n\n${contextBlock}`;
+  return `I need you to look at the route located at ${url} and path ${path} and do the following change: ${userPrompt}`;
 }
 
 async function invokeLocalAgent({ userPrompt, pageContext, requestId }) {

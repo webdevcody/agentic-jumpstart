@@ -6,10 +6,18 @@ import { isAdminFn } from "~/fn/auth";
 import { queryOptions } from "@tanstack/react-query";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { Calendar, User, ArrowLeft, Share2, Edit } from "lucide-react";
+import { Calendar, User, Share2, Edit } from "lucide-react";
 import { NotFound } from "~/components/NotFound";
 import { MarkdownRenderer } from "~/components/markdown-renderer";
 import { BlogImage } from "~/components/blog-image";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "~/components/ui/breadcrumb";
 
 export const Route = createFileRoute("/blog/$slug")({
   loader: ({ context, params }) => {
@@ -127,14 +135,21 @@ function BlogPost() {
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
-      {/* Back button and admin edit button */}
+      {/* Breadcrumb and admin edit button */}
       <div className="mb-8 flex justify-between items-center">
-        <Link to="/blog">
-          <Button variant="ghost" size="sm" className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Blog
-          </Button>
-        </Link>
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/blog">Blog</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{blogPost.title}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
         
         {isAdmin && blogPost && (
           <Link to="/admin/blog/$id/edit" params={{ id: blogPost.id.toString() }}>

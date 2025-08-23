@@ -7,7 +7,7 @@ import {
   CardDescription,
 } from "~/components/ui/card";
 import { PageHeader } from "~/routes/admin/-components/page-header";
-import { Shield, Bot, Package, DollarSign } from "lucide-react";
+import { Shield, Bot, Package, DollarSign, Newspaper } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   toggleEarlyAccessModeFn,
@@ -18,6 +18,8 @@ import {
   getLaunchKitsFeatureEnabledFn,
   toggleAffiliatesFeatureFn,
   getAffiliatesFeatureEnabledFn,
+  toggleBlogFeatureFn,
+  getBlogFeatureEnabledFn,
 } from "~/fn/app-settings";
 import { assertIsAdminFn } from "~/fn/auth";
 import { Switch } from "~/components/ui/switch";
@@ -45,6 +47,10 @@ export const Route = createFileRoute("/admin/settings")({
       queryKey: ["affiliatesFeature"],
       queryFn: () => getAffiliatesFeatureEnabledFn(),
     });
+    context.queryClient.ensureQueryData({
+      queryKey: ["blogFeature"],
+      queryFn: () => getBlogFeatureEnabledFn(),
+    });
   },
 });
 
@@ -69,6 +75,11 @@ function SettingsPage() {
   const { data: affiliatesFeature, isLoading: isLoadingAffiliates } = useQuery({
     queryKey: ["affiliatesFeature"],
     queryFn: () => getAffiliatesFeatureEnabledFn(),
+  });
+
+  const { data: blogFeature, isLoading: isLoadingBlog } = useQuery({
+    queryKey: ["blogFeature"],
+    queryFn: () => getBlogFeatureEnabledFn(),
   });
 
   const toggleEarlyAccessMutation = useMutation({
@@ -119,6 +130,18 @@ function SettingsPage() {
     },
   });
 
+  const toggleBlogFeatureMutation = useMutation({
+    mutationFn: toggleBlogFeatureFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blogFeature"] });
+      toast.success("Blog feature updated successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to update blog feature");
+      console.error("Failed to toggle blog feature:", error);
+    },
+  });
+
   const handleToggleEarlyAccess = (checked: boolean) => {
     toggleEarlyAccessMutation.mutate({ data: { enabled: checked } });
   };
@@ -133,6 +156,10 @@ function SettingsPage() {
 
   const handleToggleAffiliatesFeature = (checked: boolean) => {
     toggleAffiliatesFeatureMutation.mutate({ data: { enabled: checked } });
+  };
+
+  const handleToggleBlogFeature = (checked: boolean) => {
+    toggleBlogFeatureMutation.mutate({ data: { enabled: checked } });
   };
 
   return (
@@ -273,6 +300,40 @@ function SettingsPage() {
               {affiliatesFeature
                 ? "Users can access affiliate program features and registration."
                 : "Affiliate features are hidden from users."}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="flex flex-col h-full">
+          <CardHeader className="flex-shrink-0">
+            <CardTitle className="flex items-center gap-2">
+              <Newspaper className="h-5 w-5" />
+              Blog Feature
+            </CardTitle>
+            <CardDescription className="h-20 overflow-hidden">
+              Control whether the blog feature is available to users. When
+              disabled, blog-related functionality will be hidden.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col justify-between">
+            <div className="flex items-center space-x-3">
+              <Switch
+                id="blog-feature"
+                checked={blogFeature || false}
+                onCheckedChange={handleToggleBlogFeature}
+                disabled={
+                  isLoadingBlog ||
+                  toggleBlogFeatureMutation.isPending
+                }
+              />
+              <Label htmlFor="blog-feature" className="cursor-pointer">
+                {blogFeature ? "Enabled" : "Disabled"}
+              </Label>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground min-h-[2.5rem]">
+              {blogFeature
+                ? "Users can access blog posts and content creation features."
+                : "Blog features are hidden from users."}
             </p>
           </CardContent>
         </Card>

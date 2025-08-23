@@ -5,6 +5,7 @@ import {
   isAgentsFeatureEnabled as checkAgentsFeatureEnabled,
   isLaunchKitsFeatureEnabled as checkLaunchKitsFeatureEnabled,
   isAffiliatesFeatureEnabled as checkAffiliatesFeatureEnabled,
+  isBlogFeatureEnabled as checkBlogFeatureEnabled,
 } from "~/data-access/app-settings";
 
 export async function getAppSettingsUseCase() {
@@ -50,4 +51,12 @@ export async function getAffiliatesFeatureEnabledUseCase() {
 
 export async function toggleAffiliatesFeatureUseCase(enabled: boolean) {
   await setAppSetting("AFFILIATES_FEATURE", enabled.toString());
+}
+
+export async function getBlogFeatureEnabledUseCase() {
+  return checkBlogFeatureEnabled();
+}
+
+export async function toggleBlogFeatureUseCase(enabled: boolean) {
+  await setAppSetting("BLOG_FEATURE", enabled.toString());
 }

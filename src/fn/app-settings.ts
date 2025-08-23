@@ -10,6 +10,8 @@ import {
   toggleLaunchKitsFeatureUseCase,
   getAffiliatesFeatureEnabledUseCase,
   toggleAffiliatesFeatureUseCase,
+  getBlogFeatureEnabledUseCase,
+  toggleBlogFeatureUseCase,
 } from "~/use-cases/app-settings";
 
 export const getAppSettingsFn = createServerFn({ method: "GET" })
@@ -71,5 +73,19 @@ export const toggleAffiliatesFeatureFn = createServerFn({ method: "POST" })
   .validator((data: { enabled: boolean }) => data)
   .handler(async ({ data, context }) => {
     await toggleAffiliatesFeatureUseCase(data.enabled);
+    return { success: true };
+  });
+
+export const getBlogFeatureEnabledFn = createServerFn({ method: "GET" })
+  .middleware([unauthenticatedMiddleware])
+  .handler(async () => {
+    return getBlogFeatureEnabledUseCase();
+  });
+
+export const toggleBlogFeatureFn = createServerFn({ method: "POST" })
+  .middleware([adminMiddleware])
+  .validator((data: { enabled: boolean }) => data)
+  .handler(async ({ data, context }) => {
+    await toggleBlogFeatureUseCase(data.enabled);
     return { success: true };
   });

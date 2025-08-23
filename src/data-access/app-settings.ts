@@ -53,3 +53,8 @@ export async function isAffiliatesFeatureEnabled() {
   const setting = await getAppSetting(FLAGS.AFFILIATES_FEATURE);
   return setting?.value === "true";
 }
+
+export async function isBlogFeatureEnabled() {
+  const setting = await getAppSetting(FLAGS.BLOG_FEATURE);
+  return setting?.value === "true";
+}
