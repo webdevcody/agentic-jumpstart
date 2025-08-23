@@ -29,6 +29,7 @@ import {
   Calendar,
   Loader2,
 } from "lucide-react";
+import { parseISO, format, getDate } from "date-fns";
 
 interface EmailAnalyticsProps {
   analyticsData: Array<{ date: string; count: number }> | undefined;
@@ -78,11 +79,8 @@ export function EmailAnalytics({
     if (!analyticsData) return [];
     return analyticsData.map((item) => ({
       ...item,
-      day: new Date(item.date).getDate(),
-      formattedDate: new Date(item.date).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }),
+      day: getDate(parseISO(item.date)),
+      formattedDate: format(parseISO(item.date), "MMM d"),
     }));
   }, [analyticsData]);
 
