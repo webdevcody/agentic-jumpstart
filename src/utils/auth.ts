@@ -70,26 +70,21 @@ export async function isAuthenticated(): Promise<boolean> {
 export async function validateSessionToken(
   token: string
 ): Promise<SessionValidationResult> {
-  console.log({ token });
   const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
-  console.log({ sessionId });
   const sessionInDb = await database.query.sessions.findFirst({
     where: eq(sessions.id, sessionId),
   });
-  console.log({ sessionInDb });
   if (!sessionInDb) {
     return { session: null, user: null };
   }
   if (Date.now() >= sessionInDb.expiresAt.getTime()) {
     await database.delete(sessions).where(eq(sessions.id, sessionInDb.id));
-    console.log("asdf");
     return { session: null, user: null };
   }
 
   const user = await database.query.users.findFirst({
     where: eq(users.id, sessionInDb.userId),
   });
-  console.log(user);
 
   if (!user) {
     await database.delete(sessions).where(eq(sessions.id, sessionInDb.id));

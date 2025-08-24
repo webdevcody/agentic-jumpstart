@@ -8,11 +8,12 @@ import {
 import { assertIsAdminFn } from "~/fn/auth";
 import { PageHeader } from "../-components/page-header";
 import { queryOptions } from "@tanstack/react-query";
-import { StatsOverview } from "./-components/stats-overview";
 import { LaunchKitsList } from "./-components/launch-kits-list";
 import { DeleteLaunchKitDialog } from "./-components/delete-launch-kit-dialog";
 import { useLaunchKitDeletion } from "./-components/use-launch-kit-deletion";
 import { Page } from "../-components/page";
+import { HeaderStats, HeaderStatCard } from "../-components/header-stats";
+import { BarChart3, GitFork, MessageSquare, Tag } from "lucide-react";
 
 export const Route = createFileRoute("/admin/launch-kits/")({
   beforeLoad: () => assertIsAdminFn(),
@@ -58,12 +59,38 @@ function AdminLaunchKits() {
         title="Launch Kits Management"
         highlightedWord="Management"
         description="Manage launch kits and monitor analytics for starter repositories"
-      />
-
-      <StatsOverview
-        stats={stats}
-        tagsCount={tags?.length}
-        isLoading={statsLoading}
+        actions={
+          <HeaderStats columns={4}>
+            <HeaderStatCard
+              icon={BarChart3}
+              iconColor="blue"
+              value={stats?.totalKits ?? 0}
+              label="Total Kits"
+              loading={statsLoading}
+            />
+            <HeaderStatCard
+              icon={GitFork}
+              iconColor="green"
+              value={stats?.totalClones ?? 0}
+              label="Clones"
+              loading={statsLoading}
+            />
+            <HeaderStatCard
+              icon={MessageSquare}
+              iconColor="orange"
+              value={stats?.totalComments ?? 0}
+              label="Comments"
+              loading={statsLoading}
+            />
+            <HeaderStatCard
+              icon={Tag}
+              iconColor="purple"
+              value={tags?.length ?? 0}
+              label="Tags"
+              loading={statsLoading}
+            />
+          </HeaderStats>
+        }
       />
 
       <LaunchKitsList
