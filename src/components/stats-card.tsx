@@ -1,5 +1,11 @@
 import { LucideIcon } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 
 interface StatsCardProps {
   icon?: LucideIcon;
@@ -31,7 +37,7 @@ export function StatsCard({
   animationDelay = "0s",
 }: StatsCardProps) {
   const iconHoverBg = iconBgColor.replace("/10", "/20").replace("/20", "/30");
-  
+
   return (
     <div
       className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
@@ -43,26 +49,28 @@ export function StatsCard({
             {title}
           </div>
           {Icon && (
-            <div className={`w-10 h-10 rounded-full ${iconBgColor} flex items-center justify-center group-hover:${iconHoverBg} transition-colors duration-300`}>
+            <div
+              className={`w-10 h-10 rounded-full ${iconBgColor} flex items-center justify-center group-hover:${iconHoverBg} transition-colors duration-300`}
+            >
               <Icon className={`h-5 w-5 ${iconColor}`} />
             </div>
           )}
         </div>
-        <div className={`text-3xl font-bold text-foreground mb-2 ${hoverColor} transition-colors duration-300`}>
+        <div
+          className={`text-3xl font-bold text-foreground mb-2 ${hoverColor} transition-colors duration-300`}
+        >
           {value === null || value === undefined ? (
             <ValueSkeleton />
+          ) : typeof value === "number" ? (
+            value.toLocaleString()
           ) : (
-            typeof value === "number" ? value.toLocaleString() : value
+            value
           )}
         </div>
         {description !== undefined && (
-          <p className="text-sm text-muted-foreground">
-            {description === null ? (
-              <DescriptionSkeleton />
-            ) : (
-              description
-            )}
-          </p>
+          <div className="text-sm text-muted-foreground">
+            {description === null ? <DescriptionSkeleton /> : description}
+          </div>
         )}
       </div>
     </div>

@@ -504,8 +504,14 @@ function AdminAnalytics() {
                     >
                       <td className="p-4">
                         <div>
-                          <div className="font-medium text-foreground">
-                            {segment.title}
+                          <div className="font-medium">
+                            <Link
+                              to="/learn/$slug"
+                              params={{ slug: segment.slug }}
+                              className="text-foreground hover:text-theme-600 dark:hover:text-theme-400 transition-colors"
+                            >
+                              {segment.title}
+                            </Link>
                           </div>
                           <div className="text-sm text-muted-foreground">
                             Order: {segment.order}

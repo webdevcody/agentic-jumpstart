@@ -3,27 +3,19 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { getAllUsersWithProfilesFn } from "~/fn/users";
 import { assertIsAdminFn } from "~/fn/auth";
-import { Users, Crown, User, UserCheck } from "lucide-react";
+import { Users, Crown, User, UserCheck, Mail } from "lucide-react";
 import { queryOptions } from "@tanstack/react-query";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "~/components/ui/tabs";
 import { PageHeader } from "~/routes/admin/-components/page-header";
-import { AppCard } from "~/components/app-card";
 import { Page } from "~/routes/admin/-components/page";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { Card, CardContent } from "~/components/ui/card";
 import {
   HeaderStats,
   HeaderStatCard,
 } from "~/routes/admin/-components/header-stats";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "~/components/ui/table";
 
 export const Route = createFileRoute("/admin/users")({
   beforeLoad: () => assertIsAdminFn(),
@@ -152,183 +144,140 @@ function AdminUsers() {
             </TabsList>
           </div>
 
-          {/* Users Table */}
-          <AppCard
-            icon={Users}
-            title="Users"
-            description="All users in the system"
-            className="animate-in fade-in slide-in-from-bottom-2 duration-500"
+          {/* Users Grid */}
+          <TabsContent 
+            value={activeTab} 
+            className="mt-0 animate-in fade-in slide-in-from-bottom-2 duration-500"
             style={{ animationDelay: "0.2s", animationFillMode: "both" }}
           >
-            <div className="p-6">
-              <TabsContent value={activeTab} className="mt-0">
-                {isLoading ? (
-                  <UserTableSkeleton />
-                ) : (
-                  <div className="border rounded-lg">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>User</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Admin</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredUsers.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8">
-                              <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                                <User className="h-8 w-8" />
-                                <span>No users found for this filter</span>
+            {isLoading ? (
+              <UserGridSkeleton />
+            ) : filteredUsers.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="rounded-full bg-muted p-6 mb-4">
+                  <User className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">No users found</h3>
+                <p className="text-sm text-muted-foreground">
+                  No users match the selected filter criteria.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredUsers.map((user, index) => (
+                  <Link
+                    key={user.id}
+                    to="/profile/$userId"
+                    params={{ userId: user.id.toString() }}
+                    className="block"
+                  >
+                    <Card 
+                      className="hover:shadow-md transition-all duration-200 border-border/50 hover:border-border animate-in fade-in slide-in-from-bottom-2 duration-300 cursor-pointer hover:scale-105"
+                      style={{ animationDelay: `${0.1 * index}s`, animationFillMode: "both" }}
+                    >
+                      <CardContent className="p-6">
+                        {/* Header with Avatar and Status */}
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-12 w-12 ring-2 ring-background shadow-sm">
+                              <AvatarImage
+                                src={getUserAvatar(user.profile, user.email)}
+                                alt={user.profile?.displayName || user.email || "User"}
+                              />
+                              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
+                                {getUserInitials(user.profile?.displayName, user.email)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-base truncate">
+                                {user.profile?.displayName || "No name"}
                               </div>
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          filteredUsers.map((user) => (
-                            <TableRow
-                              key={user.id}
-                              className="hover:bg-muted/50"
-                            >
-                              <TableCell>
-                                <div className="flex items-center gap-3">
-                                  <Avatar className="h-10 w-10">
-                                    <AvatarImage
-                                      src={getUserAvatar(
-                                        user.profile,
-                                        user.email
-                                      )}
-                                      alt={
-                                        user.profile?.displayName ||
-                                        user.email ||
-                                        "User"
-                                      }
-                                    />
-                                    <AvatarFallback>
-                                      {getUserInitials(
-                                        user.profile?.displayName,
-                                        user.email
-                                      )}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div>
-                                    <div className="font-medium">
-                                      {user.profile?.displayName || "No name"}
-                                    </div>
-                                    <div className="text-sm text-muted-foreground">
-                                      ID: {user.id}
-                                    </div>
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="text-sm">{user.email}</div>
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  variant={
-                                    user.isPremium ? "default" : "secondary"
-                                  }
-                                  className={
-                                    user.isPremium
-                                      ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                                      : ""
-                                  }
-                                >
-                                  {user.isPremium ? (
-                                    <>
-                                      <Crown className="h-3 w-3 mr-1" />
-                                      Premium
-                                    </>
-                                  ) : (
-                                    <>
-                                      <User className="h-3 w-3 mr-1" />
-                                      Free
-                                    </>
-                                  )}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                {user.isAdmin ? (
-                                  <Badge variant="destructive">
-                                    <UserCheck className="h-3 w-3 mr-1" />
-                                    Admin
-                                  </Badge>
-                                ) : (
-                                  <span className="text-muted-foreground text-sm">
-                                    —
-                                  </span>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                <Button variant="outline" size="sm" asChild>
-                                  <Link
-                                    to="/profile/$userId"
-                                    params={{ userId: user.id.toString() }}
-                                  >
-                                    View Profile
-                                  </Link>
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </TabsContent>
-            </div>
-          </AppCard>
+                              <div className="text-xs text-muted-foreground">
+                                ID: {user.id}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            {user.isAdmin && (
+                              <Badge variant="destructive" className="text-xs">
+                                <UserCheck className="h-3 w-3 mr-1" />
+                                Admin
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Email */}
+                        <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
+                          <Mail className="h-4 w-4 flex-shrink-0" />
+                          <span className="truncate">{user.email}</span>
+                        </div>
+
+                        {/* Status Badge */}
+                        <div className="flex items-center justify-start">
+                          <Badge
+                            variant={user.isPremium ? "default" : "secondary"}
+                            className={
+                              user.isPremium
+                                ? "bg-gradient-to-r from-yellow-400 to-yellow-600 text-yellow-900 border-0 shadow-sm"
+                                : "bg-muted text-muted-foreground"
+                            }
+                          >
+                            {user.isPremium ? (
+                              <>
+                                <Crown className="h-3 w-3 mr-1" />
+                                Premium
+                              </>
+                            ) : (
+                              <>
+                                <User className="h-3 w-3 mr-1" />
+                                Free
+                              </>
+                            )}
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
       </div>
     </Page>
   );
 }
 
-function UserTableSkeleton() {
+function UserGridSkeleton() {
   return (
-    <div className="border rounded-lg">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>User</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Admin</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <TableRow key={i}>
-              <TableCell>
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
-                  <div className="space-y-2">
-                    <div className="h-4 w-32 bg-muted animate-pulse rounded" />
-                    <div className="h-3 w-16 bg-muted animate-pulse rounded" />
-                  </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Card key={i} className="border-border/50">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-full bg-muted animate-pulse" />
+                <div className="space-y-2">
+                  <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+                  <div className="h-3 w-16 bg-muted animate-pulse rounded" />
                 </div>
-              </TableCell>
-              <TableCell>
-                <div className="h-4 w-48 bg-muted animate-pulse rounded" />
-              </TableCell>
-              <TableCell>
-                <div className="h-6 w-20 bg-muted animate-pulse rounded-full" />
-              </TableCell>
-              <TableCell>
-                <div className="h-6 w-16 bg-muted animate-pulse rounded-full" />
-              </TableCell>
-              <TableCell>
-                <div className="h-8 w-24 bg-muted animate-pulse rounded" />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+              </div>
+              <div className="h-5 w-12 bg-muted animate-pulse rounded-full" />
+            </div>
+            
+            <div className="flex items-center gap-2 mb-4">
+              <div className="h-4 w-4 bg-muted animate-pulse rounded" />
+              <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="h-6 w-20 bg-muted animate-pulse rounded-full" />
+              <div className="h-8 w-12 bg-muted animate-pulse rounded" />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
