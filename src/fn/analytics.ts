@@ -18,6 +18,7 @@ import {
   getEventTypeCounts,
   getPopularPages,
   getOverallAnalyticsStats,
+  getDailyConversions,
 } from "~/data-access/analytics";
 import { getHeaders } from "@tanstack/react-start/server";
 import { adminMiddleware } from "~/lib/auth";
@@ -197,4 +198,19 @@ export const getOverallAnalyticsStatsFn = createServerFn()
         : undefined;
 
     return getOverallAnalyticsStats(dateRange);
+  });
+
+export const getDailyConversionsFn = createServerFn()
+  .validator(dateRangeSchema)
+  .middleware([adminMiddleware])
+  .handler(async ({ data }) => {
+    const dateRange =
+      data.start && data.end
+        ? {
+            start: new Date(data.start),
+            end: new Date(data.end),
+          }
+        : undefined;
+
+    return getDailyConversions(dateRange);
   });

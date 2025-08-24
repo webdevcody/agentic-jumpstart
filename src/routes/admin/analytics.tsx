@@ -214,6 +214,18 @@ function AdminAnalytics() {
           <div className="space-y-4">
             {isLoading
               ? [...Array(5)].map((_, idx) => <SegmentSkeleton key={idx} />)
+              : analytics?.topPerformingSegments.length === 0
+              ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <TrendingUp className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                    <h3 className="font-medium text-muted-foreground mb-2">
+                      No segments completed yet
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Top performing segments will appear here once users start completing them.
+                    </p>
+                  </div>
+                )
               : analytics?.topPerformingSegments.map((segment, index) => (
                   <div
                     key={segment.segmentId}

@@ -149,7 +149,9 @@ export function AdminNav() {
         {/* Navigation links - flex-1 to take available space */}
         <ul className="space-y-1 flex-1">
           {navigation.map((item) => {
-            const isActive = location.pathname === item.href;
+            const isActive = item.href === "/admin/conversions" 
+              ? location.pathname.startsWith("/admin/conversions")
+              : location.pathname === item.href;
             const isDisabled = item.featureKey && !featureStates[item.featureKey];
             
             return (

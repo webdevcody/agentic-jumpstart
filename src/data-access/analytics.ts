@@ -546,6 +546,7 @@ export async function getDailyConversions(dateRange?: {
     .select({
       date: sql<string>`date(${analyticsSessions.firstSeen})`,
       sessions: count(analyticsSessions.id),
+      purchaseIntent: sql<number>`sum(case when ${analyticsSessions.hasPurchaseIntent} then 1 else 0 end)`,
       conversions: sql<number>`sum(case when ${analyticsSessions.hasConversion} then 1 else 0 end)`,
       conversionRate: sql<number>`
         case when count(${analyticsSessions.id}) > 0 
@@ -557,7 +558,7 @@ export async function getDailyConversions(dateRange?: {
     .from(analyticsSessions)
     .where(whereCondition)
     .groupBy(sql`date(${analyticsSessions.firstSeen})`)
-    .orderBy(desc(sql`date(${analyticsSessions.firstSeen})`))
+    .orderBy(sql`date(${analyticsSessions.firstSeen})`)
     .limit(30);
 
   return dailyData;

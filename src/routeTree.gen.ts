@@ -45,13 +45,14 @@ import { Route as AgentsNewRouteImport } from './routes/agents/new'
 import { Route as AgentsSlugRouteImport } from './routes/agents/$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
-import { Route as AdminConversionsRouteImport } from './routes/admin/conversions'
 import { Route as AdminCommentsRouteImport } from './routes/admin/comments'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AdminAffiliatesRouteImport } from './routes/admin/affiliates'
 import { Route as AdminEmailsRouteRouteImport } from './routes/admin/emails/route'
+import { Route as AdminConversionsRouteRouteImport } from './routes/admin/conversions/route'
 import { Route as AdminLaunchKitsIndexRouteImport } from './routes/admin/launch-kits/index'
 import { Route as AdminEmailsIndexRouteImport } from './routes/admin/emails/index'
+import { Route as AdminConversionsIndexRouteImport } from './routes/admin/conversions/index'
 import { Route as AdminBlogIndexRouteImport } from './routes/admin/blog/index'
 import { Route as LearnSlugEditRouteImport } from './routes/learn/$slug/edit'
 import { Route as LearnSlugLayoutRouteImport } from './routes/learn/$slug/_layout'
@@ -59,6 +60,9 @@ import { Route as AdminEmailsWaitlistRouteImport } from './routes/admin/emails/w
 import { Route as AdminEmailsHistoryRouteImport } from './routes/admin/emails/history'
 import { Route as AdminEmailsComposeRouteImport } from './routes/admin/emails/compose'
 import { Route as AdminEmailsAnalyticsRouteImport } from './routes/admin/emails/analytics'
+import { Route as AdminConversionsPagesRouteImport } from './routes/admin/conversions/pages'
+import { Route as AdminConversionsOverviewRouteImport } from './routes/admin/conversions/overview'
+import { Route as AdminConversionsEventsRouteImport } from './routes/admin/conversions/events'
 import { Route as AdminBlogNewRouteImport } from './routes/admin/blog/new'
 import { Route as LearnSlugLayoutIndexRouteImport } from './routes/learn/$slug/_layout.index'
 import { Route as AdminLaunchKitsCreateIndexRouteImport } from './routes/admin/launch-kits/create/index'
@@ -243,11 +247,6 @@ const AdminSettingsRoute = AdminSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AdminRouteRoute,
 } as any)
-const AdminConversionsRoute = AdminConversionsRouteImport.update({
-  id: '/conversions',
-  path: '/conversions',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
 const AdminCommentsRoute = AdminCommentsRouteImport.update({
   id: '/comments',
   path: '/comments',
@@ -268,6 +267,11 @@ const AdminEmailsRouteRoute = AdminEmailsRouteRouteImport.update({
   path: '/emails',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminConversionsRouteRoute = AdminConversionsRouteRouteImport.update({
+  id: '/conversions',
+  path: '/conversions',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminLaunchKitsIndexRoute = AdminLaunchKitsIndexRouteImport.update({
   id: '/launch-kits/',
   path: '/launch-kits/',
@@ -277,6 +281,11 @@ const AdminEmailsIndexRoute = AdminEmailsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminEmailsRouteRoute,
+} as any)
+const AdminConversionsIndexRoute = AdminConversionsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminConversionsRouteRoute,
 } as any)
 const AdminBlogIndexRoute = AdminBlogIndexRouteImport.update({
   id: '/blog/',
@@ -311,6 +320,22 @@ const AdminEmailsAnalyticsRoute = AdminEmailsAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
   getParentRoute: () => AdminEmailsRouteRoute,
+} as any)
+const AdminConversionsPagesRoute = AdminConversionsPagesRouteImport.update({
+  id: '/pages',
+  path: '/pages',
+  getParentRoute: () => AdminConversionsRouteRoute,
+} as any)
+const AdminConversionsOverviewRoute =
+  AdminConversionsOverviewRouteImport.update({
+    id: '/overview',
+    path: '/overview',
+    getParentRoute: () => AdminConversionsRouteRoute,
+  } as any)
+const AdminConversionsEventsRoute = AdminConversionsEventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => AdminConversionsRouteRoute,
 } as any)
 const AdminBlogNewRoute = AdminBlogNewRouteImport.update({
   id: '/blog/new',
@@ -385,11 +410,11 @@ export interface FileRoutesByFullPath {
   '/unauthenticated': typeof UnauthenticatedRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/admin/conversions': typeof AdminConversionsRouteRouteWithChildren
   '/admin/emails': typeof AdminEmailsRouteRouteWithChildren
   '/admin/affiliates': typeof AdminAffiliatesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/comments': typeof AdminCommentsRoute
-  '/admin/conversions': typeof AdminConversionsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/agents/$slug': typeof AgentsSlugRoute
@@ -407,6 +432,9 @@ export interface FileRoutesByFullPath {
   '/launch-kits': typeof LaunchKitsIndexRoute
   '/learn': typeof LearnIndexRoute
   '/admin/blog/new': typeof AdminBlogNewRoute
+  '/admin/conversions/events': typeof AdminConversionsEventsRoute
+  '/admin/conversions/overview': typeof AdminConversionsOverviewRoute
+  '/admin/conversions/pages': typeof AdminConversionsPagesRoute
   '/admin/emails/analytics': typeof AdminEmailsAnalyticsRoute
   '/admin/emails/compose': typeof AdminEmailsComposeRoute
   '/admin/emails/history': typeof AdminEmailsHistoryRoute
@@ -414,6 +442,7 @@ export interface FileRoutesByFullPath {
   '/learn/$slug': typeof LearnSlugLayoutRouteWithChildren
   '/learn/$slug/edit': typeof LearnSlugEditRoute
   '/admin/blog': typeof AdminBlogIndexRoute
+  '/admin/conversions/': typeof AdminConversionsIndexRoute
   '/admin/emails/': typeof AdminEmailsIndexRoute
   '/admin/launch-kits': typeof AdminLaunchKitsIndexRoute
   '/admin/blog/$id/edit': typeof AdminBlogIdEditRoute
@@ -442,7 +471,6 @@ export interface FileRoutesByTo {
   '/admin/affiliates': typeof AdminAffiliatesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/comments': typeof AdminCommentsRoute
-  '/admin/conversions': typeof AdminConversionsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/agents/$slug': typeof AgentsSlugRoute
@@ -460,6 +488,9 @@ export interface FileRoutesByTo {
   '/launch-kits': typeof LaunchKitsIndexRoute
   '/learn': typeof LearnIndexRoute
   '/admin/blog/new': typeof AdminBlogNewRoute
+  '/admin/conversions/events': typeof AdminConversionsEventsRoute
+  '/admin/conversions/overview': typeof AdminConversionsOverviewRoute
+  '/admin/conversions/pages': typeof AdminConversionsPagesRoute
   '/admin/emails/analytics': typeof AdminEmailsAnalyticsRoute
   '/admin/emails/compose': typeof AdminEmailsComposeRoute
   '/admin/emails/history': typeof AdminEmailsHistoryRoute
@@ -467,6 +498,7 @@ export interface FileRoutesByTo {
   '/learn/$slug': typeof LearnSlugLayoutIndexRoute
   '/learn/$slug/edit': typeof LearnSlugEditRoute
   '/admin/blog': typeof AdminBlogIndexRoute
+  '/admin/conversions': typeof AdminConversionsIndexRoute
   '/admin/emails': typeof AdminEmailsIndexRoute
   '/admin/launch-kits': typeof AdminLaunchKitsIndexRoute
   '/admin/blog/$id/edit': typeof AdminBlogIdEditRoute
@@ -492,11 +524,11 @@ export interface FileRoutesById {
   '/unauthenticated': typeof UnauthenticatedRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/admin/conversions': typeof AdminConversionsRouteRouteWithChildren
   '/admin/emails': typeof AdminEmailsRouteRouteWithChildren
   '/admin/affiliates': typeof AdminAffiliatesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/comments': typeof AdminCommentsRoute
-  '/admin/conversions': typeof AdminConversionsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/agents/$slug': typeof AgentsSlugRoute
@@ -514,6 +546,9 @@ export interface FileRoutesById {
   '/launch-kits/': typeof LaunchKitsIndexRoute
   '/learn/': typeof LearnIndexRoute
   '/admin/blog/new': typeof AdminBlogNewRoute
+  '/admin/conversions/events': typeof AdminConversionsEventsRoute
+  '/admin/conversions/overview': typeof AdminConversionsOverviewRoute
+  '/admin/conversions/pages': typeof AdminConversionsPagesRoute
   '/admin/emails/analytics': typeof AdminEmailsAnalyticsRoute
   '/admin/emails/compose': typeof AdminEmailsComposeRoute
   '/admin/emails/history': typeof AdminEmailsHistoryRoute
@@ -522,6 +557,7 @@ export interface FileRoutesById {
   '/learn/$slug/_layout': typeof LearnSlugLayoutRouteWithChildren
   '/learn/$slug/edit': typeof LearnSlugEditRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
+  '/admin/conversions/': typeof AdminConversionsIndexRoute
   '/admin/emails/': typeof AdminEmailsIndexRoute
   '/admin/launch-kits/': typeof AdminLaunchKitsIndexRoute
   '/admin/blog/$id/edit': typeof AdminBlogIdEditRoute
@@ -549,11 +585,11 @@ export interface FileRouteTypes {
     | '/unauthenticated'
     | '/unauthorized'
     | '/unsubscribe'
+    | '/admin/conversions'
     | '/admin/emails'
     | '/admin/affiliates'
     | '/admin/analytics'
     | '/admin/comments'
-    | '/admin/conversions'
     | '/admin/settings'
     | '/admin/users'
     | '/agents/$slug'
@@ -571,6 +607,9 @@ export interface FileRouteTypes {
     | '/launch-kits'
     | '/learn'
     | '/admin/blog/new'
+    | '/admin/conversions/events'
+    | '/admin/conversions/overview'
+    | '/admin/conversions/pages'
     | '/admin/emails/analytics'
     | '/admin/emails/compose'
     | '/admin/emails/history'
@@ -578,6 +617,7 @@ export interface FileRouteTypes {
     | '/learn/$slug'
     | '/learn/$slug/edit'
     | '/admin/blog'
+    | '/admin/conversions/'
     | '/admin/emails/'
     | '/admin/launch-kits'
     | '/admin/blog/$id/edit'
@@ -606,7 +646,6 @@ export interface FileRouteTypes {
     | '/admin/affiliates'
     | '/admin/analytics'
     | '/admin/comments'
-    | '/admin/conversions'
     | '/admin/settings'
     | '/admin/users'
     | '/agents/$slug'
@@ -624,6 +663,9 @@ export interface FileRouteTypes {
     | '/launch-kits'
     | '/learn'
     | '/admin/blog/new'
+    | '/admin/conversions/events'
+    | '/admin/conversions/overview'
+    | '/admin/conversions/pages'
     | '/admin/emails/analytics'
     | '/admin/emails/compose'
     | '/admin/emails/history'
@@ -631,6 +673,7 @@ export interface FileRouteTypes {
     | '/learn/$slug'
     | '/learn/$slug/edit'
     | '/admin/blog'
+    | '/admin/conversions'
     | '/admin/emails'
     | '/admin/launch-kits'
     | '/admin/blog/$id/edit'
@@ -655,11 +698,11 @@ export interface FileRouteTypes {
     | '/unauthenticated'
     | '/unauthorized'
     | '/unsubscribe'
+    | '/admin/conversions'
     | '/admin/emails'
     | '/admin/affiliates'
     | '/admin/analytics'
     | '/admin/comments'
-    | '/admin/conversions'
     | '/admin/settings'
     | '/admin/users'
     | '/agents/$slug'
@@ -677,6 +720,9 @@ export interface FileRouteTypes {
     | '/launch-kits/'
     | '/learn/'
     | '/admin/blog/new'
+    | '/admin/conversions/events'
+    | '/admin/conversions/overview'
+    | '/admin/conversions/pages'
     | '/admin/emails/analytics'
     | '/admin/emails/compose'
     | '/admin/emails/history'
@@ -685,6 +731,7 @@ export interface FileRouteTypes {
     | '/learn/$slug/_layout'
     | '/learn/$slug/edit'
     | '/admin/blog/'
+    | '/admin/conversions/'
     | '/admin/emails/'
     | '/admin/launch-kits/'
     | '/admin/blog/$id/edit'
@@ -1021,13 +1068,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSettingsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
-    '/admin/conversions': {
-      id: '/admin/conversions'
-      path: '/conversions'
-      fullPath: '/admin/conversions'
-      preLoaderRoute: typeof AdminConversionsRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
     '/admin/comments': {
       id: '/admin/comments'
       path: '/comments'
@@ -1056,6 +1096,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEmailsRouteRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/conversions': {
+      id: '/admin/conversions'
+      path: '/conversions'
+      fullPath: '/admin/conversions'
+      preLoaderRoute: typeof AdminConversionsRouteRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/launch-kits/': {
       id: '/admin/launch-kits/'
       path: '/launch-kits'
@@ -1069,6 +1116,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/emails/'
       preLoaderRoute: typeof AdminEmailsIndexRouteImport
       parentRoute: typeof AdminEmailsRouteRoute
+    }
+    '/admin/conversions/': {
+      id: '/admin/conversions/'
+      path: '/'
+      fullPath: '/admin/conversions/'
+      preLoaderRoute: typeof AdminConversionsIndexRouteImport
+      parentRoute: typeof AdminConversionsRouteRoute
     }
     '/admin/blog/': {
       id: '/admin/blog/'
@@ -1118,6 +1172,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/emails/analytics'
       preLoaderRoute: typeof AdminEmailsAnalyticsRouteImport
       parentRoute: typeof AdminEmailsRouteRoute
+    }
+    '/admin/conversions/pages': {
+      id: '/admin/conversions/pages'
+      path: '/pages'
+      fullPath: '/admin/conversions/pages'
+      preLoaderRoute: typeof AdminConversionsPagesRouteImport
+      parentRoute: typeof AdminConversionsRouteRoute
+    }
+    '/admin/conversions/overview': {
+      id: '/admin/conversions/overview'
+      path: '/overview'
+      fullPath: '/admin/conversions/overview'
+      preLoaderRoute: typeof AdminConversionsOverviewRouteImport
+      parentRoute: typeof AdminConversionsRouteRoute
+    }
+    '/admin/conversions/events': {
+      id: '/admin/conversions/events'
+      path: '/events'
+      fullPath: '/admin/conversions/events'
+      preLoaderRoute: typeof AdminConversionsEventsRouteImport
+      parentRoute: typeof AdminConversionsRouteRoute
     }
     '/admin/blog/new': {
       id: '/admin/blog/new'
@@ -1196,6 +1271,25 @@ declare module '@tanstack/react-start/server' {
   }
 }
 
+interface AdminConversionsRouteRouteChildren {
+  AdminConversionsEventsRoute: typeof AdminConversionsEventsRoute
+  AdminConversionsOverviewRoute: typeof AdminConversionsOverviewRoute
+  AdminConversionsPagesRoute: typeof AdminConversionsPagesRoute
+  AdminConversionsIndexRoute: typeof AdminConversionsIndexRoute
+}
+
+const AdminConversionsRouteRouteChildren: AdminConversionsRouteRouteChildren = {
+  AdminConversionsEventsRoute: AdminConversionsEventsRoute,
+  AdminConversionsOverviewRoute: AdminConversionsOverviewRoute,
+  AdminConversionsPagesRoute: AdminConversionsPagesRoute,
+  AdminConversionsIndexRoute: AdminConversionsIndexRoute,
+}
+
+const AdminConversionsRouteRouteWithChildren =
+  AdminConversionsRouteRoute._addFileChildren(
+    AdminConversionsRouteRouteChildren,
+  )
+
 interface AdminEmailsRouteRouteChildren {
   AdminEmailsAnalyticsRoute: typeof AdminEmailsAnalyticsRoute
   AdminEmailsComposeRoute: typeof AdminEmailsComposeRoute
@@ -1216,11 +1310,11 @@ const AdminEmailsRouteRouteWithChildren =
   AdminEmailsRouteRoute._addFileChildren(AdminEmailsRouteRouteChildren)
 
 interface AdminRouteRouteChildren {
+  AdminConversionsRouteRoute: typeof AdminConversionsRouteRouteWithChildren
   AdminEmailsRouteRoute: typeof AdminEmailsRouteRouteWithChildren
   AdminAffiliatesRoute: typeof AdminAffiliatesRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminCommentsRoute: typeof AdminCommentsRoute
-  AdminConversionsRoute: typeof AdminConversionsRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminBlogNewRoute: typeof AdminBlogNewRoute
@@ -1232,11 +1326,11 @@ interface AdminRouteRouteChildren {
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminConversionsRouteRoute: AdminConversionsRouteRouteWithChildren,
   AdminEmailsRouteRoute: AdminEmailsRouteRouteWithChildren,
   AdminAffiliatesRoute: AdminAffiliatesRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminCommentsRoute: AdminCommentsRoute,
-  AdminConversionsRoute: AdminConversionsRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminBlogNewRoute: AdminBlogNewRoute,
