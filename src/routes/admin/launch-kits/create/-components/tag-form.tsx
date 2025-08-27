@@ -138,6 +138,7 @@ export function TagForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsSubmitting(true);
     tagMutation.mutate(formData);
   };
@@ -149,7 +150,9 @@ export function TagForm({
     setFormData((prev) => ({ ...prev, color: PRESET_COLORS[nextIndex] }));
   };
 
-  const handleCreateCategory = async () => {
+  const handleCreateCategory = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
     if (newCategoryName.trim()) {
       createCategoryMutation.mutate({ data: { name: newCategoryName.trim() } });
     }
@@ -190,7 +193,7 @@ export function TagForm({
         <div>
           <Label htmlFor="tag-name">Name *</Label>
           <Input
-            id="tag-name"
+            data-testid="tag-name-input"
             value={formData.name}
             onChange={(e) =>
               setFormData((prev) => ({ ...prev, name: e.target.value }))
@@ -219,6 +222,7 @@ export function TagForm({
             />
             <Input
               type="text"
+              data-testid="tag-color-input"
               value={formData.color}
               onChange={(e) => {
                 const value = e.target.value;
@@ -254,6 +258,7 @@ export function TagForm({
             <div className="flex items-center gap-2">
               <Input
                 placeholder="Enter category name"
+                data-testid="new-category-input"
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
                 disabled={isSubmitting || createCategoryMutation.isPending}
@@ -262,7 +267,8 @@ export function TagForm({
               <Button
                 type="button"
                 size="sm"
-                onClick={handleCreateCategory}
+                data-testid="add-category-button"
+                onClick={(e) => handleCreateCategory(e)}
                 disabled={
                   isSubmitting ||
                   createCategoryMutation.isPending ||
@@ -275,7 +281,10 @@ export function TagForm({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => {
+                data-testid="cancel-category-button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   setShowNewCategoryInput(false);
                   setNewCategoryName("");
                 }}
@@ -314,8 +323,13 @@ export function TagForm({
               <Button
                 type="button"
                 variant="outline"
+                data-testid="new-category-button"
                 size="icon"
-                onClick={() => setShowNewCategoryInput(true)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowNewCategoryInput(true);
+                }}
                 disabled={isSubmitting}
                 title="Create new category"
               >
@@ -332,7 +346,11 @@ export function TagForm({
               Cancel
             </Button>
           </DialogTrigger>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button
+            data-testid="create-tag-button"
+            type="submit"
+            disabled={isSubmitting}
+          >
             {isSubmitting ? (
               <>
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />

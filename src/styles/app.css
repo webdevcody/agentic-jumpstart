@@ -178,3 +178,7 @@ a {
 .grecaptcha-badge {
   visibility: hidden !important;
 }
+
+[data-sonner-toast][data-type="error"] {
+  @apply !bg-destructive !text-white !border-none;
+}

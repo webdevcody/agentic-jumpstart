@@ -135,9 +135,20 @@ AlertDialogDescription.displayName =
 
 const AlertDialogAction = React.forwardRef<
   HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement>
->(({ className, ...props }, ref) => (
-  <button ref={ref} className={cn(buttonVariants(), className)} {...props} />
+  React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    variant: "destructive" | "default";
+  }
+>(({ className, variant, ...props }, ref) => (
+  <button
+    ref={ref}
+    className={cn(
+      buttonVariants({
+        variant,
+      }),
+      className
+    )}
+    {...props}
+  />
 ));
 AlertDialogAction.displayName = "AlertDialogAction";
 

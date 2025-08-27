@@ -81,7 +81,12 @@ export function LaunchKitForm({
               </Link>
             </Button>
 
-            <Button type="submit" disabled={isLoading} className="gap-2">
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="gap-2"
+              data-testid="save-launch-kit-button"
+            >
               {isLoading ? (
                 <>
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />

@@ -198,7 +198,7 @@ function AdminNewsPage() {
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm" asChild>
                     <a
                       href={entry.url}
@@ -210,18 +210,18 @@ function AdminNewsPage() {
                   </Button>
 
                   <Button variant="outline" size="sm" asChild>
-                    <Link to="/admin/news/$id/edit" params={{ id: String(entry.id) }}>
+                    <Link to={`/admin/news/${entry.id}/edit` as any}>
                       <Edit className="h-4 w-4" />
                     </Link>
                   </Button>
 
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm">
+                      <Button variant="destructive" size="sm">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent animation="slide-right">
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete News Entry</AlertDialogTitle>
                         <AlertDialogDescription>
@@ -233,7 +233,7 @@ function AdminNewsPage() {
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => deleteEntryMutation.mutate(entry.id)}
-                          className="bg-destructive hover:bg-destructive/90"
+                          variant="destructive"
                         >
                           Delete
                         </AlertDialogAction>

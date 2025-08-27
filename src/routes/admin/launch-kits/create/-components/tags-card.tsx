@@ -5,10 +5,7 @@ import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Badge } from "~/components/ui/badge";
-import {
-  Dialog,
-  DialogTrigger,
-} from "~/components/ui/dialog";
+import { Dialog, DialogTrigger } from "~/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,12 +16,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "~/components/ui/alert-dialog";
-import {
-  FormField,
-  FormItem,
-  FormMessage,
-} from "~/components/ui/form";
-import { Plus, Tag as TagIcon, X, Edit2, Trash2 } from "lucide-react";
+import { FormField, FormItem, FormMessage } from "~/components/ui/form";
+import { Plus, Tag as TagIcon, Edit2, Trash2 } from "lucide-react";
 import { CreateLaunchKitForm } from "./basic-information-card";
 import { TagForm } from "./tag-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -35,6 +28,7 @@ interface Tag {
   id: number;
   name: string;
   color: string;
+  slug?: string;
   categoryId?: number | null;
   category?: {
     id: number;
@@ -52,12 +46,12 @@ interface TagsCardProps {
   refetchTags: () => void;
 }
 
-export function TagsCard({ 
-  form, 
-  isLoading, 
-  tags, 
+export function TagsCard({
+  form,
+  isLoading,
+  tags,
   onTagToggle,
-  refetchTags 
+  refetchTags,
 }: TagsCardProps) {
   const queryClient = useQueryClient();
   const [isTagDialogOpen, setIsTagDialogOpen] = useState(false);
@@ -85,7 +79,10 @@ export function TagsCard({
     // Also remove from selected tags if it was selected
     const currentTags = form.getValues("tagIds") || [];
     if (currentTags.includes(tagId)) {
-      form.setValue("tagIds", currentTags.filter(id => id !== tagId));
+      form.setValue(
+        "tagIds",
+        currentTags.filter((id) => id !== tagId)
+      );
     }
   };
 
@@ -136,7 +133,12 @@ export function TagsCard({
               }}
             >
               <DialogTrigger asChild>
-                <Button type="button" variant="outline" size="sm">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  data-testid="new-tag-button"
+                >
                   <Plus className="mr-2 h-3 w-3" />
                   New Tag
                 </Button>
@@ -193,25 +195,31 @@ export function TagsCard({
                                 <Label
                                   htmlFor={`tag-${tag.id}`}
                                   className="text-sm cursor-pointer flex-1"
+                                  data-testid={`tag-${tag.slug}`}
                                 >
                                   <Badge
                                     variant="outline"
                                     className="relative"
-                                    style={{
-                                      '--tag-color': tag.color,
-                                      borderColor: tag.color,
-                                      color: tag.color,
-                                      backgroundColor: `color-mix(in srgb, ${tag.color} 15%, transparent)`,
-                                    } as React.CSSProperties & { '--tag-color': string }}
+                                    style={
+                                      {
+                                        "--tag-color": tag.color,
+                                        borderColor: tag.color,
+                                        color: tag.color,
+                                        backgroundColor: `color-mix(in srgb, ${tag.color} 15%, transparent)`,
+                                      } as React.CSSProperties & {
+                                        "--tag-color": string;
+                                      }
+                                    }
                                     data-tag={tag.slug}
                                   >
                                     <span className="relative z-10 dark:text-white dark:drop-shadow-sm">
                                       {tag.name}
                                     </span>
-                                    <div 
+                                    <div
                                       className="absolute inset-0 rounded-md dark:bg-gray-800/80 dark:border-gray-600"
                                       style={{
-                                        borderColor: 'color-mix(in srgb, var(--tag-color) 60%, #6b7280)',
+                                        borderColor:
+                                          "color-mix(in srgb, var(--tag-color) 60%, #6b7280)",
                                       }}
                                     />
                                   </Badge>
@@ -222,7 +230,11 @@ export function TagsCard({
                                     variant="ghost"
                                     size="sm"
                                     className="h-6 w-6 p-0"
-                                    onClick={() => handleEditTag(tag)}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleEditTag(tag);
+                                    }}
                                     disabled={isLoading}
                                     aria-label={`Edit tag ${tag.name}`}
                                   >
@@ -233,7 +245,11 @@ export function TagsCard({
                                     variant="ghost"
                                     size="sm"
                                     className="h-6 w-6 p-0"
-                                    onClick={() => setDeletingTagId(tag.id)}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setDeletingTagId(tag.id);
+                                    }}
                                     disabled={isLoading}
                                     aria-label={`Delete tag ${tag.name}`}
                                   >
@@ -266,7 +282,8 @@ export function TagsCard({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Tag</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete the tag "{tags.find(t => t.id === deletingTagId)?.name}"?
+              Are you sure you want to delete the tag "
+              {tags.find((t) => t.id === deletingTagId)?.name}"?
               {/* Note: The backend will prevent deletion if the tag is in use */}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -278,7 +295,7 @@ export function TagsCard({
                   handleDeleteTag(deletingTagId);
                 }
               }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              variant="destructive"
             >
               Delete
             </AlertDialogAction>
