@@ -19,6 +19,7 @@ import {
   LogIn,
   Newspaper,
   Rocket,
+  BookOpen,
 } from "lucide-react";
 import {
   Sheet,
@@ -45,6 +46,7 @@ import {
   getAgentsFeatureEnabledFn,
   getAffiliatesFeatureEnabledFn,
   getLaunchKitsFeatureEnabledFn,
+  getNewsFeatureEnabledFn,
 } from "~/fn/app-settings";
 
 interface NavLink {
@@ -65,7 +67,7 @@ interface NavLink {
     newsFeatureEnabled?: boolean;
   }) => boolean;
   params?: any;
-  priority?: "primary" | "secondary";
+  category?: "primary" | "resources" | "more";
 }
 
 interface AdminMenuItem {
@@ -75,43 +77,46 @@ interface AdminMenuItem {
 }
 
 const NAVIGATION_LINKS: NavLink[] = [
-  {
-    to: "/purchase",
-    label: "Pricing",
-    icon: Tag,
-    priority: "primary",
-  },
-  {
-    to: "/blog",
-    label: "Blog",
-    icon: Video,
-    priority: "primary",
-  },
+  // Primary navigation (always visible in top nav)
   {
     to: "/learn/$slug",
     label: "Course Content",
     icon: Video,
     condition: ({ continueSlug }) => !!continueSlug,
     params: (data: any) => ({ slug: data.continueSlug }),
-    priority: "primary",
+    category: "primary",
   },
   {
     to: "/learn",
     label: "Course Content",
     icon: Video,
     condition: ({ continueSlug }) => !continueSlug,
-    priority: "primary",
+    category: "primary",
   },
   {
-    to: "/news",
-    label: "AI News",
-    icon: Newspaper,
+    to: "/purchase",
+    label: "Pricing",
+    icon: Tag,
+    category: "primary",
+  },
+  {
+    to: "/community",
+    label: "Community",
+    icon: Users,
     badge: {
-      text: "NEW",
+      text: "FREE",
       className:
-        "ml-2 px-1.5 py-0.5 text-xs bg-theme-500/20 text-theme-600 dark:text-theme-400 rounded-md font-medium",
+        "ml-2 px-1.5 py-0.5 text-xs bg-green-500/20 text-green-600 dark:text-green-400 rounded-md font-medium",
     },
-    condition: ({ newsFeatureEnabled }) => !!newsFeatureEnabled,
+    category: "primary",
+  },
+
+  // Resources dropdown (all secondary links)
+  {
+    to: "/blog",
+    label: "Blog",
+    icon: Video,
+    category: "resources",
   },
   {
     to: "/launch-kits",
@@ -123,18 +128,19 @@ const NAVIGATION_LINKS: NavLink[] = [
         "ml-2 px-1.5 py-0.5 text-xs bg-theme-500/20 text-theme-600 dark:text-theme-400 rounded-md font-medium",
     },
     condition: ({ launchKitsFeatureEnabled }) => !!launchKitsFeatureEnabled,
-    priority: "primary",
+    category: "resources",
   },
   {
-    to: "/community",
-    label: "Community",
-    icon: Users,
+    to: "/news",
+    label: "AI News",
+    icon: Newspaper,
     badge: {
-      text: "FREE",
+      text: "NEW",
       className:
-        "ml-2 px-1.5 py-0.5 text-xs bg-green-500/20 text-green-600 dark:text-green-400 rounded-md font-medium",
+        "ml-2 px-1.5 py-0.5 text-xs bg-theme-500/20 text-theme-600 dark:text-theme-400 rounded-md font-medium",
     },
-    priority: "secondary",
+    condition: ({ newsFeatureEnabled }) => !!newsFeatureEnabled,
+    category: "resources",
   },
   {
     to: "/agents",
@@ -146,7 +152,7 @@ const NAVIGATION_LINKS: NavLink[] = [
         "ml-2 px-1.5 py-0.5 text-xs bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 rounded-md font-medium",
     },
     condition: ({ agentsFeatureEnabled }) => !!agentsFeatureEnabled,
-    priority: "secondary",
+    category: "resources",
   },
   {
     to: "/affiliates",
@@ -154,7 +160,7 @@ const NAVIGATION_LINKS: NavLink[] = [
     icon: DollarSign,
     condition: ({ user, affiliatesFeatureEnabled }) =>
       !user && !!affiliatesFeatureEnabled,
-    priority: "secondary",
+    category: "resources",
   },
   {
     to: "/affiliates",
@@ -165,7 +171,7 @@ const NAVIGATION_LINKS: NavLink[] = [
       !user.isAdmin &&
       !affiliateStatus?.isAffiliate &&
       !!affiliatesFeatureEnabled,
-    priority: "secondary",
+    category: "resources",
   },
 ];
 
@@ -205,10 +211,8 @@ const DesktopNavigation = ({
   routerState: any;
   navData: any;
 }) => {
-  const primaryLinks = navLinks.filter((link) => link.priority === "primary");
-  const secondaryLinks = navLinks.filter(
-    (link) => link.priority === "secondary"
-  );
+  const primaryLinks = navLinks.filter((link) => link.category === "primary");
+  const resourcesLinks = navLinks.filter((link) => link.category === "resources");
 
   const renderNavLink = (link: NavLink, key?: string) => {
     const Icon = link.icon;
@@ -239,71 +243,61 @@ const DesktopNavigation = ({
     );
   };
 
+  const renderDropdownItem = (link: NavLink) => {
+    const Icon = link.icon;
+    const isActive = routerState.location.pathname.startsWith(
+      link.to.split("$")[0].replace("/$slug", "")
+    );
+
+    return (
+      <DropdownMenuItem key={`dropdown-${link.to}-${link.label}`} asChild>
+        <Link
+          to={link.to}
+          params={link.params ? link.params(navData) : undefined}
+          className={cn(
+            "flex items-center w-full",
+            isActive
+              ? "text-theme-600 dark:text-theme-400 font-semibold"
+              : ""
+          )}
+        >
+          {Icon && <Icon className="mr-2 h-4 w-4 text-theme-400" />}
+          {link.label}
+          {link.badge && (
+            <span className={cn("ml-auto", link.badge.className)}>
+              {link.badge.text}
+            </span>
+          )}
+        </Link>
+      </DropdownMenuItem>
+    );
+  };
+
   return (
     <div className="hidden md:flex items-center gap-1">
       {/* Always show primary links */}
       {primaryLinks.map((link) => renderNavLink(link))}
 
-      {/* Show secondary links directly on larger screens, in dropdown on smaller screens */}
-      {secondaryLinks.length > 0 && (
-        <>
-          {/* Show secondary links directly on xl screens */}
-          <div className="hidden xl:flex items-center gap-1">
-            {secondaryLinks.map((link) => renderNavLink(link))}
-          </div>
-
-          {/* Show "More" dropdown on lg screens */}
-          <div className="xl:hidden">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                  <span>More</span>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {secondaryLinks.map((link) => {
-                  const Icon = link.icon;
-                  const isActive = routerState.location.pathname.startsWith(
-                    link.to.split("$")[0].replace("/$slug", "")
-                  );
-
-                  return (
-                    <DropdownMenuItem
-                      key={`dropdown-${link.to}-${link.label}`}
-                      asChild
-                    >
-                      <Link
-                        to={link.to}
-                        params={link.params ? link.params(navData) : undefined}
-                        className={cn(
-                          "flex items-center w-full",
-                          isActive
-                            ? "text-theme-600 dark:text-theme-400 font-semibold"
-                            : ""
-                        )}
-                      >
-                        {Icon && (
-                          <Icon className="mr-2 h-4 w-4 text-theme-400" />
-                        )}
-                        {link.label}
-                        {link.badge && (
-                          <span className={cn("ml-auto", link.badge.className)}>
-                            {link.badge.text}
-                          </span>
-                        )}
-                      </Link>
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </>
+      {/* Resources dropdown with FREE badge */}
+      {resourcesLinks.length > 0 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            >
+              <BookOpen className="h-4 w-4" />
+              <span>Resources</span>
+              <span className="ml-2 px-1.5 py-0.5 text-xs bg-green-500/20 text-green-600 dark:text-green-400 rounded-md font-medium">
+                FREE
+              </span>
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {resourcesLinks.map((link) => renderDropdownItem(link))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
     </div>
   );
@@ -318,31 +312,55 @@ const MobileNavigation = ({
   setIsOpen: (open: boolean) => void;
   navData: any;
 }) => {
-  return (
-    <nav className="flex flex-col gap-4 mt-8 px-6">
-      {navLinks.map((link) => {
-        const Icon = link.icon;
+  const primaryLinks = navLinks.filter((link) => link.category === "primary");
+  const resourcesLinks = navLinks.filter((link) => link.category === "resources");
 
-        return (
-          <Link
-            key={`mobile-${link.to}-${link.label}`}
-            to={link.to}
-            params={link.params ? link.params(navData) : undefined}
-            className="flex items-center py-3 text-lg text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/50 px-3"
-            onClick={() => setIsOpen(false)}
-          >
-            {Icon ? (
-              <Icon className="mr-3 h-5 w-5 text-theme-400 flex-shrink-0" />
-            ) : (
-              <div className="mr-3 h-5 w-5 flex-shrink-0" />
-            )}
-            <span className="flex-1">{link.label}</span>
-            {link.badge && (
-              <span className={link.badge.className}>{link.badge.text}</span>
-            )}
-          </Link>
-        );
-      })}
+  const renderMobileNavLink = (link: NavLink, key?: string) => {
+    const Icon = link.icon;
+
+    return (
+      <Link
+        key={key || `mobile-${link.to}-${link.label}`}
+        to={link.to}
+        params={link.params ? link.params(navData) : undefined}
+        className="flex items-center py-3 text-lg text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/50 px-3"
+        onClick={() => setIsOpen(false)}
+      >
+        {Icon ? (
+          <Icon className="mr-3 h-5 w-5 text-theme-400 flex-shrink-0" />
+        ) : (
+          <div className="mr-3 h-5 w-5 flex-shrink-0" />
+        )}
+        <span className="flex-1">{link.label}</span>
+        {link.badge && (
+          <span className={link.badge.className}>{link.badge.text}</span>
+        )}
+      </Link>
+    );
+  };
+
+  return (
+    <nav className="flex flex-col gap-2 mt-8 px-6">
+      {/* Primary links */}
+      {primaryLinks.length > 0 && (
+        <div className="space-y-1">
+          {primaryLinks.map((link) => renderMobileNavLink(link))}
+        </div>
+      )}
+
+      {/* Resources section */}
+      {resourcesLinks.length > 0 && (
+        <div className="space-y-1 mt-6">
+          <h3 className="text-sm font-medium text-muted-foreground mb-3 px-3 flex items-center">
+            <BookOpen className="mr-2 h-4 w-4" />
+            Resources
+            <span className="ml-2 px-1.5 py-0.5 text-xs bg-green-500/20 text-green-600 dark:text-green-400 rounded-md font-medium">
+              FREE
+            </span>
+          </h3>
+          {resourcesLinks.map((link) => renderMobileNavLink(link))}
+        </div>
+      )}
     </nav>
   );
 };
@@ -378,6 +396,12 @@ export function Header() {
     queryFn: () => getLaunchKitsFeatureEnabledFn(),
   });
 
+  // Check if news feature is enabled
+  const { data: newsFeatureEnabled } = useQuery({
+    queryKey: ["newsFeatureEnabled"],
+    queryFn: () => getNewsFeatureEnabledFn(),
+  });
+
   const navData = {
     user,
     continueSlug,
@@ -385,6 +409,7 @@ export function Header() {
     agentsFeatureEnabled,
     affiliatesFeatureEnabled,
     launchKitsFeatureEnabled,
+    newsFeatureEnabled,
   };
 
   const filteredNavLinks = getFilteredNavLinks(navData);
