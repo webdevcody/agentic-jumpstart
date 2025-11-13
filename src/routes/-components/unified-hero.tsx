@@ -134,7 +134,10 @@ export function UnifiedHero({ isEarlyAccess }: UnifiedHeroProps) {
                     {/* Video container with glass morphism effect */}
                     <div className="video-container">
                       <div className="video-wrapper">
-                        <VideoPlayer segmentId={firstVideoSegment.id} />
+                        <VideoPlayer
+                          segmentId={firstVideoSegment.id}
+                          videoKey={firstVideoSegment.videoKey!}
+                        />
                       </div>
 
                       {/* Decorative elements - using theme colors */}

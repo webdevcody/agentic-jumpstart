@@ -5,21 +5,31 @@ import { AuthenticationError } from "~/use-cases/errors";
 import { getSegmentByIdUseCase } from "~/use-cases/segments";
 import { getAuthenticatedUser } from "~/utils/auth";
 import { getStorage } from "~/utils/storage";
+import type { IStorage } from "~/utils/storage/storage.interface";
 import { Play, Loader2 } from "lucide-react";
+
+const VIDEO_AVAILABILITY_MAX_ATTEMPTS = 5;
+const VIDEO_AVAILABILITY_INITIAL_DELAY_MS = 300;
+
+function wait(durationMs: number) {
+  return new Promise((resolve) => setTimeout(resolve, durationMs));
+}
 
 interface VideoPlayerProps {
   segmentId: number;
+  videoKey: string;
 }
 
-export function VideoPlayer({ segmentId }: VideoPlayerProps) {
+export function VideoPlayer({ segmentId, videoKey }: VideoPlayerProps) {
   const getVideoUrl = useServerFn(getVideoUrlFn);
   const { data, isLoading, error } = useQuery({
-    queryKey: ["video-url", segmentId],
+    queryKey: ["video-url", segmentId, videoKey],
     queryFn: () => getVideoUrl({ data: { segmentId } }),
     refetchOnWindowFocus: false,
     retry: false,
     staleTime: 1000 * 60 * 55, // 55 minutes
     gcTime: 1000 * 60 * 60, // 1 hour
+    enabled: Boolean(videoKey),
   });
 
   if (isLoading) {
@@ -97,6 +107,22 @@ export const getVideoUrlFn = createServerFn({ method: "GET" })
       }
     }
 
+    await ensureVideoAvailability(storage, segment.videoKey);
+
     const url = await storage.getPresignedUrl(segment.videoKey);
     return { videoUrl: url };
   });
+
+async function ensureVideoAvailability(storage: IStorage, key: string) {
+  for (let attempt = 0; attempt < VIDEO_AVAILABILITY_MAX_ATTEMPTS; attempt++) {
+    const exists = await storage.exists(key);
+    if (exists) {
+      return;
+    }
+
+    const delay = VIDEO_AVAILABILITY_INITIAL_DELAY_MS * Math.pow(2, attempt);
+    await wait(delay);
+  }
+
+  throw new Error("Video is still processing. Please try again shortly.");
+}
