@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { isAdminUseCase } from "~/use-cases/users";
 import { getEarlyAccessModeUseCase } from "~/use-cases/app-settings";
+import { unauthenticatedMiddleware } from "~/lib/auth";
 
 export const checkEarlyAccessFn = createServerFn()
   .validator(z.void())
@@ -17,7 +18,8 @@ export const checkEarlyAccessFn = createServerFn()
 
 export const shouldShowEarlyAccessFn = createServerFn()
   .validator(z.void())
-  .handler(async () => {
+  .middleware([unauthenticatedMiddleware])
+  .handler(async ({ context }) => {
     try {
       const earlyAccessMode = await getEarlyAccessModeUseCase();
 
@@ -25,10 +27,11 @@ export const shouldShowEarlyAccessFn = createServerFn()
         return false;
       }
 
-      // If early access mode is enabled, check if user is admin
-      // Admins should bypass early access mode
-      const isAdmin = await isAdminUseCase();
-      return !isAdmin;
+      if (context.user?.isEarlyAccess || context.isAdmin) {
+        return false;
+      }
+
+      return true;
     } catch (error) {
       console.error("Error checking should show early access:", error);
       // Default to showing early access if there's an error
