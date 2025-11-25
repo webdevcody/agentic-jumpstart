@@ -40,7 +40,7 @@ export function FutureOfCodingSection() {
               The era of manual coding is transforming. AI-powered development
               isn't just a trend—it's the future. While traditional developers
               spend hours debugging and writing boilerplate, agentic coders
-              leverage AI models like Claude Sonnet 3.5 and Claude Opus to build
+              leverage AI models like Opus 4.5, Composer1, and GPT-5.1 Codex to build
               complex applications in minutes, not days.
             </p>
           </ScrollAnimation>

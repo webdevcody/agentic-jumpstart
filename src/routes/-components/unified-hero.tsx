@@ -79,8 +79,8 @@ export function UnifiedHero({ isEarlyAccess }: UnifiedHeroProps) {
                 <ScrollAnimation direction="up" delay={0.2}>
                   <p className="text-base md:text-lg text-description mb-8 md:mb-12 max-w-xl">
                     Master AI-first development with Cursor IDE, Claude Code
-                    CLI, and advanced AI models. Learn how to leverage Claude
-                    Sonnet 3.5, Claude Opus, and cutting-edge agentic
+                    CLI, and advanced AI models. Learn how to leverage Opus 4.5,
+                    Composer1, GPT-5.1 Codex, and cutting-edge agentic
                     programming techniques to accelerate your development
                     workflow and build applications 10x faster than traditional
                     programming methods.

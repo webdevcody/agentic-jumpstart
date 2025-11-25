@@ -108,7 +108,7 @@ const features = [
   {
     title: "Advanced Prompting Techniques",
     description:
-      "Optimize Claude Sonnet and Opus for maximum coding efficiency",
+      "Optimize Opus 4.5, Composer1, and GPT-5.1 Codex for maximum coding efficiency",
     icon: Star,
   },
   {
