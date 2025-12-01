@@ -108,3 +108,13 @@ export async function isNewsFeatureEnabled() {
     return FALLBACK_CONFIG.NEWS_FEATURE;
   }
 }
+
+export async function isVideoSegmentContentTabsEnabled() {
+  try {
+    const setting = await getAppSetting(FLAGS.VIDEO_SEGMENT_CONTENT_TABS);
+    return setting?.value === "true";
+  } catch (error) {
+    console.error("Error checking video segment content tabs feature:", error);
+    return FALLBACK_CONFIG.VIDEO_SEGMENT_CONTENT_TABS;
+  }
+}

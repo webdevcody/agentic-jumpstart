@@ -5,7 +5,9 @@ export const PRICING_CONFIG = {
   CURRENT_PRICE: 199, // Current discounted price
   ORIGINAL_PRICE: 297, // Original price before discount
   get DISCOUNT_PERCENTAGE() {
-    return Math.round(((this.ORIGINAL_PRICE - this.CURRENT_PRICE) / this.ORIGINAL_PRICE) * 100);
+    return Math.round(
+      ((this.ORIGINAL_PRICE - this.CURRENT_PRICE) / this.ORIGINAL_PRICE) * 100
+    );
   },
   get FORMATTED_CURRENT_PRICE() {
     return `$${this.CURRENT_PRICE}`;
@@ -30,6 +32,7 @@ export const FLAGS = {
   AFFILIATES_FEATURE: "AFFILIATES_FEATURE",
   BLOG_FEATURE: "BLOG_FEATURE",
   NEWS_FEATURE: "NEWS_FEATURE",
+  VIDEO_SEGMENT_CONTENT_TABS: "VIDEO_SEGMENT_CONTENT_TABS",
 };
 
 // Fallback values for when database is not available
@@ -40,4 +43,5 @@ export const FALLBACK_CONFIG = {
   AFFILIATES_FEATURE: true,
   BLOG_FEATURE: true,
   NEWS_FEATURE: true,
+  VIDEO_SEGMENT_CONTENT_TABS: false,
 } as const;

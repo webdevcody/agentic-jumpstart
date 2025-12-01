@@ -15,6 +15,8 @@ import {
   toggleBlogFeatureUseCase,
   getNewsFeatureEnabledUseCase,
   toggleNewsFeatureUseCase,
+  getVideoSegmentContentTabsEnabledUseCase,
+  toggleVideoSegmentContentTabsUseCase,
 } from "~/use-cases/app-settings";
 
 export const getAppSettingsFn = createServerFn({ method: "GET" })
@@ -111,5 +113,24 @@ export const toggleNewsFeatureFn = createServerFn({ method: "POST" })
   .validator(z.object({ enabled: z.boolean() }))
   .handler(async ({ data }) => {
     await toggleNewsFeatureUseCase(data.enabled);
+    return { success: true };
+  });
+
+export const getVideoSegmentContentTabsEnabledFn = createServerFn({
+  method: "GET",
+})
+  .middleware([unauthenticatedMiddleware])
+  .validator(z.void())
+  .handler(async () => {
+    return getVideoSegmentContentTabsEnabledUseCase();
+  });
+
+export const toggleVideoSegmentContentTabsFn = createServerFn({
+  method: "POST",
+})
+  .middleware([adminMiddleware])
+  .validator(z.object({ enabled: z.boolean() }))
+  .handler(async ({ data }) => {
+    await toggleVideoSegmentContentTabsUseCase(data.enabled);
     return { success: true };
   });

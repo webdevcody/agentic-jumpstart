@@ -11,6 +11,7 @@ interface VideoContentTabsPanelProps {
   isLoggedIn: boolean;
   defaultTab?: "content" | "transcripts" | "comments";
   commentId?: number;
+  showContentTabs: boolean;
 }
 
 export function VideoContentTabsPanel({
@@ -18,17 +19,33 @@ export function VideoContentTabsPanel({
   isLoggedIn,
   defaultTab,
   commentId,
+  showContentTabs,
 }: VideoContentTabsPanelProps) {
+  // If content tabs are disabled and defaultTab is content/transcripts, default to comments
+  const effectiveDefaultTab =
+    !showContentTabs &&
+    (defaultTab === "content" || defaultTab === "transcripts")
+      ? "comments"
+      : defaultTab || "comments";
+
   const [activeTab, setActiveTab] = useState<
     "content" | "transcripts" | "comments"
-  >(defaultTab || "comments");
+  >(effectiveDefaultTab);
 
   // Set active tab when defaultTab changes (from URL params)
   useEffect(() => {
     if (defaultTab) {
-      setActiveTab(defaultTab);
+      // If content tabs are disabled and trying to set content/transcripts, use comments instead
+      if (
+        !showContentTabs &&
+        (defaultTab === "content" || defaultTab === "transcripts")
+      ) {
+        setActiveTab("comments");
+      } else {
+        setActiveTab(defaultTab);
+      }
     }
-  }, [defaultTab]);
+  }, [defaultTab, showContentTabs]);
 
   return (
     <div className="module-card overflow-hidden">
@@ -46,39 +63,43 @@ export function VideoContentTabsPanel({
           <MessageSquare className="h-4 w-4" />
           Discussion
         </button>
-        <button
-          onClick={() => setActiveTab("content")}
-          className={cn(
-            "flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 border-b-2 cursor-pointer",
-            activeTab === "content"
-              ? "border-theme-500 text-theme-600 dark:text-theme-400 bg-theme-50 dark:bg-theme-950/30"
-              : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
-          )}
-        >
-          <FileText className="h-4 w-4" />
-          Lesson Content
-        </button>
-        <button
-          onClick={() => setActiveTab("transcripts")}
-          className={cn(
-            "flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 border-b-2 cursor-pointer",
-            activeTab === "transcripts"
-              ? "border-theme-500 text-theme-600 dark:text-theme-400 bg-theme-50 dark:bg-theme-950/30"
-              : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
-          )}
-        >
-          <FileText className="h-4 w-4" />
-          Transcripts
-        </button>
+        {showContentTabs && (
+          <>
+            <button
+              onClick={() => setActiveTab("content")}
+              className={cn(
+                "flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 border-b-2 cursor-pointer",
+                activeTab === "content"
+                  ? "border-theme-500 text-theme-600 dark:text-theme-400 bg-theme-50 dark:bg-theme-950/30"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              )}
+            >
+              <FileText className="h-4 w-4" />
+              Lesson Content
+            </button>
+            <button
+              onClick={() => setActiveTab("transcripts")}
+              className={cn(
+                "flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 border-b-2 cursor-pointer",
+                activeTab === "transcripts"
+                  ? "border-theme-500 text-theme-600 dark:text-theme-400 bg-theme-50 dark:bg-theme-950/30"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              )}
+            >
+              <FileText className="h-4 w-4" />
+              Transcripts
+            </button>
+          </>
+        )}
       </div>
 
       {/* Tab Content */}
       <div className="p-6 min-h-96">
-        {activeTab === "content" && (
+        {showContentTabs && activeTab === "content" && (
           <ContentPanel currentSegment={currentSegment} />
         )}
 
-        {activeTab === "transcripts" && (
+        {showContentTabs && activeTab === "transcripts" && (
           <div className="animate-fade-in">
             {currentSegment.transcripts ? (
               <MarkdownContent content={currentSegment.transcripts} />

@@ -7,6 +7,7 @@ import {
   isAffiliatesFeatureEnabled as checkAffiliatesFeatureEnabled,
   isBlogFeatureEnabled as checkBlogFeatureEnabled,
   isNewsFeatureEnabled as checkNewsFeatureEnabled,
+  isVideoSegmentContentTabsEnabled as checkVideoSegmentContentTabsEnabled,
 } from "~/data-access/app-settings";
 
 export async function getAppSettingsUseCase() {
@@ -68,4 +69,12 @@ export async function getNewsFeatureEnabledUseCase() {
 
 export async function toggleNewsFeatureUseCase(enabled: boolean) {
   await setAppSetting("NEWS_FEATURE", enabled.toString());
+}
+
+export async function getVideoSegmentContentTabsEnabledUseCase() {
+  return checkVideoSegmentContentTabsEnabled();
+}
+
+export async function toggleVideoSegmentContentTabsUseCase(enabled: boolean) {
+  await setAppSetting("VIDEO_SEGMENT_CONTENT_TABS", enabled.toString());
 }

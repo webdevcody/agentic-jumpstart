@@ -21,6 +21,7 @@ import { VideoHeader } from "./-components/video-header";
 import { VideoControls } from "./-components/video-controls";
 import { VideoContentTabsPanel } from "./-components/video-content-tabs-panel";
 import { UpgradePlaceholder } from "./-components/upgrade-placeholder";
+import { getVideoSegmentContentTabsEnabledFn } from "~/fn/app-settings";
 
 export const Route = createFileRoute("/learn/$slug/_layout/")({
   component: RouteComponent,
@@ -29,12 +30,17 @@ export const Route = createFileRoute("/learn/$slug/_layout/")({
     commentId: z.number().optional(),
   }),
   loader: async ({ context: { queryClient }, params }) => {
-    const [{ segment, segments, progress }, isPremium, isAdmin] =
-      await Promise.all([
-        getSegmentInfoFn({ data: { slug: params.slug } }),
-        isUserPremiumFn(),
-        isAdminFn(),
-      ]);
+    const [
+      { segment, segments, progress },
+      isPremium,
+      isAdmin,
+      showContentTabs,
+    ] = await Promise.all([
+      getSegmentInfoFn({ data: { slug: params.slug } }),
+      isUserPremiumFn(),
+      isAdminFn(),
+      getVideoSegmentContentTabsEnabledFn(),
+    ]);
 
     if (segments.length === 0) {
       throw redirect({ to: "/learn/no-segments" });
@@ -46,7 +52,7 @@ export const Route = createFileRoute("/learn/$slug/_layout/")({
 
     queryClient.ensureQueryData(getCommentsQuery(segment.id));
 
-    return { segment, segments, progress, isPremium, isAdmin };
+    return { segment, segments, progress, isPremium, isAdmin, showContentTabs };
   },
 });
 
@@ -71,6 +77,7 @@ function ViewSegment({
   isAdmin,
   defaultTab,
   commentId,
+  showContentTabs,
 }: {
   segments: Segment[];
   currentSegment: Segment;
@@ -79,6 +86,7 @@ function ViewSegment({
   isAdmin: boolean;
   defaultTab?: "content" | "transcripts" | "comments";
   commentId?: number;
+  showContentTabs: boolean;
 }) {
   const { setCurrentSegmentId } = useSegment();
 
@@ -143,6 +151,7 @@ function ViewSegment({
           isLoggedIn={isLoggedIn}
           defaultTab={defaultTab}
           commentId={commentId}
+          showContentTabs={showContentTabs}
         />
       )}
     </div>
@@ -150,7 +159,8 @@ function ViewSegment({
 }
 
 function RouteComponent() {
-  const { segment, segments, isPremium, isAdmin } = Route.useLoaderData();
+  const { segment, segments, isPremium, isAdmin, showContentTabs } =
+    Route.useLoaderData();
   const { tab, commentId } = Route.useSearch();
 
   return (
@@ -163,6 +173,7 @@ function RouteComponent() {
         isAdmin={isAdmin}
         defaultTab={tab}
         commentId={commentId}
+        showContentTabs={showContentTabs}
       />
       {/* <FloatingFeedbackButton /> */}
     </>

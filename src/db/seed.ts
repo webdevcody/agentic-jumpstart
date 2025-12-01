@@ -65,6 +65,19 @@ async function main() {
 
   console.log(`Seeded AFFILIATES_FEATURE with value: ${affiliatesFeature}`);
 
+  // Seed video segment content tabs feature flag
+  const videoSegmentContentTabsFeature = "false";
+  await database
+    .insert(appSettings)
+    .values({
+      key: FLAGS.VIDEO_SEGMENT_CONTENT_TABS,
+      value: videoSegmentContentTabsFeature,
+      updatedAt: new Date(),
+    })
+    .onConflictDoNothing();
+
+  console.log(`Seeded VIDEO_SEGMENT_CONTENT_TABS with value: ${videoSegmentContentTabsFeature}`);
+
   const moduleData = [
     {
       title: "Getting Started",
