@@ -14,12 +14,19 @@ import { InstructorSection } from "./-components/instructor-section";
 import { DiscordCommunitySection } from "./-components/discord-community-section";
 import { shouldShowEarlyAccessFn } from "~/fn/early-access";
 import { NewsletterSection } from "./-components/newsletter";
+import { getNewsletterSignupsCount } from "~/data-access/newsletter";
 
 const loaderFn = createServerFn().handler(async () => {
   const segments = await getSegmentsUseCase();
   const stats = await getCourseStatsUseCase();
   const shouldShowEarlyAccess = await shouldShowEarlyAccessFn();
-  return { segments, stats, shouldShowEarlyAccess };
+  const signupsCount = await getNewsletterSignupsCount();
+  return {
+    segments,
+    stats,
+    shouldShowEarlyAccess,
+    waitlistCount: signupsCount.waitlist,
+  };
 });
 
 export const Route = createFileRoute("/")({
@@ -31,11 +38,15 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { segments, stats, shouldShowEarlyAccess } = Route.useLoaderData();
+  const { segments, stats, shouldShowEarlyAccess, waitlistCount } =
+    Route.useLoaderData();
 
   return (
     <div className="min-h-screen bg-background">
-      <UnifiedHero isEarlyAccess={shouldShowEarlyAccess} />
+      <UnifiedHero
+        isEarlyAccess={shouldShowEarlyAccess}
+        waitlistCount={waitlistCount}
+      />
       {shouldShowEarlyAccess && <DiscordCommunitySection />}
       <FutureOfCodingSection />
       {stats && <StatsSection stats={stats} />}

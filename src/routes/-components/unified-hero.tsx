@@ -20,9 +20,10 @@ const getFirstVideoSegmentFn = createServerFn().handler(async () => {
 
 interface UnifiedHeroProps {
   isEarlyAccess: boolean;
+  waitlistCount?: number;
 }
 
-export function UnifiedHero({ isEarlyAccess }: UnifiedHeroProps) {
+export function UnifiedHero({ isEarlyAccess, waitlistCount }: UnifiedHeroProps) {
   const continueSlug = useContinueSlug();
 
   const { data: firstVideoSegment } = useQuery({
@@ -31,7 +32,7 @@ export function UnifiedHero({ isEarlyAccess }: UnifiedHeroProps) {
   });
 
   if (isEarlyAccess) {
-    return <EarlyAccessHeroContent />;
+    return <EarlyAccessHeroContent waitlistCount={waitlistCount} />;
   }
 
   return (
@@ -159,7 +160,7 @@ export function UnifiedHero({ isEarlyAccess }: UnifiedHeroProps) {
   );
 }
 
-function EarlyAccessHeroContent() {
+function EarlyAccessHeroContent({ waitlistCount }: { waitlistCount?: number }) {
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Hero background similar to main hero */}
@@ -229,7 +230,17 @@ function EarlyAccessHeroContent() {
               </p>
             </ScrollAnimation>
             
-            <ScrollAnimation direction="up" delay={0.45}>
+            {waitlistCount !== undefined && (
+              <ScrollAnimation direction="up" delay={0.45}>
+                <div className="mt-6 p-4 md:p-6 rounded-lg bg-theme-50/50 dark:bg-theme-900/20 border border-theme-200 dark:border-theme-500/30 max-w-lg mx-auto">
+                  <p className="text-base md:text-lg text-theme-700 dark:text-theme-300 font-semibold">
+                    <span className="text-2xl md:text-3xl font-bold text-theme-600 dark:text-theme-400">{waitlistCount.toLocaleString()}</span>{" "}
+                    early access sign ups already
+                  </p>
+                </div>
+              </ScrollAnimation>
+            )}
+            <ScrollAnimation direction="up" delay={0.5}>
               <div className="mt-6 p-4 rounded-lg bg-theme-50/50 dark:bg-theme-900/20 border border-theme-200 dark:border-theme-500/30 max-w-lg mx-auto">
                 <p className="text-sm md:text-base text-theme-700 dark:text-theme-300 font-medium">
                   🎁 <strong>Bonus:</strong> Waitlist members get access to a free Hans hook that reads your completed features out loud!
@@ -238,7 +249,7 @@ function EarlyAccessHeroContent() {
             </ScrollAnimation>
           </div>
 
-          <ScrollAnimation direction="up" delay={0.5}>
+          <ScrollAnimation direction="up" delay={0.55}>
             <NewsletterForm />
           </ScrollAnimation>
         </div>
