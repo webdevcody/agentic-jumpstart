@@ -165,7 +165,7 @@ function RouteComponent() {
         data: {
           affiliateCode: affiliateCode || undefined,
           // discountCode: affiliateCode || undefined, // Discount codes not implemented yet
-          analyticsSessionId: sessionId, // Pass analytics session ID
+          analyticsSessionId: sessionId || undefined, // Pass analytics session ID (convert null to undefined)
         },
       });
       const { error } = await stripeResolved.redirectToCheckout({
