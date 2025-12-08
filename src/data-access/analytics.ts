@@ -537,28 +537,22 @@ export async function getDailyConversions(dateRange?: {
 }) {
   const whereCondition = dateRange
     ? and(
-        gte(analyticsSessions.firstSeen, dateRange.start),
-        lte(analyticsSessions.firstSeen, dateRange.end)
+        gte(analyticsEvents.createdAt, dateRange.start),
+        lte(analyticsEvents.createdAt, dateRange.end)
       )
     : undefined;
 
   const dailyData = await database
     .select({
-      date: sql<string>`date(${analyticsSessions.firstSeen})`,
-      sessions: count(analyticsSessions.id),
-      purchaseIntent: sql<number>`sum(case when ${analyticsSessions.hasPurchaseIntent} then 1 else 0 end)`,
-      conversions: sql<number>`sum(case when ${analyticsSessions.hasConversion} then 1 else 0 end)`,
-      conversionRate: sql<number>`
-        case when count(${analyticsSessions.id}) > 0 
-        then round(sum(case when ${analyticsSessions.hasConversion} then 1 else 0 end) * 100.0 / count(${analyticsSessions.id}), 2)
-        else 0 
-        end
-      `,
+      date: sql<string>`date(${analyticsEvents.createdAt})`,
+      pageViews: sql<number>`sum(case when ${analyticsEvents.eventType} = 'page_view' then 1 else 0 end)`,
+      purchaseIntent: sql<number>`sum(case when ${analyticsEvents.eventType} = 'purchase_intent' then 1 else 0 end)`,
+      purchaseCompleted: sql<number>`sum(case when ${analyticsEvents.eventType} = 'purchase_completed' then 1 else 0 end)`,
     })
-    .from(analyticsSessions)
+    .from(analyticsEvents)
     .where(whereCondition)
-    .groupBy(sql`date(${analyticsSessions.firstSeen})`)
-    .orderBy(sql`date(${analyticsSessions.firstSeen})`)
+    .groupBy(sql`date(${analyticsEvents.createdAt})`)
+    .orderBy(sql`date(${analyticsEvents.createdAt})`)
     .limit(30);
 
   return dailyData;

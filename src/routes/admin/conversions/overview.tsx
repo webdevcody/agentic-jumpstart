@@ -107,7 +107,7 @@ function OverviewPage() {
             Conversion Overview
           </h2>
           <p className="text-muted-foreground">
-            Track conversions, purchase intent, and sessions over time
+            Track page views, purchase intent, and purchase completions over time
           </p>
         </div>
 
@@ -147,7 +147,7 @@ function OverviewPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                Sessions, Purchase Intent & Conversions Over Time
+                Page Views, Purchase Intent & Purchase Completed Over Time
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -185,9 +185,9 @@ function OverviewPage() {
                                   <p className="font-medium">{label}</p>
                                   {payload.map((entry, index) => (
                                     <p key={index} style={{ color: entry.color }}>
-                                      {entry.dataKey === 'sessions' && 'Total Sessions: '}
+                                      {entry.dataKey === 'pageViews' && 'Page Views: '}
                                       {entry.dataKey === 'purchaseIntent' && 'Purchase Intent: '}
-                                      {entry.dataKey === 'conversions' && 'Conversions: '}
+                                      {entry.dataKey === 'purchaseCompleted' && 'Purchase Completed: '}
                                       {entry.value}
                                     </p>
                                   ))}
@@ -200,11 +200,11 @@ function OverviewPage() {
                         <Legend />
                         <Line
                           type="monotone"
-                          dataKey="sessions"
+                          dataKey="pageViews"
                           stroke="#3b82f6"
                           strokeWidth={3}
                           dot={{ fill: "#3b82f6", r: 4 }}
-                          name="Total Sessions"
+                          name="Page Views"
                         />
                         <Line
                           type="monotone"
@@ -216,11 +216,11 @@ function OverviewPage() {
                         />
                         <Line
                           type="monotone"
-                          dataKey="conversions"
+                          dataKey="purchaseCompleted"
                           stroke="#10b981"
                           strokeWidth={3}
                           dot={{ fill: "#10b981", r: 4 }}
-                          name="Conversions"
+                          name="Purchase Completed"
                         />
                       </LineChart>
                     </ResponsiveContainer>
@@ -249,9 +249,9 @@ function OverviewPage() {
                                   <p className="font-medium">{label}</p>
                                   {payload.map((entry, index) => (
                                     <p key={index} style={{ color: entry.color }}>
-                                      {entry.dataKey === 'sessions' && 'Total Sessions: '}
+                                      {entry.dataKey === 'pageViews' && 'Page Views: '}
                                       {entry.dataKey === 'purchaseIntent' && 'Purchase Intent: '}
-                                      {entry.dataKey === 'conversions' && 'Conversions: '}
+                                      {entry.dataKey === 'purchaseCompleted' && 'Purchase Completed: '}
                                       {entry.value}
                                     </p>
                                   ))}
@@ -263,9 +263,9 @@ function OverviewPage() {
                         />
                         <Legend />
                         <Bar
-                          dataKey="sessions"
+                          dataKey="pageViews"
                           fill="#3b82f6"
-                          name="Total Sessions"
+                          name="Page Views"
                         />
                         <Bar
                           dataKey="purchaseIntent"
@@ -273,9 +273,9 @@ function OverviewPage() {
                           name="Purchase Intent"
                         />
                         <Bar
-                          dataKey="conversions"
+                          dataKey="purchaseCompleted"
                           fill="#10b981"
-                          name="Conversions"
+                          name="Purchase Completed"
                         />
                       </BarChart>
                     </ResponsiveContainer>
