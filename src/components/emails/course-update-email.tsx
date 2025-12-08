@@ -11,6 +11,7 @@ import {
   Img,
 } from "@react-email/components";
 import { env } from "~/utils/env";
+import { COMPANY_ADDRESS } from "~/config";
 
 interface CourseUpdateEmailProps {
   subject: string;
@@ -82,6 +83,13 @@ export function CourseUpdateEmail({
                 Agentic Jumpstart
               </Link>{" "}
               - Learn to build AI agents that work
+            </Text>
+
+            <Text style={footerText}>{COMPANY_ADDRESS.NAME}</Text>
+            <Text style={footerText}>{COMPANY_ADDRESS.LINE1}</Text>
+            <Text style={footerText}>
+              {COMPANY_ADDRESS.CITY} {COMPANY_ADDRESS.STATE},{" "}
+              {COMPANY_ADDRESS.ZIP}
             </Text>
           </Section>
         </Container>

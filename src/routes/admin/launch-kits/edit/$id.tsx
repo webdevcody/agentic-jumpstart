@@ -32,6 +32,7 @@ function EditLaunchKitPage() {
   const { data: launchKit, isLoading: isLoadingKit } = useQuery({
     queryKey: ["admin", "launch-kit", id],
     queryFn: () => getLaunchKitByIdFn({ data: { id: parseInt(id) } }),
+    refetchOnWindowFocus: false,
   });
 
   const { form, isLoading, formError, onSubmit, handleTagToggle } =

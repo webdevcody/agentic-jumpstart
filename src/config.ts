@@ -25,6 +25,18 @@ export const AFFILIATE_CONFIG = {
   AFFILIATE_CODE_RETRY_ATTEMPTS: 10, // Max attempts to generate unique code
 } as const;
 
+// Company information for marketing emails
+export const COMPANY_ADDRESS = {
+  NAME: "Seibert Software Solutions, LLC",
+  LINE1: "PO Box 913",
+  CITY: "Harrison",
+  STATE: "TN",
+  ZIP: "37341",
+  get FORMATTED() {
+    return `${this.NAME}\n${this.LINE1}\n${this.CITY} ${this.STATE}, ${this.ZIP}`;
+  },
+} as const;
+
 export const FLAGS = {
   EARLY_ACCESS_MODE: "EARLY_ACCESS_MODE",
   AGENTS_FEATURE: "AGENTS_FEATURE",

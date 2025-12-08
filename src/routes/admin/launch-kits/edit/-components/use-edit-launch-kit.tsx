@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -27,6 +27,7 @@ export function useEditLaunchKit(launchKit?: any) {
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [formError, setFormError] = useState("");
+  const hasInitialized = useRef(false);
 
   const form = useForm<EditLaunchKitForm>({
     resolver: zodResolver(editLaunchKitSchema),
@@ -41,9 +42,9 @@ export function useEditLaunchKit(launchKit?: any) {
     },
   });
 
-  // Populate form when launch kit data is loaded
+  // Populate form when launch kit data is loaded (only once on initial load)
   useEffect(() => {
-    if (launchKit) {
+    if (launchKit && !hasInitialized.current) {
       form.reset({
         name: launchKit.name || "",
         description: launchKit.description || "",
@@ -53,6 +54,7 @@ export function useEditLaunchKit(launchKit?: any) {
         imageUrl: launchKit.imageUrl || "",
         tagIds: launchKit.tags?.map((tag: any) => tag.id) || [],
       });
+      hasInitialized.current = true;
     }
   }, [launchKit, form]);
 
