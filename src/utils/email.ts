@@ -55,6 +55,7 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
 
   try {
     await sesClient.send(command);
+    console.log(`[Email Sent] To: ${options.to}, Subject: ${options.subject}`);
   } catch (error) {
     console.error("Failed to send email:", error);
     throw new Error(`Failed to send email: ${error}`);
@@ -77,7 +78,7 @@ export async function renderEmailTemplate(
   try {
     // Convert markdown content to HTML
     const htmlContent = await marked.parse(template.content);
-    
+
     // Use react-email to render the email template
     const html = await render(
       CourseUpdateEmail({
@@ -102,7 +103,7 @@ export async function sendBulkEmails(
 ): Promise<{ sent: number; failed: number }> {
   let sent = 0;
   let failed = 0;
-  const BATCH_SIZE = 5; // 5 emails per second rate limit
+  const BATCH_SIZE = 10; // 5 emails per second rate limit
 
   for (let i = 0; i < emails.length; i += BATCH_SIZE) {
     const batch = emails.slice(i, i + BATCH_SIZE);
@@ -140,6 +141,9 @@ export async function sendBulkEmails(
     }
   }
 
+  console.log(
+    `[Bulk Email Summary] Sent: ${sent}, Failed: ${failed}, Total: ${emails.length}`
+  );
   return { sent, failed };
 }
 
