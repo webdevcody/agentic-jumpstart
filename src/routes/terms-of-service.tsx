@@ -170,6 +170,15 @@ function RouteComponent() {
           permitted by law.
         </p>
 
+        <h2>Refund Policy</h2>
+        <p>
+          All sales are final. The Company does not provide refunds for any
+          purchases made through the Service. By completing a purchase, You
+          acknowledge and agree that You will not be entitled to a refund for
+          any reason, including but not limited to dissatisfaction with the
+          Service, change of mind, or any other circumstance.
+        </p>
+
         <h2>"AS IS" and "AS AVAILABLE" Disclaimer</h2>
         <p>
           The Service is provided to You "AS IS" and "AS AVAILABLE" and with all

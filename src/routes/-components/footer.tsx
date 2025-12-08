@@ -60,6 +60,14 @@ export function FooterSection() {
                   Privacy Policy
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/refund-policy"
+                  className="hover:text-foreground transition-colors"
+                >
+                  Refund Policy
+                </Link>
+              </li>
             </ul>
           </div>
 

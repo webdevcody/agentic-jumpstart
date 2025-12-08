@@ -18,6 +18,7 @@ import { Route as UnauthenticatedRouteImport } from './routes/unauthenticated'
 import { Route as TermsOfServiceRouteImport } from './routes/terms-of-service'
 import { Route as SuccessRouteImport } from './routes/success'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as RefundPolicyRouteImport } from './routes/refund-policy'
 import { Route as PurchaseRouteImport } from './routes/purchase'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as NewsRouteImport } from './routes/news'
@@ -110,6 +111,11 @@ const SuccessRoute = SuccessRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RefundPolicyRoute = RefundPolicyRouteImport.update({
+  id: '/refund-policy',
+  path: '/refund-policy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PurchaseRoute = PurchaseRouteImport.update({
@@ -435,6 +441,7 @@ export interface FileRoutesByFullPath {
   '/news': typeof NewsRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/purchase': typeof PurchaseRoute
+  '/refund-policy': typeof RefundPolicyRoute
   '/settings': typeof SettingsRoute
   '/success': typeof SuccessRoute
   '/terms-of-service': typeof TermsOfServiceRoute
@@ -498,6 +505,7 @@ export interface FileRoutesByTo {
   '/news': typeof NewsRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/purchase': typeof PurchaseRoute
+  '/refund-policy': typeof RefundPolicyRoute
   '/settings': typeof SettingsRoute
   '/success': typeof SuccessRoute
   '/terms-of-service': typeof TermsOfServiceRoute
@@ -559,6 +567,7 @@ export interface FileRoutesById {
   '/news': typeof NewsRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/purchase': typeof PurchaseRoute
+  '/refund-policy': typeof RefundPolicyRoute
   '/settings': typeof SettingsRoute
   '/success': typeof SuccessRoute
   '/terms-of-service': typeof TermsOfServiceRoute
@@ -625,6 +634,7 @@ export interface FileRouteTypes {
     | '/news'
     | '/privacy-policy'
     | '/purchase'
+    | '/refund-policy'
     | '/settings'
     | '/success'
     | '/terms-of-service'
@@ -688,6 +698,7 @@ export interface FileRouteTypes {
     | '/news'
     | '/privacy-policy'
     | '/purchase'
+    | '/refund-policy'
     | '/settings'
     | '/success'
     | '/terms-of-service'
@@ -748,6 +759,7 @@ export interface FileRouteTypes {
     | '/news'
     | '/privacy-policy'
     | '/purchase'
+    | '/refund-policy'
     | '/settings'
     | '/success'
     | '/terms-of-service'
@@ -813,6 +825,7 @@ export interface RootRouteChildren {
   NewsRoute: typeof NewsRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   PurchaseRoute: typeof PurchaseRoute
+  RefundPolicyRoute: typeof RefundPolicyRoute
   SettingsRoute: typeof SettingsRoute
   SuccessRoute: typeof SuccessRoute
   TermsOfServiceRoute: typeof TermsOfServiceRoute
@@ -931,6 +944,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/refund-policy': {
+      id: '/refund-policy'
+      path: '/refund-policy'
+      fullPath: '/refund-policy'
+      preLoaderRoute: typeof RefundPolicyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/purchase': {
@@ -1488,6 +1508,7 @@ const rootRouteChildren: RootRouteChildren = {
   NewsRoute: NewsRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   PurchaseRoute: PurchaseRoute,
+  RefundPolicyRoute: RefundPolicyRoute,
   SettingsRoute: SettingsRoute,
   SuccessRoute: SuccessRoute,
   TermsOfServiceRoute: TermsOfServiceRoute,

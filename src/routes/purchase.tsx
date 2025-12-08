@@ -6,7 +6,6 @@ import { env } from "~/utils/env";
 import { loadStripe } from "@stripe/stripe-js";
 import { publicEnv } from "~/utils/env-public";
 import { Button, buttonVariants } from "~/components/ui/button";
-import { useEffect, useState } from "react";
 import { z } from "zod";
 import {
   Lock,
@@ -23,8 +22,9 @@ import {
 import { useAuth } from "~/hooks/use-auth";
 import { useContinueSlug } from "~/hooks/use-continue-slug";
 import { Link } from "@tanstack/react-router";
-import { DiscountDialog } from "~/components/discount-dialog";
-import { discountStore } from "~/stores/discount-store";
+// Discount codes not implemented yet
+// import { DiscountDialog } from "~/components/discount-dialog";
+// import { discountStore } from "~/stores/discount-store";
 import { shouldShowEarlyAccessFn } from "~/fn/early-access";
 import { useAnalytics } from "~/hooks/use-analytics";
 import { trackPurchaseIntentFn } from "~/fn/analytics";
@@ -134,15 +134,7 @@ function RouteComponent() {
   const user = useAuth();
   const continueSlug = useContinueSlug();
   const { ref } = Route.useSearch();
-  const [showDiscountDialog, setShowDiscountDialog] = useState(false);
   const { sessionId } = useAnalytics();
-
-  // Store affiliate code in memory when present in URL
-  useEffect(() => {
-    if (ref) {
-      discountStore.setDiscountCode(ref);
-    }
-  }, [ref]);
 
   const handlePurchaseClick = async () => {
     // Track purchase intent
@@ -159,20 +151,11 @@ function RouteComponent() {
       }
     }
 
-    // Show discount dialog instead of going directly to checkout
-    setShowDiscountDialog(true);
+    // Go directly to checkout (discount codes not implemented yet)
+    await proceedToCheckout(ref || "");
   };
 
-  const handleApplyDiscount = async (code: string) => {
-    // Store the code in memory if valid
-    if (code) {
-      discountStore.setDiscountCode(code);
-    }
-    // Proceed with checkout
-    await proceedToCheckout(code);
-  };
-
-  const proceedToCheckout = async (appliedDiscountCode: string) => {
+  const proceedToCheckout = async (affiliateCode: string) => {
     const stripePromise = loadStripe(publicEnv.VITE_STRIPE_PUBLISHABLE_KEY);
     const stripeResolved = await stripePromise;
     if (!stripeResolved) throw new Error("Stripe failed to initialize");
@@ -180,8 +163,8 @@ function RouteComponent() {
     try {
       const { sessionId: stripeSessionId } = await checkoutFn({
         data: {
-          affiliateCode: appliedDiscountCode || undefined,
-          discountCode: appliedDiscountCode || undefined,
+          affiliateCode: affiliateCode || undefined,
+          // discountCode: affiliateCode || undefined, // Discount codes not implemented yet
           analyticsSessionId: sessionId, // Pass analytics session ID
         },
       });
@@ -360,13 +343,13 @@ function RouteComponent() {
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background via-background/80 to-transparent"></div>
       <div className="section-divider-glow-bottom"></div>
 
-      {/* Discount Dialog */}
-      <DiscountDialog
+      {/* Discount Dialog - Hidden until discount codes are implemented */}
+      {/* <DiscountDialog
         open={showDiscountDialog}
         onOpenChange={setShowDiscountDialog}
         onApplyDiscount={handleApplyDiscount}
         initialCode={discountStore.getDiscountCode() || ""}
-      />
+      /> */}
     </div>
   );
 }

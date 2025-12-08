@@ -5,7 +5,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSegments } from "~/data-access/segments";
 import { VideoPlayer } from "~/routes/learn/-components/video-player";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, ShoppingCart } from "lucide-react";
+import { ArrowRight, ShoppingCart, CheckCircle2 } from "lucide-react";
 import { ScrollAnimation, ScrollScale } from "~/components/scroll-animation";
 import { NewsletterForm } from "./newsletter-form";
 
@@ -23,7 +23,10 @@ interface UnifiedHeroProps {
   waitlistCount?: number;
 }
 
-export function UnifiedHero({ isEarlyAccess, waitlistCount }: UnifiedHeroProps) {
+export function UnifiedHero({
+  isEarlyAccess,
+  waitlistCount,
+}: UnifiedHeroProps) {
   const continueSlug = useContinueSlug();
 
   const { data: firstVideoSegment } = useQuery({
@@ -65,34 +68,36 @@ export function UnifiedHero({ isEarlyAccess, waitlistCount }: UnifiedHeroProps) 
                 <ScrollAnimation direction="down" delay={0}>
                   <div className="inline-flex items-center px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-theme-50/50 dark:bg-background/20 backdrop-blur-sm border border-theme-200 dark:border-border/50 text-theme-600 dark:text-theme-400 text-xs md:text-sm font-medium mb-6 md:mb-8">
                     <span className="w-2 h-2 bg-theme-500 dark:bg-theme-400 rounded-full mr-2 animate-pulse"></span>
-                    Agentic Coding Mastery Course
+                    🚀 The Blueprint for AI-First Development
                   </div>
                 </ScrollAnimation>
 
                 <ScrollAnimation direction="up" delay={0}>
-                  <h1 className="text-4xl md:text-5xl lg:text-6xl leading-tight mb-8">
-                    Coding is <span className="text-theme-400">Changing</span>,
-                    Master{" "}
-                    <span className="text-theme-400">Agentic Coding</span>{" "}
+                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+                    Don't Just Write Code. <br className="hidden md:block" />
+                    <span className="text-theme-600 dark:text-theme-400">
+                      Direct It.
+                    </span>
                   </h1>
                 </ScrollAnimation>
 
                 <ScrollAnimation direction="up" delay={0.2}>
-                  <p className="text-base md:text-lg text-description mb-8 md:mb-12 max-w-xl">
-                    Master AI-first development with Cursor IDE, Claude Code
-                    CLI, and advanced AI models. Learn how to leverage Opus 4.5,
-                    Composer1, GPT-5.1 Codex, and cutting-edge agentic
-                    programming techniques to accelerate your development
-                    workflow and build applications 10x faster than traditional
-                    programming methods.
+                  <p className="text-base md:text-xl text-muted-foreground mb-8 md:mb-10 max-w-xl leading-relaxed">
+                    Stop typing every character manually. Master{" "}
+                    <strong>Cursor</strong>, <strong>Claude</strong>, and{" "}
+                    <strong>Agentic Workflows</strong> to build production-ready
+                    apps 10x faster. Become the architect, not just the typist.
                   </p>
                 </ScrollAnimation>
 
                 <ScrollAnimation direction="up" delay={0.3}>
-                  <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex flex-col sm:flex-row gap-4 mb-8">
                     <Link
                       to="/purchase"
-                      className={buttonVariants({ variant: "outline" })}
+                      className={buttonVariants({
+                        variant: "default",
+                        size: "lg",
+                      })}
                       onKeyDown={(e) => {
                         if (e.key === " ") {
                           e.preventDefault();
@@ -101,15 +106,18 @@ export function UnifiedHero({ isEarlyAccess, waitlistCount }: UnifiedHeroProps) 
                       }}
                     >
                       <ShoppingCart
-                        className="mr-2 h-4 w-4"
+                        className="mr-2 h-5 w-5"
                         aria-hidden="true"
                       />
-                      Buy Now
+                      Get Lifetime Access
                     </Link>
                     <Link
                       to={"/learn/$slug"}
                       params={{ slug: continueSlug }}
-                      className={buttonVariants({ variant: "default" })}
+                      className={buttonVariants({
+                        variant: "outline",
+                        size: "lg",
+                      })}
                       onKeyDown={(e) => {
                         if (e.key === " ") {
                           e.preventDefault();
@@ -117,9 +125,25 @@ export function UnifiedHero({ isEarlyAccess, waitlistCount }: UnifiedHeroProps) 
                         }
                       }}
                     >
-                      Start Learning
-                      <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                      View Curriculum
+                      <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
                     </Link>
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <span>Lifetime Updates Included</span>
+                    </div>
+                    {waitlistCount !== undefined && waitlistCount > 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        Join{" "}
+                        <span className="font-semibold text-foreground">
+                          {waitlistCount.toLocaleString()}+
+                        </span>{" "}
+                        developers building with AI
+                      </p>
+                    )}
                   </div>
                 </ScrollAnimation>
               </div>
@@ -229,12 +253,14 @@ function EarlyAccessHeroContent({ waitlistCount }: { waitlistCount?: number }) {
                 deployed applications in hours, not weeks.
               </p>
             </ScrollAnimation>
-            
+
             {waitlistCount !== undefined && (
               <ScrollAnimation direction="up" delay={0.45}>
                 <div className="mt-6 p-4 md:p-6 rounded-lg bg-theme-50/50 dark:bg-theme-900/20 border border-theme-200 dark:border-theme-500/30 max-w-lg mx-auto">
                   <p className="text-base md:text-lg text-theme-700 dark:text-theme-300 font-semibold">
-                    <span className="text-2xl md:text-3xl font-bold text-theme-600 dark:text-theme-400">{waitlistCount.toLocaleString()}</span>{" "}
+                    <span className="text-2xl md:text-3xl font-bold text-theme-600 dark:text-theme-400">
+                      {waitlistCount.toLocaleString()}
+                    </span>{" "}
                     early access sign ups already
                   </p>
                 </div>
@@ -243,7 +269,8 @@ function EarlyAccessHeroContent({ waitlistCount }: { waitlistCount?: number }) {
             <ScrollAnimation direction="up" delay={0.5}>
               <div className="mt-6 p-4 rounded-lg bg-theme-50/50 dark:bg-theme-900/20 border border-theme-200 dark:border-theme-500/30 max-w-lg mx-auto">
                 <p className="text-sm md:text-base text-theme-700 dark:text-theme-300 font-medium">
-                  🎁 <strong>Bonus:</strong> Waitlist members get access to a free Hans hook that reads your completed features out loud!
+                  🎁 <strong>Bonus:</strong> Waitlist members get access to a
+                  free Hans hook that reads your completed features out loud!
                 </p>
               </div>
             </ScrollAnimation>
