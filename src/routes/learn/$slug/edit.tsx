@@ -38,6 +38,7 @@ function RouteComponent() {
           onSubmit={onSubmit}
           isSubmitting={isSubmitting}
           uploadProgress={uploadProgress}
+          showNotifyUsers={true}
           defaultValues={{
             title: segment.title,
             content: segment.content ?? "",

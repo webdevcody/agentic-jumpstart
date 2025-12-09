@@ -254,7 +254,7 @@ export function SegmentForm({
                             </span>
                           </FormLabel>
                           <FormDescription className="text-xs text-muted-foreground">
-                            Email premium users about this new segment
+                            Email all subscribers about this segment
                           </FormDescription>
                         </div>
                         <FormControl>

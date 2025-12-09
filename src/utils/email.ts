@@ -220,6 +220,7 @@ export interface VideoNotificationTemplateProps {
   videoUrl: string;
   thumbnailUrl?: string;
   unsubscribeUrl?: string;
+  notificationType?: "new" | "updated";
 }
 
 export async function renderVideoNotificationEmail(

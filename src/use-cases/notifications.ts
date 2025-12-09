@@ -7,13 +7,17 @@ import {
 import { createUnsubscribeToken } from "~/data-access/unsubscribe-tokens";
 import { env } from "~/utils/env";
 
+export type VideoNotificationType = "new" | "updated";
+
 /**
- * Sends email notifications to all subscribers about a new segment
+ * Sends email notifications to all subscribers about a segment
  * Includes: premium users, free users, and newsletter subscribers who opted in to course updates
- * @param segment The newly created segment
+ * @param segment The segment to notify about
+ * @param notificationType Whether this is a "new" or "updated" segment
  */
-export async function sendNewSegmentNotificationUseCase(
-  segment: Segment
+export async function sendSegmentNotificationUseCase(
+  segment: Segment,
+  notificationType: VideoNotificationType = "new"
 ): Promise<{ sent: number; failed: number }> {
   // Get all recipients (premium, free, and newsletter subscribers)
   const allRecipients = await getAllVideoNotificationRecipients();
@@ -27,7 +31,13 @@ export async function sendNewSegmentNotificationUseCase(
   const videoUrl = `${env.HOST_NAME}/learn/${segment.slug}`;
   const videoDescription = segment.content
     ? segment.content.substring(0, 200) + "..."
-    : "Check out this new video in the course and continue your learning journey!";
+    : notificationType === "new"
+      ? "Check out this new video in the course and continue your learning journey!"
+      : "This video has been updated with new content. Check it out!";
+
+  // Determine subject line and badge text based on notification type
+  const subjectPrefix = notificationType === "new" ? "New Video" : "Updated Video";
+  const badgeText = notificationType === "new" ? "NEW VIDEO" : "UPDATED";
 
   // Prepare all emails with personalized content
   const emails = await Promise.all(
@@ -48,11 +58,12 @@ export async function sendNewSegmentNotificationUseCase(
         videoDescription,
         videoUrl,
         unsubscribeUrl,
+        notificationType,
       });
 
       return {
         to: recipient.email,
-        subject: `New Video: ${segment.title}`,
+        subject: `${subjectPrefix}: ${segment.title}`,
         html,
       };
     })
@@ -63,4 +74,14 @@ export async function sendNewSegmentNotificationUseCase(
     batchSize: 5,
     logPrefix: "Video Notification",
   });
+}
+
+/**
+ * Sends email notifications to all subscribers about a new segment
+ * @deprecated Use sendSegmentNotificationUseCase with notificationType="new" instead
+ */
+export async function sendNewSegmentNotificationUseCase(
+  segment: Segment
+): Promise<{ sent: number; failed: number }> {
+  return sendSegmentNotificationUseCase(segment, "new");
 }

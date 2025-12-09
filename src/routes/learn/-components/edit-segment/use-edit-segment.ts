@@ -51,6 +51,7 @@ export function useEditSegment(segment: any) {
             isPremium: values.isPremium,
             isComingSoon: values.isComingSoon,
           },
+          notifyUsers: values.notifyUsers,
         },
       });
 

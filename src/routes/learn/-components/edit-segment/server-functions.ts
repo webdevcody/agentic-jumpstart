@@ -8,6 +8,7 @@ import {
 import { getModuleById } from "~/data-access/modules";
 import { getModulesUseCase } from "~/use-cases/modules";
 import { isSlugInUse } from "~/data-access/segments";
+import { sendSegmentNotificationUseCase } from "~/use-cases/notifications";
 
 export const updateSegmentFn = createServerFn()
   .middleware([adminMiddleware])
@@ -25,10 +26,11 @@ export const updateSegmentFn = createServerFn()
         isPremium: z.boolean(),
         isComingSoon: z.boolean(),
       }),
+      notifyUsers: z.boolean().optional().default(false),
     })
   )
   .handler(async ({ data }) => {
-    const { segmentId, updates } = data;
+    const { segmentId, updates, notifyUsers } = data;
 
     // Check if slug is already in use by another segment
     if (await isSlugInUse(updates.slug, segmentId)) {
@@ -37,7 +39,19 @@ export const updateSegmentFn = createServerFn()
       );
     }
 
-    return updateSegmentUseCase(segmentId, updates);
+    const updatedSegment = await updateSegmentUseCase(segmentId, updates);
+
+    // Send notification to all subscribers if requested
+    if (notifyUsers) {
+      // Run in background to not block segment update
+      sendSegmentNotificationUseCase(updatedSegment, "updated").catch(
+        (error) => {
+          console.error("Failed to send segment update notification:", error);
+        }
+      );
+    }
+
+    return updatedSegment;
   });
 
 export const getSegmentFn = createServerFn()

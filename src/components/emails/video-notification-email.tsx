@@ -19,6 +19,7 @@ interface VideoNotificationEmailProps {
   videoUrl: string;
   thumbnailUrl?: string;
   unsubscribeUrl?: string;
+  notificationType?: "new" | "updated";
 }
 
 export function VideoNotificationEmail({
@@ -27,11 +28,19 @@ export function VideoNotificationEmail({
   videoUrl,
   thumbnailUrl,
   unsubscribeUrl,
+  notificationType = "new",
 }: VideoNotificationEmailProps) {
+  const badgeText = notificationType === "new" ? "NEW VIDEO" : "UPDATED";
+  const badgeColor = notificationType === "new" ? "#10b981" : "#3b82f6";
+  const previewText =
+    notificationType === "new"
+      ? `New video available: ${videoTitle}`
+      : `Video updated: ${videoTitle}`;
+
   return (
     <Html>
       <Head />
-      <Preview>New video available: {videoTitle}</Preview>
+      <Preview>{previewText}</Preview>
       <Body style={main}>
         <Container style={container}>
           <EmailHeader />
@@ -40,7 +49,9 @@ export function VideoNotificationEmail({
           <Section style={contentSection}>
             {/* Badge */}
             <div style={badgeContainer}>
-              <span style={badge}>NEW VIDEO</span>
+              <span style={{ ...badge, backgroundColor: badgeColor }}>
+                {badgeText}
+              </span>
             </div>
 
             <Heading as="h1" style={heading}>
