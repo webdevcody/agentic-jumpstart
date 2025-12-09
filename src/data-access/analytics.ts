@@ -544,15 +544,15 @@ export async function getDailyConversions(dateRange?: {
 
   const dailyData = await database
     .select({
-      date: sql<string>`date(${analyticsEvents.createdAt})`,
+      date: sql<string>`date(${analyticsEvents.createdAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York')`,
       pageViews: sql<number>`sum(case when ${analyticsEvents.eventType} = 'page_view' then 1 else 0 end)`,
       purchaseIntent: sql<number>`sum(case when ${analyticsEvents.eventType} = 'purchase_intent' then 1 else 0 end)`,
       purchaseCompleted: sql<number>`sum(case when ${analyticsEvents.eventType} = 'purchase_completed' then 1 else 0 end)`,
     })
     .from(analyticsEvents)
     .where(whereCondition)
-    .groupBy(sql`date(${analyticsEvents.createdAt})`)
-    .orderBy(sql`date(${analyticsEvents.createdAt})`)
+    .groupBy(sql`date(${analyticsEvents.createdAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York')`)
+    .orderBy(sql`date(${analyticsEvents.createdAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York')`)
     .limit(30);
 
   return dailyData;

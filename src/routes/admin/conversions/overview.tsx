@@ -93,8 +93,7 @@ function OverviewPage() {
         ...item,
         formattedDate: format(parseISO(item.date), "MMM d"),
         day: format(parseISO(item.date), "d"),
-      }))
-      .reverse(); // Reverse to show chronological order
+      }));
   }, [dailyData]);
 
   return (
