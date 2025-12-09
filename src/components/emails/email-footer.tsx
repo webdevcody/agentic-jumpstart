@@ -35,7 +35,7 @@ export function EmailFooter({
           <Link href={`${env.HOST_NAME}`} style={link}>
             Agentic Jumpstart
           </Link>{" "}
-          - Learn to build AI agents that work
+          - Learn to build fast using LLMs tooling
         </Text>
 
         <Text style={footerText}>{COMPANY_ADDRESS.NAME}</Text>

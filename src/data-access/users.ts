@@ -254,12 +254,13 @@ export async function getAllVideoNotificationRecipients(): Promise<
     }
   });
 
-  // 3. Get newsletter subscribers
+  // 3. Get newsletter subscribers (excluding those who unsubscribed)
   const newsletterSubs = await database
     .select({
       email: newsletterSignups.email,
     })
-    .from(newsletterSignups);
+    .from(newsletterSignups)
+    .where(eq(newsletterSignups.isUnsubscribed, false));
 
   // Add newsletter subscribers (they don't have user IDs)
   newsletterSubs.forEach((sub) => {

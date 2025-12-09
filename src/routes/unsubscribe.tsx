@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
 import { Button } from "~/components/ui/button";
 
 const unsubscribeSearchSchema = z.object({
@@ -47,18 +47,19 @@ function UnsubscribePage() {
               Successfully Unsubscribed
             </CardTitle>
             <CardDescription className="text-base">
-              You have been unsubscribed from marketing emails for{" "}
+              You have been unsubscribed from all emails for{" "}
               <span className="font-medium">{data.emailAddress}</span>
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-              <p className="text-sm text-blue-800 dark:text-blue-200 flex items-center gap-2 justify-center">
-                <AlertTriangle className="h-4 w-4" />
-                You will still receive course updates and important
-                notifications
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                You will no longer receive course updates, promotional emails, or newsletters from us.
               </p>
             </div>
+            <p className="text-sm text-muted-foreground">
+              If you'd like to manage your preferences or resubscribe, you can do so in your account settings.
+            </p>
             <Button
               onClick={() => (window.location.href = "/")}
               className="btn-gradient"

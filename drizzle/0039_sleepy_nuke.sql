@@ -1,0 +1,1 @@
+ALTER TABLE "app_newsletter_signup" ADD COLUMN "isUnsubscribed" boolean DEFAULT false NOT NULL;

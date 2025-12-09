@@ -6,6 +6,7 @@ import {
   createOrUpdateEmailPreferences,
 } from "~/data-access/emails";
 import { validateAndConsumeUnsubscribeToken } from "~/data-access/unsubscribe-tokens";
+import { markNewsletterSignupAsUnsubscribed } from "~/data-access/newsletter";
 
 // Email preferences validation schema
 const emailPreferencesSchema = z.object({
@@ -59,11 +60,17 @@ export const processUnsubscribeFn = createServerFn({
         };
       }
 
-      // Disable marketing emails for this user
-      await createOrUpdateEmailPreferences(tokenData.userId, {
-        allowCourseUpdates: true, // Keep course updates enabled
-        allowPromotional: false, // Disable marketing emails
-      });
+      // If this is a registered user, disable all emails in their preferences
+      if (tokenData.userId) {
+        await createOrUpdateEmailPreferences(tokenData.userId, {
+          allowCourseUpdates: false, // Disable course updates
+          allowPromotional: false,   // Disable promotional emails
+        });
+      }
+
+      // Always mark newsletter/waitlist signups as unsubscribed (if they exist)
+      // This handles the case where someone is both a user AND on the newsletter list
+      await markNewsletterSignupAsUnsubscribed(tokenData.emailAddress);
 
       return {
         status: "success",

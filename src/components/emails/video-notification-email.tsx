@@ -87,16 +87,6 @@ export function VideoNotificationEmail({
             </Text>
           </Section>
 
-          {/* Benefits Section */}
-          <Section style={benefitsSection}>
-            <Text style={benefitsHeading}>What you'll learn:</Text>
-            <Text style={benefitsText}>
-              This video is part of our comprehensive course on building AI
-              agents. Each lesson builds on the previous one to help you master
-              modern AI development.
-            </Text>
-          </Section>
-
           <EmailFooter
             unsubscribeUrl={unsubscribeUrl}
             footerMessage="You're receiving this email because you signed up for course updates from Agentic Jumpstart."

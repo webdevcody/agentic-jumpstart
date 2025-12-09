@@ -333,9 +333,7 @@ export const unsubscribeTokens = tableCreator(
   {
     id: serial("id").primaryKey(),
     token: text("token").notNull().unique(),
-    userId: serial("userId")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
+    userId: serial("userId").references(() => users.id, { onDelete: "cascade" }), // Nullable for newsletter-only subscribers
     emailAddress: text("emailAddress").notNull(),
     isUsed: boolean("isUsed").notNull().default(false),
     expiresAt: timestamp("expires_at").notNull(),
@@ -355,6 +353,7 @@ export const newsletterSignups = tableCreator(
     email: text("email").notNull().unique(),
     source: text("source").notNull().default("early_access"), // 'early_access', 'newsletter', 'waitlist'
     isVerified: boolean("isVerified").notNull().default(false),
+    isUnsubscribed: boolean("isUnsubscribed").notNull().default(false),
     subscriptionType: text("subscriptionType").notNull().default("newsletter"), // 'newsletter', 'waitlist'
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -903,7 +902,7 @@ export const analyticsEventsRelations = relations(
 
 export const analyticsSessionsRelations = relations(
   analyticsSessions,
-  ({ one, many }) => ({
+  ({ many }) => ({
     events: many(analyticsEvents),
   })
 );

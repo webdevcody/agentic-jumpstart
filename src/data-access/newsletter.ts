@@ -71,6 +71,19 @@ export async function deleteNewsletterSignup(email: string): Promise<void> {
     .where(eq(newsletterSignups.email, email));
 }
 
+// Mark newsletter signup as unsubscribed
+export async function markNewsletterSignupAsUnsubscribed(
+  email: string
+): Promise<void> {
+  await database
+    .update(newsletterSignups)
+    .set({
+      isUnsubscribed: true,
+      updatedAt: new Date(),
+    })
+    .where(eq(newsletterSignups.email, email));
+}
+
 // Get newsletter and waitlist emails for emailing
 export async function getNewsletterEmailsForEmailing(): Promise<
   Array<{ email: string }>

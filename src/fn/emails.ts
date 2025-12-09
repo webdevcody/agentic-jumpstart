@@ -147,8 +147,8 @@ export const sendTestEmailFn = createServerFn({
 
       // Always generate unsubscribe token since all emails now include unsubscribe
       const unsubscribeToken = await createUnsubscribeToken(
-        user.id,
-        data.email
+        data.email,
+        user.id
       );
       const unsubscribeUrl = `${env.HOST_NAME}/unsubscribe?token=${unsubscribeToken}`;
 
@@ -234,7 +234,7 @@ async function processBulkEmails(
   users: Array<{ id?: number; email: string }>,
   subject: string,
   htmlContent: string,
-  isMarketingEmail: boolean = true // Keep parameter for backwards compatibility but always true
+  _isMarketingEmail: boolean = true // Keep parameter for backwards compatibility but always true
 ) {
   try {
     // Update batch status to processing
@@ -245,25 +245,16 @@ async function processBulkEmails(
       users.map(async (user) => {
         let finalHtmlContent = htmlContent;
 
-        // Generate unsubscribe token if user has an ID (registered user)
-        if (user.id) {
-          const unsubscribeToken = await createUnsubscribeToken(
-            user.id,
-            user.email
-          );
-          const unsubscribeUrl = `${env.HOST_NAME}/unsubscribe?token=${unsubscribeToken}`;
-          finalHtmlContent = htmlContent.replace(
-            /{{unsubscribeUrl}}/g,
-            unsubscribeUrl
-          );
-        } else {
-          // For newsletter subscribers without user accounts, provide a generic unsubscribe
-          const unsubscribeUrl = `${env.HOST_NAME}/unsubscribe?email=${encodeURIComponent(user.email)}`;
-          finalHtmlContent = htmlContent.replace(
-            /{{unsubscribeUrl}}/g,
-            unsubscribeUrl
-          );
-        }
+        // Generate unsubscribe token for all recipients (both users and newsletter-only)
+        const unsubscribeToken = await createUnsubscribeToken(
+          user.email,
+          user.id ?? undefined
+        );
+        const unsubscribeUrl = `${env.HOST_NAME}/unsubscribe?token=${unsubscribeToken}`;
+        finalHtmlContent = htmlContent.replace(
+          /{{unsubscribeUrl}}/g,
+          unsubscribeUrl
+        );
 
         return {
           to: user.email,

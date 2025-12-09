@@ -35,22 +35,18 @@ export async function sendSegmentNotificationUseCase(
       ? "Check out this new video in the course and continue your learning journey!"
       : "This video has been updated with new content. Check it out!";
 
-  // Determine subject line and badge text based on notification type
+  // Determine subject line based on notification type
   const subjectPrefix = notificationType === "new" ? "New Video" : "Updated Video";
-  const badgeText = notificationType === "new" ? "NEW VIDEO" : "UPDATED";
 
   // Prepare all emails with personalized content
   const emails = await Promise.all(
     allRecipients.map(async (recipient) => {
-      // Generate unsubscribe URL
-      let unsubscribeUrl = `${env.HOST_NAME}/settings`;
-      if (recipient.id) {
-        const unsubscribeToken = await createUnsubscribeToken(
-          recipient.id,
-          recipient.email
-        );
-        unsubscribeUrl = `${env.HOST_NAME}/unsubscribe?token=${unsubscribeToken}`;
-      }
+      // Generate unsubscribe token for all recipients (both users and newsletter-only)
+      const unsubscribeToken = await createUnsubscribeToken(
+        recipient.email,
+        recipient.id ?? undefined
+      );
+      const unsubscribeUrl = `${env.HOST_NAME}/unsubscribe?token=${unsubscribeToken}`;
 
       // Render email HTML
       const html = await renderVideoNotificationEmail({

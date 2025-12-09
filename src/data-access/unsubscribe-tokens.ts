@@ -1,6 +1,6 @@
 import { database } from "~/db";
-import { unsubscribeTokens, UnsubscribeTokenCreate } from "~/db/schema";
-import { eq, and, gt } from "drizzle-orm";
+import { unsubscribeTokens } from "~/db/schema";
+import { eq, and, gt, lt } from "drizzle-orm";
 import { randomBytes } from "crypto";
 
 // Generate a secure unsubscribe token
@@ -8,10 +8,10 @@ export function generateUnsubscribeToken(): string {
   return randomBytes(32).toString("hex");
 }
 
-// Create an unsubscribe token for a user
+// Create an unsubscribe token for a user or newsletter subscriber
 export async function createUnsubscribeToken(
-  userId: number,
-  emailAddress: string
+  emailAddress: string,
+  userId?: number
 ): Promise<string> {
   const token = generateUnsubscribeToken();
 
@@ -21,7 +21,7 @@ export async function createUnsubscribeToken(
 
   await database.insert(unsubscribeTokens).values({
     token,
-    userId,
+    userId: userId,
     emailAddress,
     expiresAt,
   });
@@ -32,7 +32,7 @@ export async function createUnsubscribeToken(
 // Validate and consume an unsubscribe token
 export async function validateAndConsumeUnsubscribeToken(
   token: string
-): Promise<{ userId: number; emailAddress: string } | null> {
+): Promise<{ userId: number | null; emailAddress: string } | null> {
   const [tokenData] = await database
     .select()
     .from(unsubscribeTokens)
@@ -63,7 +63,8 @@ export async function validateAndConsumeUnsubscribeToken(
 
 // Clean up expired tokens (optional, for maintenance)
 export async function cleanupExpiredTokens(): Promise<void> {
+  const now = new Date();
   await database
     .delete(unsubscribeTokens)
-    .where(gt(new Date(), unsubscribeTokens.expiresAt));
+    .where(lt(unsubscribeTokens.expiresAt, now));
 }
