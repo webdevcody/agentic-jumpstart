@@ -11,7 +11,29 @@ import {
   type AnalyticsEventCreate,
   type AnalyticsSessionCreate,
 } from "~/db/schema";
-import { sql, count, eq, and, desc, gte, lte } from "drizzle-orm";
+import { sql, count, eq, and, desc, gte, lte, like } from "drizzle-orm";
+
+// Helper to parse UTM parameters from a pagePath that includes query string
+function parseUtmFromUrl(path: string): {
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmContent?: string;
+  utmTerm?: string;
+} {
+  try {
+    const url = new URL(path, "http://placeholder");
+    return {
+      utmSource: url.searchParams.get("utm_source") || undefined,
+      utmMedium: url.searchParams.get("utm_medium") || undefined,
+      utmCampaign: url.searchParams.get("utm_campaign") || undefined,
+      utmContent: url.searchParams.get("utm_content") || undefined,
+      utmTerm: url.searchParams.get("utm_term") || undefined,
+    };
+  } catch {
+    return {};
+  }
+}
 
 export interface UserStats {
   totalUsers: number;
@@ -297,17 +319,9 @@ export async function getMostCommentedSegments(limit: number = 10) {
 
 export async function createOrUpdateAnalyticsSession({
   sessionId,
-  utmParams,
   referrerSource,
 }: {
   sessionId: string;
-  utmParams: {
-    utmSource?: string;
-    utmMedium?: string;
-    utmCampaign?: string;
-    utmContent?: string;
-    utmTerm?: string;
-  };
   referrerSource?: string;
 }) {
   // Try to find existing session
@@ -335,11 +349,6 @@ export async function createOrUpdateAnalyticsSession({
       firstSeen: new Date(),
       lastSeen: new Date(),
       referrerSource,
-      utmCampaign: utmParams.utmCampaign,
-      utmSource: utmParams.utmSource,
-      utmMedium: utmParams.utmMedium,
-      utmContent: utmParams.utmContent,
-      utmTerm: utmParams.utmTerm,
       pageViews: 1,
       hasPurchaseIntent: false,
       hasConversion: false,
@@ -361,27 +370,14 @@ export async function trackAnalyticsEvent({
   referrer,
   userAgent,
   ipAddressHash,
-  utmParams,
   metadata,
 }: {
   sessionId: string;
-  eventType:
-    | "page_view"
-    | "purchase_intent"
-    | "purchase_completed"
-    | "course_access"
-    | "utm_visit";
+  eventType: "page_view" | "purchase_intent" | "purchase_completed" | "course_access";
   pagePath: string;
   referrer?: string;
   userAgent?: string;
   ipAddressHash?: string;
-  utmParams?: {
-    utmSource?: string;
-    utmMedium?: string;
-    utmCampaign?: string;
-    utmContent?: string;
-    utmTerm?: string;
-  };
   metadata?: Record<string, any>;
 }) {
   const event: AnalyticsEventCreate = {
@@ -391,11 +387,6 @@ export async function trackAnalyticsEvent({
     referrer,
     userAgent,
     ipAddressHash,
-    utmSource: utmParams?.utmSource,
-    utmMedium: utmParams?.utmMedium,
-    utmCampaign: utmParams?.utmCampaign,
-    utmContent: utmParams?.utmContent,
-    utmTerm: utmParams?.utmTerm,
     metadata: metadata ? JSON.stringify(metadata) : null,
     createdAt: new Date(),
   };
@@ -432,30 +423,17 @@ export async function getConversionMetrics(dateRange?: {
       )
     : undefined;
 
-  const campaignMetrics = await database
+  const [metrics] = await database
     .select({
-      utmCampaign: analyticsSessions.utmCampaign,
-      utmSource: analyticsSessions.utmSource,
-      utmMedium: analyticsSessions.utmMedium,
       totalSessions: count(analyticsSessions.id),
       totalPageViews: sql<number>`sum(${analyticsSessions.pageViews})`,
       purchaseIntentSessions: sql<number>`sum(case when ${analyticsSessions.hasPurchaseIntent} then 1 else 0 end)`,
       conversions: sql<number>`sum(case when ${analyticsSessions.hasConversion} then 1 else 0 end)`,
     })
     .from(analyticsSessions)
-    .where(whereCondition)
-    .groupBy(
-      analyticsSessions.utmCampaign,
-      analyticsSessions.utmSource,
-      analyticsSessions.utmMedium
-    )
-    .orderBy(
-      desc(
-        sql`sum(case when ${analyticsSessions.hasConversion} then 1 else 0 end)`
-      )
-    );
+    .where(whereCondition);
 
-  return campaignMetrics;
+  return metrics;
 }
 
 export async function getConversionFunnel(dateRange?: {
@@ -580,9 +558,6 @@ export async function getAllAnalyticsEvents(
       pagePath: analyticsEvents.pagePath,
       referrer: analyticsEvents.referrer,
       userAgent: analyticsEvents.userAgent,
-      utmSource: analyticsEvents.utmSource,
-      utmMedium: analyticsEvents.utmMedium,
-      utmCampaign: analyticsEvents.utmCampaign,
       metadata: analyticsEvents.metadata,
       createdAt: analyticsEvents.createdAt,
     })
@@ -642,9 +617,6 @@ export async function getAllAnalyticsSessions(
       firstSeen: analyticsSessions.firstSeen,
       lastSeen: analyticsSessions.lastSeen,
       referrerSource: analyticsSessions.referrerSource,
-      utmCampaign: analyticsSessions.utmCampaign,
-      utmSource: analyticsSessions.utmSource,
-      utmMedium: analyticsSessions.utmMedium,
       pageViews: analyticsSessions.pageViews,
       hasPurchaseIntent: analyticsSessions.hasPurchaseIntent,
       hasConversion: analyticsSessions.hasConversion,
@@ -747,93 +719,151 @@ export async function getOverallAnalyticsStats(dateRange?: {
   return stats;
 }
 
-// UTM Analytics functions
+// UTM Analytics functions - parse UTM params from pagePath
 
 export async function getUniqueUtmCampaigns(dateRange?: {
   start: Date;
   end: Date;
 }) {
+  // Query events where pagePath contains UTM parameters
   const whereCondition = dateRange
     ? and(
         gte(analyticsEvents.createdAt, dateRange.start),
         lte(analyticsEvents.createdAt, dateRange.end),
-        sql`${analyticsEvents.utmCampaign} IS NOT NULL`
+        like(analyticsEvents.pagePath, "%utm_%")
       )
-    : sql`${analyticsEvents.utmCampaign} IS NOT NULL`;
+    : like(analyticsEvents.pagePath, "%utm_%");
 
-  const campaigns = await database
+  const events = await database
     .select({
-      utmCampaign: analyticsEvents.utmCampaign,
-      utmSource: analyticsEvents.utmSource,
-      utmMedium: analyticsEvents.utmMedium,
-      totalEvents: count(analyticsEvents.id),
+      pagePath: analyticsEvents.pagePath,
     })
     .from(analyticsEvents)
-    .where(whereCondition)
-    .groupBy(
-      analyticsEvents.utmCampaign,
-      analyticsEvents.utmSource,
-      analyticsEvents.utmMedium
-    )
-    .orderBy(desc(count(analyticsEvents.id)));
+    .where(whereCondition);
 
-  return campaigns;
+  // Parse UTM from pagePath and aggregate
+  const utmMap = new Map<
+    string,
+    {
+      utmCampaign: string | null;
+      utmSource: string | null;
+      utmMedium: string | null;
+      totalEvents: number;
+    }
+  >();
+
+  for (const event of events) {
+    const utm = parseUtmFromUrl(event.pagePath);
+    if (utm.utmCampaign) {
+      const key = `${utm.utmCampaign}|${utm.utmSource || ""}|${utm.utmMedium || ""}`;
+      const existing = utmMap.get(key);
+      if (existing) {
+        existing.totalEvents += 1;
+      } else {
+        utmMap.set(key, {
+          utmCampaign: utm.utmCampaign,
+          utmSource: utm.utmSource || null,
+          utmMedium: utm.utmMedium || null,
+          totalEvents: 1,
+        });
+      }
+    }
+  }
+
+  return Array.from(utmMap.values()).sort((a, b) => b.totalEvents - a.totalEvents);
 }
 
 export async function getDailyUtmPageViews(dateRange?: {
   start: Date;
   end: Date;
 }) {
+  // Query events where pagePath contains UTM parameters
   const whereCondition = dateRange
     ? and(
         gte(analyticsEvents.createdAt, dateRange.start),
         lte(analyticsEvents.createdAt, dateRange.end),
-        sql`${analyticsEvents.utmCampaign} IS NOT NULL`
+        like(analyticsEvents.pagePath, "%utm_%")
       )
-    : sql`${analyticsEvents.utmCampaign} IS NOT NULL`;
+    : like(analyticsEvents.pagePath, "%utm_%");
 
-  const dailyData = await database
+  const events = await database
     .select({
+      pagePath: analyticsEvents.pagePath,
       date: sql<string>`date(${analyticsEvents.createdAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York')`,
-      utmCampaign: analyticsEvents.utmCampaign,
-      utmSource: analyticsEvents.utmSource,
-      utmMedium: analyticsEvents.utmMedium,
-      pageViews: count(analyticsEvents.id),
     })
     .from(analyticsEvents)
-    .where(whereCondition)
-    .groupBy(
-      sql`date(${analyticsEvents.createdAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York')`,
-      analyticsEvents.utmCampaign,
-      analyticsEvents.utmSource,
-      analyticsEvents.utmMedium
-    )
-    .orderBy(sql`date(${analyticsEvents.createdAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York')`);
+    .where(whereCondition);
 
-  return dailyData;
+  // Parse UTM from pagePath and aggregate by date
+  const dailyMap = new Map<
+    string,
+    {
+      date: string;
+      utmCampaign: string | null;
+      utmSource: string | null;
+      utmMedium: string | null;
+      pageViews: number;
+    }
+  >();
+
+  for (const event of events) {
+    const utm = parseUtmFromUrl(event.pagePath);
+    if (utm.utmCampaign) {
+      const key = `${event.date}|${utm.utmCampaign}|${utm.utmSource || ""}|${utm.utmMedium || ""}`;
+      const existing = dailyMap.get(key);
+      if (existing) {
+        existing.pageViews += 1;
+      } else {
+        dailyMap.set(key, {
+          date: event.date,
+          utmCampaign: utm.utmCampaign,
+          utmSource: utm.utmSource || null,
+          utmMedium: utm.utmMedium || null,
+          pageViews: 1,
+        });
+      }
+    }
+  }
+
+  return Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export async function getUtmStats(dateRange?: {
   start: Date;
   end: Date;
 }) {
+  // Query events where pagePath contains UTM parameters
   const whereCondition = dateRange
     ? and(
         gte(analyticsEvents.createdAt, dateRange.start),
         lte(analyticsEvents.createdAt, dateRange.end),
-        sql`${analyticsEvents.utmCampaign} IS NOT NULL`
+        like(analyticsEvents.pagePath, "%utm_%")
       )
-    : sql`${analyticsEvents.utmCampaign} IS NOT NULL`;
+    : like(analyticsEvents.pagePath, "%utm_%");
 
-  const [stats] = await database
+  const events = await database
     .select({
-      totalUtmEvents: count(analyticsEvents.id),
-      uniqueCampaigns: sql<number>`count(distinct ${analyticsEvents.utmCampaign})`,
-      uniqueSources: sql<number>`count(distinct ${analyticsEvents.utmSource})`,
-      uniqueMediums: sql<number>`count(distinct ${analyticsEvents.utmMedium})`,
+      pagePath: analyticsEvents.pagePath,
     })
     .from(analyticsEvents)
     .where(whereCondition);
 
-  return stats;
+  // Parse UTM from pagePath and count unique values
+  const campaigns = new Set<string>();
+  const sources = new Set<string>();
+  const mediums = new Set<string>();
+
+  for (const event of events) {
+    const utm = parseUtmFromUrl(event.pagePath);
+    if (utm.utmCampaign) campaigns.add(utm.utmCampaign);
+    if (utm.utmSource) sources.add(utm.utmSource);
+    if (utm.utmMedium) mediums.add(utm.utmMedium);
+  }
+
+  return {
+    totalUtmEvents: events.length,
+    uniqueCampaigns: campaigns.size,
+    uniqueSources: sources.size,
+    uniqueMediums: mediums.size,
+  };
 }

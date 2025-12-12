@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "@tanstack/react-router";
-import { generateSessionIdFn, trackPageViewFn, trackUtmVisitFn } from "~/fn/analytics";
+import { generateSessionIdFn, trackPageViewFn } from "~/fn/analytics";
 
 // Store session ID in memory for the browser session
 let browserSessionId: string | null = null;
@@ -14,17 +14,6 @@ const UTM_PARAMS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "
 // Check if URL has any UTM parameters
 function hasUtmParams(url: URL): boolean {
   return UTM_PARAMS.some((param) => url.searchParams.has(param));
-}
-
-// Extract UTM parameters from URL
-function extractUtmParams(url: URL) {
-  return {
-    utmSource: url.searchParams.get("utm_source") || undefined,
-    utmMedium: url.searchParams.get("utm_medium") || undefined,
-    utmCampaign: url.searchParams.get("utm_campaign") || undefined,
-    utmContent: url.searchParams.get("utm_content") || undefined,
-    utmTerm: url.searchParams.get("utm_term") || undefined,
-  };
 }
 
 // Remove UTM parameters from URL and update browser history
@@ -69,28 +58,33 @@ export function useAnalytics() {
         // Check for UTM params on initial load only (once per session)
         if (initialLoadRef.current && !utmProcessed && hasUtmParams(currentUrl)) {
           utmProcessed = true;
-          const utmParams = extractUtmParams(currentUrl);
 
-          // Track UTM visit event
+          // Track page view with full path including UTM query string
+          const fullPath = currentUrl.pathname + currentUrl.search;
+
           try {
-            await trackUtmVisitFn({
+            await trackPageViewFn({
               data: {
                 sessionId: browserSessionId,
-                pagePath: currentPathname,
-                ...utmParams,
+                pagePath: fullPath, // e.g., /purchase?utm_source=google&utm_medium=cpc
+                fullUrl: window.location.href,
               },
             });
           } catch (error) {
-            console.error("[Analytics] Failed to track UTM visit:", error);
+            console.error("[Analytics] Failed to track UTM page view:", error);
           }
 
           // Strip UTM params from URL after tracking
           stripUtmFromUrl();
+
+          initialLoadRef.current = false;
+          prevPathnameRef.current = currentPathname;
+          return; // Already tracked, don't double-track below
         }
 
         initialLoadRef.current = false;
 
-        // Track page view when pathname changes
+        // Track page view when pathname changes (non-UTM visits)
         if (prevPathnameRef.current !== currentPathname) {
           prevPathnameRef.current = currentPathname;
 
@@ -106,7 +100,7 @@ export function useAnalytics() {
                 data: {
                   sessionId: browserSessionId,
                   pagePath: currentPathname,
-                  fullUrl: window.location.href, // Include full URL with query params
+                  fullUrl: window.location.href,
                 },
               });
             } catch (error) {

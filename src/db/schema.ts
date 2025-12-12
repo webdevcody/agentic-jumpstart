@@ -788,22 +788,16 @@ export const analyticsEvents = tableCreator(
     id: serial("id").primaryKey(),
     sessionId: text("sessionId").notNull(),
     eventType: text("eventType").notNull(), // page_view, purchase_intent, purchase_completed, course_access
-    pagePath: text("pagePath").notNull(),
+    pagePath: text("pagePath").notNull(), // Includes UTM params in query string (e.g., /purchase?utm_source=google)
     referrer: text("referrer"),
     userAgent: text("userAgent"),
     ipAddressHash: text("ipAddressHash"),
-    utmSource: text("utmSource"),
-    utmMedium: text("utmMedium"),
-    utmCampaign: text("utmCampaign"),
-    utmContent: text("utmContent"),
-    utmTerm: text("utmTerm"),
     metadata: text("metadata"), // JSON string for flexible data
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [
     index("analytics_events_session_idx").on(table.sessionId),
     index("analytics_events_type_idx").on(table.eventType),
-    index("analytics_events_campaign_idx").on(table.utmCampaign),
     index("analytics_events_created_idx").on(table.createdAt),
   ]
 );
@@ -815,19 +809,11 @@ export const analyticsSessions = tableCreator(
     firstSeen: timestamp("first_seen").notNull().defaultNow(),
     lastSeen: timestamp("last_seen").notNull().defaultNow(),
     referrerSource: text("referrerSource"),
-    utmCampaign: text("utmCampaign"),
-    utmSource: text("utmSource"),
-    utmMedium: text("utmMedium"),
-    utmContent: text("utmContent"),
-    utmTerm: text("utmTerm"),
     pageViews: integer("pageViews").notNull().default(0),
     hasPurchaseIntent: boolean("hasPurchaseIntent").notNull().default(false),
     hasConversion: boolean("hasConversion").notNull().default(false),
   },
-  (table) => [
-    index("analytics_sessions_campaign_idx").on(table.utmCampaign),
-    index("analytics_sessions_first_seen_idx").on(table.firstSeen),
-  ]
+  (table) => [index("analytics_sessions_first_seen_idx").on(table.firstSeen)]
 );
 
 export const blogPosts = tableCreator(

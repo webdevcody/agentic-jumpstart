@@ -26,18 +26,6 @@ export function hashIpAddress(ipAddress?: string): string {
   return crypto.createHash("sha256").update(ipAddress).digest("hex");
 }
 
-// Extract UTM parameters from URL
-export function extractUtmParams(url: string) {
-  const urlObj = new URL(url); // Base URL needed for relative URLs
-  return {
-    utmSource: urlObj.searchParams.get("utm_source") || undefined,
-    utmMedium: urlObj.searchParams.get("utm_medium") || undefined,
-    utmCampaign: urlObj.searchParams.get("utm_campaign") || undefined,
-    utmContent: urlObj.searchParams.get("utm_content") || undefined,
-    utmTerm: urlObj.searchParams.get("utm_term") || undefined,
-  };
-}
-
 // Extract referrer source (domain)
 export function extractReferrerSource(referrer?: string): string | undefined {
   if (!referrer) return undefined;
@@ -52,12 +40,10 @@ export function extractReferrerSource(referrer?: string): string | undefined {
 // Track page view
 export async function trackPageView({
   headers,
-  url,
   sessionId,
   pagePath,
 }: {
   headers: Partial<Record<HTTPHeaderName, string | undefined>>;
-  url: string;
   sessionId: string;
   pagePath: string;
 }) {
@@ -66,18 +52,16 @@ export async function trackPageView({
   const ipAddress =
     headers["X-Forwarded-For"] || headers["X-Real-IP"] || undefined;
 
-  const utmParams = extractUtmParams(url);
   const referrerSource = extractReferrerSource(referrer);
   const ipAddressHash = hashIpAddress(ipAddress);
 
   // Create or update session
   await createOrUpdateAnalyticsSession({
     sessionId,
-    utmParams,
     referrerSource,
   });
 
-  // Track page view event
+  // Track page view event (pagePath now includes UTM params in query string)
   return trackAnalyticsEvent({
     sessionId,
     eventType: "page_view",
@@ -85,7 +69,6 @@ export async function trackPageView({
     referrer,
     userAgent,
     ipAddressHash,
-    utmParams,
   });
 }
 
@@ -163,11 +146,10 @@ export async function trackCourseAccess({
 
   return trackAnalyticsEvent({
     sessionId,
-    userId,
     eventType: "course_access",
     pagePath: `/learn/${courseSlug}`,
     userAgent,
     ipAddressHash,
-    metadata: { courseSlug },
+    metadata: { courseSlug, userId },
   });
 }
