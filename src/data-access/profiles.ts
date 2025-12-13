@@ -61,7 +61,7 @@ export async function getProfileWithProjects(userId: UserId) {
 
 export async function getPublicProfile(userId: UserId) {
   const profile = await database.query.profiles.findFirst({
-    where: eq(profiles.userId, userId),
+    where: and(eq(profiles.userId, userId), eq(profiles.isPublicProfile, true)),
     with: {
       projects: {
         where: eq(projects.isVisible, true),
