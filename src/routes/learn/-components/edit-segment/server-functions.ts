@@ -4,11 +4,14 @@ import { adminMiddleware, authenticatedMiddleware } from "~/lib/auth";
 import {
   getSegmentBySlugUseCase,
   updateSegmentUseCase,
+  getSegmentByIdUseCase,
 } from "~/use-cases/segments";
 import { getModuleById } from "~/data-access/modules";
 import { getModulesUseCase } from "~/use-cases/modules";
 import { isSlugInUse } from "~/data-access/segments";
 import { sendSegmentNotificationUseCase } from "~/use-cases/notifications";
+import { queueAllJobsForSegmentUseCase } from "~/use-cases/video-processing";
+import { startVideoProcessingWorker } from "~/lib/video-processing-worker";
 
 export const updateSegmentFn = createServerFn()
   .middleware([adminMiddleware])
@@ -39,7 +42,29 @@ export const updateSegmentFn = createServerFn()
       );
     }
 
+    // Check if a new video is being uploaded
+    const existingSegment = await getSegmentByIdUseCase(segmentId);
+    const isNewVideoUpload =
+      updates.videoKey && existingSegment?.videoKey !== updates.videoKey;
+
     const updatedSegment = await updateSegmentUseCase(segmentId, updates);
+
+    // Queue video processing jobs if a new video was uploaded
+    if (isNewVideoUpload && updates.videoKey) {
+      // Queue jobs in background to not block segment update
+      queueAllJobsForSegmentUseCase(segmentId)
+        .then((jobs) => {
+          if (jobs.length > 0) {
+            // Start worker if not already running
+            startVideoProcessingWorker().catch((error) => {
+              console.error("Failed to start video processing worker:", error);
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to queue video processing jobs:", error);
+        });
+    }
 
     // Send notification to all subscribers if requested
     if (notifyUsers) {
@@ -71,5 +96,5 @@ export const getUniqueModuleNamesFn = createServerFn()
   .middleware([authenticatedMiddleware])
   .handler(async () => {
     const modules = await getModulesUseCase();
-    return modules.map(module => module.title);
+    return modules.map((module) => module.title);
   });

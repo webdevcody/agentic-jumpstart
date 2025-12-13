@@ -131,6 +131,27 @@ export const segments = tableCreator(
   ]
 );
 
+export const videoProcessingJobs = tableCreator(
+  "video_processing_job",
+  {
+    id: serial("id").primaryKey(),
+    segmentId: serial("segmentId")
+      .notNull()
+      .references(() => segments.id, { onDelete: "cascade" }),
+    jobType: text("jobType").notNull(), // "transcript" | "transcode"
+    status: text("status").notNull().default("pending"), // pending | processing | completed | failed
+    error: text("error"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    completedAt: timestamp("completed_at"),
+  },
+  (table) => [
+    index("video_processing_jobs_segment_idx").on(table.segmentId),
+    index("video_processing_jobs_status_idx").on(table.status),
+    index("video_processing_jobs_created_idx").on(table.createdAt),
+  ]
+);
+
 export const comments = tableCreator(
   "comment",
   {
@@ -334,7 +355,9 @@ export const unsubscribeTokens = tableCreator(
   {
     id: serial("id").primaryKey(),
     token: text("token").notNull().unique(),
-    userId: serial("userId").references(() => users.id, { onDelete: "cascade" }), // Nullable for newsletter-only subscribers
+    userId: serial("userId").references(() => users.id, {
+      onDelete: "cascade",
+    }), // Nullable for newsletter-only subscribers
     emailAddress: text("emailAddress").notNull(),
     isUsed: boolean("isUsed").notNull().default(false),
     expiresAt: timestamp("expires_at").notNull(),
@@ -995,6 +1018,8 @@ export type Profile = typeof profiles.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Segment = typeof segments.$inferSelect;
 export type SegmentCreate = typeof segments.$inferInsert;
+export type VideoProcessingJob = typeof videoProcessingJobs.$inferSelect;
+export type VideoProcessingJobCreate = typeof videoProcessingJobs.$inferInsert;
 export type Attachment = typeof attachments.$inferSelect;
 export type AttachmentCreate = typeof attachments.$inferInsert;
 export type Progress = typeof progress.$inferSelect;

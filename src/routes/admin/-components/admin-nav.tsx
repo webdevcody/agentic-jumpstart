@@ -16,6 +16,7 @@ import {
   LogOut,
   AlertCircle,
   TrendingUp,
+  Video,
 } from "lucide-react";
 import {
   getLaunchKitsFeatureEnabledFn,
@@ -29,7 +30,13 @@ interface NavigationItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   featureKey?: "blog" | "launchKits" | "affiliates" | "news";
-  category: "dashboard" | "content" | "users" | "business" | "communications" | "system";
+  category:
+    | "dashboard"
+    | "content"
+    | "users"
+    | "business"
+    | "communications"
+    | "system";
 }
 
 const navigation: NavigationItem[] = [
@@ -40,12 +47,18 @@ const navigation: NavigationItem[] = [
     icon: Home,
     category: "dashboard",
   },
-  
+
   // Content Management
   {
     name: "Comments",
     href: "/admin/comments",
     icon: MessageSquare,
+    category: "content",
+  },
+  {
+    name: "Video Processing",
+    href: "/admin/video-processing",
+    icon: Video,
     category: "content",
   },
   {
@@ -62,7 +75,7 @@ const navigation: NavigationItem[] = [
     category: "content",
     featureKey: "news",
   },
-  
+
   // User Management
   {
     name: "Users",
@@ -77,7 +90,7 @@ const navigation: NavigationItem[] = [
     category: "users",
     featureKey: "affiliates",
   },
-  
+
   // Business
   {
     name: "Launch Kits",
@@ -98,7 +111,7 @@ const navigation: NavigationItem[] = [
     icon: TrendingUp,
     category: "business",
   },
-  
+
   // Communications
   {
     name: "Emails",
@@ -106,7 +119,7 @@ const navigation: NavigationItem[] = [
     icon: Mail,
     category: "communications",
   },
-  
+
   // System
   {
     name: "Settings",
@@ -131,14 +144,14 @@ interface AdminNavProps {
 
 function getGroupedNavigationItems() {
   const grouped: Record<string, NavigationItem[]> = {};
-  
+
   navigation.forEach((item) => {
     if (!grouped[item.category]) {
       grouped[item.category] = [];
     }
     grouped[item.category].push(item);
   });
-  
+
   return grouped;
 }
 
@@ -219,149 +232,155 @@ export function AdminNav({ onItemClick }: AdminNavProps = {}) {
 
         {/* Navigation links - flex-1 to take available space */}
         <div className="space-y-6 flex-1">
-          {Object.entries(getGroupedNavigationItems()).map(([category, items], categoryIndex) => {
-            // Handle dashboard separately - no category header
-            if (category === "dashboard") {
-              return items.map((item) => {
-                const isActive =
-                  item.href === "/admin/conversions"
-                    ? location.pathname.startsWith("/admin/conversions")
-                    : location.pathname === item.href;
-                const isDisabled =
-                  item.featureKey &&
-                  !featureStates[item.featureKey as keyof typeof featureStates];
+          {Object.entries(getGroupedNavigationItems()).map(
+            ([category, items], categoryIndex) => {
+              // Handle dashboard separately - no category header
+              if (category === "dashboard") {
+                return items.map((item) => {
+                  const isActive =
+                    item.href === "/admin/conversions"
+                      ? location.pathname.startsWith("/admin/conversions")
+                      : location.pathname === item.href;
+                  const isDisabled =
+                    item.featureKey &&
+                    !featureStates[
+                      item.featureKey as keyof typeof featureStates
+                    ];
 
-                return (
-                  <div key={item.name} className="mb-6">
-                    <Link
-                      to={item.href}
-                      onClick={onItemClick}
-                      className={cn(
-                        "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group relative",
-                        isActive
-                          ? "text-theme-600 dark:text-theme-400 bg-theme-500/15 dark:bg-theme-500/10 shadow-sm"
-                          : isDisabled
-                            ? "text-muted-foreground/40 hover:text-muted-foreground/60 hover:bg-muted/30"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                      )}
-                    >
-                      {/* Subtle glow for active state */}
-                      {isActive && !isDisabled && (
-                        <div className="absolute inset-0 rounded-lg bg-theme-500/5 blur-sm"></div>
-                      )}
-
-                      <item.icon
+                  return (
+                    <div key={item.name} className="mb-6">
+                      <Link
+                        to={item.href}
+                        onClick={onItemClick}
                         className={cn(
-                          "mr-3 h-4 w-4 transition-colors duration-200",
-                          isActive && !isDisabled
-                            ? "text-theme-500 dark:text-theme-400"
+                          "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group relative",
+                          isActive
+                            ? "text-theme-600 dark:text-theme-400 bg-theme-500/15 dark:bg-theme-500/10 shadow-sm"
                             : isDisabled
-                              ? "text-muted-foreground/40"
-                              : "text-muted-foreground group-hover:text-theme-400"
-                        )}
-                      />
-                      <span
-                        className={cn(
-                          "relative z-10 flex-1",
-                          isActive && !isDisabled && "font-semibold",
-                          isDisabled && "opacity-60"
+                              ? "text-muted-foreground/40 hover:text-muted-foreground/60 hover:bg-muted/30"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                         )}
                       >
-                        {item.name}
-                      </span>
-                      {isDisabled && (
-                        <div className="flex items-center gap-1 ml-auto">
-                          <span className="text-xs text-muted-foreground/50 font-normal">
-                            Disabled
-                          </span>
-                          <AlertCircle className="h-3 w-3 text-muted-foreground/50" />
-                        </div>
-                      )}
+                        {/* Subtle glow for active state */}
+                        {isActive && !isDisabled && (
+                          <div className="absolute inset-0 rounded-lg bg-theme-500/5 blur-sm"></div>
+                        )}
 
-                      {/* Hover indicator */}
-                      {!isDisabled && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-theme-500 rounded-r-full transition-all duration-200 group-hover:h-8 opacity-0 group-hover:opacity-100"></div>
-                      )}
-                    </Link>
-                  </div>
-                );
-              });
-            }
-
-            return (
-              <div key={category}>
-                <h3 className="text-xs font-medium text-muted-foreground mb-3 px-2 uppercase tracking-wider">
-                  {CATEGORY_LABELS[category as NavigationItem["category"]]}
-                </h3>
-                <ul className="space-y-1">
-                  {items.map((item) => {
-                    const isActive =
-                      item.href === "/admin/conversions"
-                        ? location.pathname.startsWith("/admin/conversions")
-                        : location.pathname === item.href;
-                    const isDisabled =
-                      item.featureKey &&
-                      !featureStates[item.featureKey as keyof typeof featureStates];
-
-                    return (
-                      <li key={item.name}>
-                        <Link
-                          to={item.href}
-                          onClick={onItemClick}
+                        <item.icon
                           className={cn(
-                            "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group relative",
-                            isActive
-                              ? "text-theme-600 dark:text-theme-400 bg-theme-500/15 dark:bg-theme-500/10 shadow-sm"
+                            "mr-3 h-4 w-4 transition-colors duration-200",
+                            isActive && !isDisabled
+                              ? "text-theme-500 dark:text-theme-400"
                               : isDisabled
-                                ? "text-muted-foreground/40 hover:text-muted-foreground/60 hover:bg-muted/30"
-                                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                ? "text-muted-foreground/40"
+                                : "text-muted-foreground group-hover:text-theme-400"
+                          )}
+                        />
+                        <span
+                          className={cn(
+                            "relative z-10 flex-1",
+                            isActive && !isDisabled && "font-semibold",
+                            isDisabled && "opacity-60"
                           )}
                         >
-                          {/* Subtle glow for active state */}
-                          {isActive && !isDisabled && (
-                            <div className="absolute inset-0 rounded-lg bg-theme-500/5 blur-sm"></div>
-                          )}
+                          {item.name}
+                        </span>
+                        {isDisabled && (
+                          <div className="flex items-center gap-1 ml-auto">
+                            <span className="text-xs text-muted-foreground/50 font-normal">
+                              Disabled
+                            </span>
+                            <AlertCircle className="h-3 w-3 text-muted-foreground/50" />
+                          </div>
+                        )}
 
-                          <item.icon
+                        {/* Hover indicator */}
+                        {!isDisabled && (
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-theme-500 rounded-r-full transition-all duration-200 group-hover:h-8 opacity-0 group-hover:opacity-100"></div>
+                        )}
+                      </Link>
+                    </div>
+                  );
+                });
+              }
+
+              return (
+                <div key={category}>
+                  <h3 className="text-xs font-medium text-muted-foreground mb-3 px-2 uppercase tracking-wider">
+                    {CATEGORY_LABELS[category as NavigationItem["category"]]}
+                  </h3>
+                  <ul className="space-y-1">
+                    {items.map((item) => {
+                      const isActive =
+                        item.href === "/admin/conversions"
+                          ? location.pathname.startsWith("/admin/conversions")
+                          : location.pathname === item.href;
+                      const isDisabled =
+                        item.featureKey &&
+                        !featureStates[
+                          item.featureKey as keyof typeof featureStates
+                        ];
+
+                      return (
+                        <li key={item.name}>
+                          <Link
+                            to={item.href}
+                            onClick={onItemClick}
                             className={cn(
-                              "mr-3 h-4 w-4 transition-colors duration-200",
-                              isActive && !isDisabled
-                                ? "text-theme-500 dark:text-theme-400"
+                              "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group relative",
+                              isActive
+                                ? "text-theme-600 dark:text-theme-400 bg-theme-500/15 dark:bg-theme-500/10 shadow-sm"
                                 : isDisabled
-                                  ? "text-muted-foreground/40"
-                                  : "text-muted-foreground group-hover:text-theme-400"
-                            )}
-                          />
-                          <span
-                            className={cn(
-                              "relative z-10 flex-1",
-                              isActive && !isDisabled && "font-semibold",
-                              isDisabled && "opacity-60"
+                                  ? "text-muted-foreground/40 hover:text-muted-foreground/60 hover:bg-muted/30"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                             )}
                           >
-                            {item.name}
-                          </span>
-                          {isDisabled && (
-                            <div className="flex items-center gap-1 ml-auto">
-                              <span className="text-xs text-muted-foreground/50 font-normal">
-                                Disabled
-                              </span>
-                              <AlertCircle className="h-3 w-3 text-muted-foreground/50" />
-                            </div>
-                          )}
+                            {/* Subtle glow for active state */}
+                            {isActive && !isDisabled && (
+                              <div className="absolute inset-0 rounded-lg bg-theme-500/5 blur-sm"></div>
+                            )}
 
-                          {/* Hover indicator */}
-                          {!isDisabled && (
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-theme-500 rounded-r-full transition-all duration-200 group-hover:h-8 opacity-0 group-hover:opacity-100"></div>
-                          )}
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            );
-          })}
+                            <item.icon
+                              className={cn(
+                                "mr-3 h-4 w-4 transition-colors duration-200",
+                                isActive && !isDisabled
+                                  ? "text-theme-500 dark:text-theme-400"
+                                  : isDisabled
+                                    ? "text-muted-foreground/40"
+                                    : "text-muted-foreground group-hover:text-theme-400"
+                              )}
+                            />
+                            <span
+                              className={cn(
+                                "relative z-10 flex-1",
+                                isActive && !isDisabled && "font-semibold",
+                                isDisabled && "opacity-60"
+                              )}
+                            >
+                              {item.name}
+                            </span>
+                            {isDisabled && (
+                              <div className="flex items-center gap-1 ml-auto">
+                                <span className="text-xs text-muted-foreground/50 font-normal">
+                                  Disabled
+                                </span>
+                                <AlertCircle className="h-3 w-3 text-muted-foreground/50" />
+                              </div>
+                            )}
+
+                            {/* Hover indicator */}
+                            {!isDisabled && (
+                              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-theme-500 rounded-r-full transition-all duration-200 group-hover:h-8 opacity-0 group-hover:opacity-100"></div>
+                            )}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            }
+          )}
         </div>
 
         {/* Sign Out Button - stays at bottom */}

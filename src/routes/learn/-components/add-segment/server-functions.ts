@@ -5,6 +5,8 @@ import { addSegmentUseCase } from "~/use-cases/segments";
 import { getSegments, isSlugInUse } from "~/data-access/segments";
 import { getModulesUseCase } from "~/use-cases/modules";
 import { sendNewSegmentNotificationUseCase } from "~/use-cases/notifications";
+import { queueAllJobsForSegmentUseCase } from "~/use-cases/video-processing";
+import { startVideoProcessingWorker } from "~/lib/video-processing-worker";
 
 export const createSegmentFn = createServerFn()
   .middleware([adminMiddleware])
@@ -51,6 +53,23 @@ export const createSegmentFn = createServerFn()
       isComingSoon: data.isComingSoon,
     });
 
+    // Queue video processing jobs if a video was uploaded
+    if (data.videoKey) {
+      // Queue jobs in background to not block segment creation
+      queueAllJobsForSegmentUseCase(segment.id)
+        .then((jobs) => {
+          if (jobs.length > 0) {
+            // Start worker if not already running
+            startVideoProcessingWorker().catch((error) => {
+              console.error("Failed to start video processing worker:", error);
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to queue video processing jobs:", error);
+        });
+    }
+
     // Send notification to premium users if requested
     if (data.notifyUsers) {
       // Run in background to not block segment creation
@@ -66,5 +85,5 @@ export const getUniqueModuleNamesFn = createServerFn()
   .middleware([authenticatedMiddleware])
   .handler(async () => {
     const modules = await getModulesUseCase();
-    return modules.map(module => module.title);
+    return modules.map((module) => module.title);
   });

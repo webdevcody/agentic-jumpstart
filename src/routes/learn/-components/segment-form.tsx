@@ -39,7 +39,6 @@ import {
 import { AutoComplete } from "~/components/ui/autocomplete";
 import { Switch } from "~/components/ui/switch";
 import type { UploadProgress } from "~/utils/storage/helpers";
-import { TranscodeVideoButton } from "./edit-segment/transcode-video-button";
 
 export const formSchema = z.object({
   title: z
@@ -449,15 +448,6 @@ export function SegmentForm({
                                     </div>
                                   </CardContent>
                                 </Card>
-                              )}
-
-                              {segmentId && existingVideoKey && !value && (
-                                <div className="pt-2">
-                                  <TranscodeVideoButton
-                                    segmentId={segmentId}
-                                    videoKey={existingVideoKey}
-                                  />
-                                </div>
                               )}
                             </div>
                           </FormControl>

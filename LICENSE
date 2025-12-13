@@ -1,21 +1,84 @@
-MIT License
+SOURCE-AVAILABLE LICENSE
 
-Copyright (c) 2025 Web Dev Cody
+Copyright (c) 2025 Cody Seibert (webdevcody@gmail.com). All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This course platform software is source-available software. You may view, use, modify, and distribute the source code subject to the strict terms below.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+PERMITTED USES (No License Required):
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+You may:
+
+- View and study the source code
+- Use the software to host FREE courses (completely non-monetized)
+- Modify the software for your own free course hosting needs
+- Contribute code improvements (see CONTRIBUTING.md for contributor agreement)
+- Share the source code with others for educational or non-commercial purposes
+
+FREE course hosting means:
+
+- No fees, subscriptions, or paid access to courses
+- No advertisements or ad networks
+- No sponsorships or sponsored content
+- No affiliate marketing or referral programs
+- No donations, tips, or any form of compensation related to course hosting
+- Completely non-monetized educational use only
+
+COMMERCIAL LICENSE REQUIRED:
+
+You MUST obtain a Commercial License from Cody Seibert (webdevcody@gmail.com) if you want to:
+
+- Monetize any course platform in ANY way (fees, ads, sponsorships, donations, etc.)
+- Charge for course access, subscriptions, or memberships
+- Display advertisements or accept sponsorships
+- Accept any form of payment or compensation related to course hosting
+- Use the software for any revenue-generating course platform activities
+
+PROHIBITED USES (Strictly Forbidden without explicit written permission):
+
+You may NOT:
+
+- Monetize course platforms without a Commercial License
+- Resell, redistribute, sublicense, or rent this software as a product (e.g., "course platform starter", "SaaS template", "boilerplate", "admin dashboard kit")
+- Include this software in products you sell to others
+- Create derivative works sold as course platform software products, starter kits, or templates
+- Offer this software as a "Software as a Service" (SaaS) or "Platform as a Service" (PaaS) to third parties
+- Port the code to other languages or frameworks for the purpose of selling it as a product
+- Use this software in any way that generates revenue from course hosting without a Commercial License
+
+CONTRIBUTOR RIGHTS ASSIGNMENT:
+
+By contributing code, documentation, or other materials to this project, you automatically agree to assign ALL copyright and intellectual property rights to Cody Seibert. All contributions become the exclusive property of Cody Seibert. Contributors:
+
+- Retain NO rights to their code
+- Grant Cody Seibert the right to relicense, sell, modify, and commercialize their contributions
+- Waive all moral rights to their contributions
+- See CONTRIBUTING.md for the full legal Contributor License Agreement
+
+COPYRIGHT AND OWNERSHIP:
+
+All rights, title, and interest in this software, including all intellectual property rights, belong exclusively to Cody Seibert. Cody Seibert retains sole ownership, control, and the right to license, sell, or commercialize this software in any way.
+
+INDEMNIFICATION:
+
+You agree to indemnify, defend, and hold harmless Cody Seibert and any contributors from and against any and all claims, liabilities, damages, losses, costs, expenses, or fees (including reasonable attorneys' fees) that such parties may incur as a result of or arising from your (or anyone using your account's) use of the Software, your violation of these terms, or your violation of any rights of another.
+
+NO WARRANTY AND LIMITATION OF LIABILITY:
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+IN NO EVENT SHALL CODY SEIBERT BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+THIS LIMITATION OF LIABILITY INCLUDES, BUT IS NOT LIMITED TO:
+
+- DAMAGES RESULTING FROM BUGS, ERRORS, OR DEFECTS IN THE SOFTWARE
+- SECURITY VULNERABILITIES, DATA BREACHES, OR UNAUTHORIZED ACCESS
+- DATA LOSS, CORRUPTION, OR UNAVAILABILITY
+- FINANCIAL LOSSES OR BUSINESS INTERRUPTION
+- PERSONAL INJURY OR PROPERTY DAMAGE
+- ANY OTHER DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES
+
+YOU ASSUME ALL RISKS ASSOCIATED WITH THE USE OF THIS SOFTWARE.
+
+For questions about licensing or to obtain a Commercial License, please contact:
+Cody Seibert
+Email: webdevcody@gmail.com

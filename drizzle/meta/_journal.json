@@ -295,6 +295,13 @@
       "when": 1765605525304,
       "tag": "0041_ordinary_shard",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1765652325706,
+      "tag": "0042_familiar_calypso",
+      "breakpoints": true
     }
   ]
 }

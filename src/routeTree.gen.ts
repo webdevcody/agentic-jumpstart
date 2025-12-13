@@ -46,6 +46,7 @@ import { Route as LaunchKitsSlugRouteImport } from './routes/launch-kits/$slug'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as AgentsNewRouteImport } from './routes/agents/new'
 import { Route as AgentsSlugRouteImport } from './routes/agents/$slug'
+import { Route as AdminVideoProcessingRouteImport } from './routes/admin/video-processing'
 import { Route as AdminUtmAnalyticsRouteImport } from './routes/admin/utm-analytics'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
@@ -261,6 +262,11 @@ const AgentsSlugRoute = AgentsSlugRouteImport.update({
   id: '/agents/$slug',
   path: '/agents/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminVideoProcessingRoute = AdminVideoProcessingRouteImport.update({
+  id: '/video-processing',
+  path: '/video-processing',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminUtmAnalyticsRoute = AdminUtmAnalyticsRouteImport.update({
   id: '/utm-analytics',
@@ -481,6 +487,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/utm-analytics': typeof AdminUtmAnalyticsRoute
+  '/admin/video-processing': typeof AdminVideoProcessingRoute
   '/agents/$slug': typeof AgentsSlugRoute
   '/agents/new': typeof AgentsNewRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -545,6 +552,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/utm-analytics': typeof AdminUtmAnalyticsRoute
+  '/admin/video-processing': typeof AdminVideoProcessingRoute
   '/agents/$slug': typeof AgentsSlugRoute
   '/agents/new': typeof AgentsNewRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -611,6 +619,7 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/utm-analytics': typeof AdminUtmAnalyticsRoute
+  '/admin/video-processing': typeof AdminVideoProcessingRoute
   '/agents/$slug': typeof AgentsSlugRoute
   '/agents/new': typeof AgentsNewRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -680,6 +689,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/admin/utm-analytics'
+    | '/admin/video-processing'
     | '/agents/$slug'
     | '/agents/new'
     | '/blog/$slug'
@@ -744,6 +754,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/admin/utm-analytics'
+    | '/admin/video-processing'
     | '/agents/$slug'
     | '/agents/new'
     | '/blog/$slug'
@@ -809,6 +820,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/admin/utm-analytics'
+    | '/admin/video-processing'
     | '/agents/$slug'
     | '/agents/new'
     | '/blog/$slug'
@@ -1200,6 +1212,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgentsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/video-processing': {
+      id: '/admin/video-processing'
+      path: '/video-processing'
+      fullPath: '/admin/video-processing'
+      preLoaderRoute: typeof AdminVideoProcessingRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/utm-analytics': {
       id: '/admin/utm-analytics'
       path: '/utm-analytics'
@@ -1513,6 +1532,7 @@ interface AdminRouteRouteChildren {
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminUtmAnalyticsRoute: typeof AdminUtmAnalyticsRoute
+  AdminVideoProcessingRoute: typeof AdminVideoProcessingRoute
   AdminBlogNewRoute: typeof AdminBlogNewRoute
   AdminLaunchKitsTagsRoute: typeof AdminLaunchKitsTagsRoute
   AdminNewsNewRoute: typeof AdminNewsNewRoute
@@ -1534,6 +1554,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminUtmAnalyticsRoute: AdminUtmAnalyticsRoute,
+  AdminVideoProcessingRoute: AdminVideoProcessingRoute,
   AdminBlogNewRoute: AdminBlogNewRoute,
   AdminLaunchKitsTagsRoute: AdminLaunchKitsTagsRoute,
   AdminNewsNewRoute: AdminNewsNewRoute,
