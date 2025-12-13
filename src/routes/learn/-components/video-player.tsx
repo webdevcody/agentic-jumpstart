@@ -220,12 +220,12 @@ export function VideoPlayer({ segmentId, videoKey }: VideoPlayerProps) {
             </Tabs>
           </div>
         )}
-        <div className="w-full h-full overflow-hidden">
+        <div className="w-full h-full overflow-hidden rounded-xl">
           <video
             ref={videoRef}
             src={data.videoUrl}
             controls
-            className="w-full h-full object-cover bg-background"
+            className="w-full h-full object-contain bg-background"
             preload="metadata"
             poster=""
           >
