@@ -56,7 +56,8 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
 
   try {
     await sesClient.send(command);
-    console.log(`[Email Sent] To: ${options.to}, Subject: ${options.subject}`);
+    // Don't log email addresses for security/privacy
+    console.log(`[Email Sent] Subject: ${options.subject}`);
   } catch (error) {
     console.error("Failed to send email:", error);
     throw new Error(`Failed to send email: ${error}`);
@@ -103,11 +104,7 @@ export async function sendBulkEmails(
     onProgress?: (sent: number, total: number) => void;
   }
 ): Promise<{ sent: number; failed: number }> {
-  const {
-    batchSize = 5,
-    logPrefix = "Bulk Email",
-    onProgress,
-  } = options || {};
+  const { batchSize = 5, logPrefix = "Bulk Email", onProgress } = options || {};
 
   let sent = 0;
   let failed = 0;
@@ -127,10 +124,12 @@ export async function sendBulkEmails(
     const promises = batch.map(async (email) => {
       try {
         await sendEmail(email);
-        console.log(`[${logPrefix}] Successfully sent email to ${email.to}`);
+        // Don't log email addresses for security/privacy
+        console.log(`[${logPrefix}] Successfully sent email`);
         return { success: true };
       } catch (error) {
-        console.error(`[${logPrefix}] Failed to send email to ${email.to}:`, error);
+        // Don't log email addresses for security/privacy
+        console.error(`[${logPrefix}] Failed to send email:`, error);
         return { success: false };
       }
     });

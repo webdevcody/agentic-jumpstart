@@ -47,11 +47,11 @@ export async function updateAffiliateBalances(
   if (!Number.isInteger(affiliateId) || affiliateId <= 0) {
     throw new Error("Affiliate ID must be a positive integer");
   }
-  
+
   if (!Number.isInteger(earnings) || earnings < 0) {
     throw new Error("Earnings must be a non-negative integer");
   }
-  
+
   if (!Number.isInteger(unpaid) || unpaid < 0) {
     throw new Error("Unpaid amount must be a non-negative integer");
   }
@@ -81,7 +81,7 @@ export async function getAffiliateReferrals(affiliateId: number) {
     .select({
       id: affiliateReferrals.id,
       purchaserId: affiliateReferrals.purchaserId,
-      purchaserEmail: users.email,
+      // Don't expose purchaser email - only show display name for privacy
       purchaserName: profiles.displayName,
       amount: affiliateReferrals.amount,
       commission: affiliateReferrals.commission,
@@ -137,18 +137,20 @@ export async function createAffiliatePayout(
         )
       );
 
-    const totalUnpaidAmount = unpaidReferrals.reduce((sum, referral) => sum + referral.commission, 0);
+    const totalUnpaidAmount = unpaidReferrals.reduce(
+      (sum, referral) => sum + referral.commission,
+      0
+    );
 
     // Validate that payout amount doesn't exceed unpaid balance
     if (data.amount > totalUnpaidAmount) {
-      throw new Error(`Payout amount ($${data.amount / 100}) exceeds unpaid balance ($${totalUnpaidAmount / 100})`);
+      throw new Error(
+        `Payout amount ($${data.amount / 100}) exceeds unpaid balance ($${totalUnpaidAmount / 100})`
+      );
     }
 
     // Create the payout record
-    const [payout] = await tx
-      .insert(affiliatePayouts)
-      .values(data)
-      .returning();
+    const [payout] = await tx.insert(affiliatePayouts).values(data).returning();
 
     // Update affiliate paid amount and unpaid balance
     await tx
@@ -174,7 +176,7 @@ export async function createAffiliatePayout(
         referralsToUpdate.push(referral.id);
         remainingPayout = 0;
       }
-      
+
       if (remainingPayout === 0) break;
     }
 
@@ -204,7 +206,7 @@ export async function getAffiliatePayouts(affiliateId: number) {
       transactionId: affiliatePayouts.transactionId,
       notes: affiliatePayouts.notes,
       paidAt: affiliatePayouts.paidAt,
-      paidByEmail: users.email,
+      // Don't expose admin email - only show display name for privacy
       paidByName: profiles.displayName,
     })
     .from(affiliatePayouts)

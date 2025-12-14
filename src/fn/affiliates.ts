@@ -117,6 +117,7 @@ const validateAffiliateCodeSchema = z.object({
 });
 
 export const validateAffiliateCodeFn = createServerFn()
+  .middleware([unauthenticatedMiddleware])
   .validator(validateAffiliateCodeSchema)
   .handler(async ({ data }) => {
     const affiliate = await validateAffiliateCodeUseCase(data.code);

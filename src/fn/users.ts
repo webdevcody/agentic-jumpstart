@@ -15,11 +15,30 @@ export const getUserProfileFn = createServerFn({
     return getProfile(context.userId);
   });
 
-export const getUserInfoFn = createServerFn().handler(async () => {
-  const user = await getCurrentUser();
-  const profile = user ? await getProfile(user.id) : null;
-  return { user, profile };
-});
+export const getUserInfoFn = createServerFn({
+  method: "GET",
+})
+  .middleware([unauthenticatedMiddleware])
+  .handler(async ({ context }) => {
+    if (!context.userId) {
+      return { user: null, profile: null };
+    }
+    const user = await getCurrentUser();
+    const profile = user ? await getProfile(user.id) : null;
+    // Don't expose email in response - only return safe user data
+    return {
+      user: user
+        ? {
+            id: user.id,
+            isPremium: user.isPremium,
+            isAdmin: user.isAdmin,
+            isEarlyAccess: user.isEarlyAccess,
+            emailVerified: user.emailVerified,
+          }
+        : null,
+      profile,
+    };
+  });
 
 export const getAllUsersWithProfilesFn = createServerFn({
   method: "GET",

@@ -382,17 +382,13 @@ function LaunchKitDetailPage() {
                     <Avatar>
                       <AvatarImage src={comment.user?.image} />
                       <AvatarFallback>
-                        {comment.user?.displayName?.[0] ||
-                          comment.user?.email?.[0] ||
-                          "?"}
+                        {comment.user?.displayName?.[0] || "?"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-2 text-sm">
                         <span className="font-medium">
-                          {comment.user?.displayName ||
-                            comment.user?.email ||
-                            "Anonymous"}
+                          {comment.user?.displayName || "Anonymous"}
                         </span>
                         <span className="text-muted-foreground">
                           {new Date(comment.createdAt).toLocaleDateString()}

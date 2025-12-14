@@ -1,38 +1,43 @@
 import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { isAdmin, unauthenticatedMiddleware } from "~/lib/auth";
+import { unauthenticatedMiddleware } from "~/lib/auth";
 import { isAdminUseCase } from "~/use-cases/users";
-import { validateRequest } from "~/utils/auth";
 
-export const isAuthenticatedFn = createServerFn().handler(async () => {
-  const { user } = await validateRequest();
-  return !!user;
-});
+export const isAuthenticatedFn = createServerFn()
+  .middleware([unauthenticatedMiddleware])
+  .handler(async ({ context }) => {
+    return !!context.userId;
+  });
 
-export const assertIsAdminFn = createServerFn().handler(async () => {
-  const user = await assertAuthenticatedFn();
+export const assertIsAdminFn = createServerFn()
+  .middleware([unauthenticatedMiddleware])
+  .handler(async ({ context }) => {
+    if (!context.user) {
+      throw redirect({ to: "/unauthenticated" });
+    }
 
-  if (!isAdmin(user)) {
-    throw redirect({ to: "/unauthorized" });
-  }
+    if (!context.isAdmin) {
+      throw redirect({ to: "/unauthorized" });
+    }
 
-  return user;
-});
+    return context.user;
+  });
 
-export const assertAuthenticatedFn = createServerFn().handler(async () => {
-  const { user } = await validateRequest();
+export const assertAuthenticatedFn = createServerFn()
+  .middleware([unauthenticatedMiddleware])
+  .handler(async ({ context }) => {
+    if (!context.user) {
+      throw redirect({ to: "/unauthenticated" });
+    }
 
-  if (!user) {
-    throw redirect({ to: "/unauthenticated" });
-  }
+    return context.user;
+  });
 
-  return user;
-});
-
-export const isUserPremiumFn = createServerFn().handler(async () => {
-  const { user } = await validateRequest();
-  return !!user?.isPremium;
-});
+export const isUserPremiumFn = createServerFn()
+  .middleware([unauthenticatedMiddleware])
+  .handler(async ({ context }) => {
+    return !!context.user?.isPremium;
+  });
 
 export const isAdminFn = createServerFn()
   .middleware([unauthenticatedMiddleware])

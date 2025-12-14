@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { adminMiddleware } from "~/lib/auth";
+import { adminMiddleware, unauthenticatedMiddleware } from "~/lib/auth";
 import { z } from "zod";
 import { getStorage } from "~/utils/storage";
 
@@ -32,6 +32,7 @@ export const getPresignedImageUploadUrlFn = createServerFn({ method: "POST" })
   });
 
 export const getImageUrlFn = createServerFn({ method: "POST" })
+  .middleware([unauthenticatedMiddleware])
   .validator(
     z.object({
       imageKey: z.string(),

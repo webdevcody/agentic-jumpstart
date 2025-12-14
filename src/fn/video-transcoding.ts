@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { adminMiddleware } from "~/lib/auth";
+import { adminMiddleware, unauthenticatedMiddleware } from "~/lib/auth";
 import { AuthenticationError } from "~/use-cases/errors";
 import { getSegmentByIdUseCase } from "~/use-cases/segments";
 import { getAuthenticatedUser } from "~/utils/auth";
@@ -107,12 +107,13 @@ export const transcodeVideoFn = createServerFn({ method: "POST" })
  * Gets available video quality variants for a segment
  */
 export const getAvailableQualitiesFn = createServerFn({ method: "GET" })
+  .middleware([unauthenticatedMiddleware])
   .validator(
     z.object({
       segmentId: z.number(),
     })
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { segmentId } = data;
     const { storage, type } = getStorage();
 
@@ -131,9 +132,9 @@ export const getAvailableQualitiesFn = createServerFn({ method: "GET" })
 
     // Check authentication for premium segments
     if (segment.isPremium) {
+      if (!context.userId) throw new AuthenticationError();
       const user = await getAuthenticatedUser();
-      if (!user) throw new AuthenticationError();
-      if (!user.isPremium && !user.isAdmin) {
+      if (!user || (!user.isPremium && !user.isAdmin)) {
         throw new Error("You don't have permission to access this video");
       }
     }

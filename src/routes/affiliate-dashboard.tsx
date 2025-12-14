@@ -149,7 +149,7 @@ export const Route = createFileRoute("/affiliate-dashboard")({
 
 function AffiliateDashboard() {
   const loaderData = Route.useLoaderData();
-  
+
   // If user is not an affiliate, show error message
   if (!loaderData.isAffiliate) {
     return <NotAffiliateError />;
@@ -609,9 +609,7 @@ function AffiliateDashboard() {
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <span className="font-semibold text-lg group-hover/ref:text-theme-600 dark:group-hover/ref:text-theme-400 transition-colors duration-300">
-                            {referral.purchaserName ||
-                              referral.purchaserEmail ||
-                              "Anonymous"}
+                            {referral.purchaserName || "Anonymous"}
                           </span>
                           {referral.isPaid ? (
                             <Badge
@@ -715,15 +713,16 @@ function NotAffiliateError() {
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-theme-500/10 dark:bg-theme-400/20 flex items-center justify-center">
             <Users className="h-10 w-10 text-theme-500 dark:text-theme-400" />
           </div>
-          
+
           <h1 className="text-3xl font-bold mb-4">
             Not an <span className="text-theme-400">Affiliate</span>
           </h1>
-          
+
           <p className="text-muted-foreground mb-8 text-lg">
-            You are not registered as an affiliate. You need to join our affiliate program to access this dashboard.
+            You are not registered as an affiliate. You need to join our
+            affiliate program to access this dashboard.
           </p>
-          
+
           <div className="space-y-4">
             <Link
               to="/"
@@ -734,7 +733,7 @@ function NotAffiliateError() {
             >
               Return Home
             </Link>
-            
+
             <Link
               to="/affiliate-signup"
               className={cn(

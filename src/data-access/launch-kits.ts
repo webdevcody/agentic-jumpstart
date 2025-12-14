@@ -434,7 +434,7 @@ export async function getLaunchKitComments(launchKitId: number) {
       parentId: launchKitComments.parentId,
       user: {
         id: users.id,
-        email: users.email,
+        // Don't expose email - use displayName and image only
         displayName: profiles.displayName,
         image: profiles.image,
       },

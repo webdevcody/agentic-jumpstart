@@ -10,6 +10,7 @@ import type { IStorage } from "~/utils/storage/storage.interface";
 import { Play, Loader2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { getAvailableQualitiesFn } from "~/fn/video-transcoding";
+import { unauthenticatedMiddleware } from "~/lib/auth";
 
 const VIDEO_AVAILABILITY_MAX_ATTEMPTS = 5;
 const VIDEO_AVAILABILITY_INITIAL_DELAY_MS = 300;
@@ -240,23 +241,23 @@ export function VideoPlayer({ segmentId, videoKey }: VideoPlayerProps) {
 }
 
 export const getVideoUrlFn = createServerFn({ method: "GET" })
+  .middleware([unauthenticatedMiddleware])
   .validator(z.object({ segmentId: z.number() }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { storage, type } = getStorage();
 
     if (type !== "r2") {
       return { videoUrl: `/api/segments/${data.segmentId}/video` };
     }
 
-    const user = await getAuthenticatedUser();
-
     const segment = await getSegmentByIdUseCase(data.segmentId);
     if (!segment) throw new Error("Segment not found");
     if (!segment.videoKey) throw new Error("Video not attached to segment");
 
     if (segment.isPremium) {
-      if (!user) throw new AuthenticationError();
-      if (!user.isPremium && !user.isAdmin) {
+      if (!context.userId) throw new AuthenticationError();
+      const user = await getAuthenticatedUser();
+      if (!user || (!user.isPremium && !user.isAdmin)) {
         throw new Error("You don't have permission to access this video");
       }
     }

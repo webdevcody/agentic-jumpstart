@@ -1,10 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { isAdminUseCase } from "~/use-cases/users";
 import { getEarlyAccessModeUseCase } from "~/use-cases/app-settings";
 import { unauthenticatedMiddleware } from "~/lib/auth";
 
 export const checkEarlyAccessFn = createServerFn()
+  .middleware([unauthenticatedMiddleware])
   .validator(z.void())
   .handler(async () => {
     try {
