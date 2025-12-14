@@ -101,7 +101,7 @@ function AdminVideoProcessing() {
 
   const handleQueueSegment = (segmentId: number) => {
     setProcessingSegments((prev) => new Set(prev).add(segmentId));
-    queueSegmentMutation.mutate({ segmentId });
+    queueSegmentMutation.mutate({ data: { segmentId } });
   };
 
   if (isLoading) {
