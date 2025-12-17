@@ -42,34 +42,7 @@ export function SegmentSelector({
   selectedIds,
   onSelectionChange,
 }: SegmentSelectorProps) {
-  // Group segments by module
-  const groupedSegments = segments?.reduce(
-    (acc, segment) => {
-      const key = segment.moduleTitle;
-      if (!acc[key]) {
-        acc[key] = {
-          moduleTitle: segment.moduleTitle,
-          moduleOrder: segment.moduleOrder,
-          segments: [],
-        };
-      }
-      acc[key].segments.push(segment);
-      return acc;
-    },
-    {} as Record<
-      string,
-      {
-        moduleTitle: string;
-        moduleOrder: number;
-        segments: SegmentWithModule[];
-      }
-    >
-  );
-
-  const sortedModules = groupedSegments
-    ? Object.values(groupedSegments).sort((a, b) => a.moduleOrder - b.moduleOrder)
-    : [];
-
+  // Segments are already sorted by updatedAt from the server
   const totalSegments = segments?.length ?? 0;
   const selectedCount = selectedIds.length;
 
@@ -139,65 +112,62 @@ export function SegmentSelector({
               <SegmentSkeleton key={idx} />
             ))}
           </div>
-        ) : sortedModules.length > 0 ? (
-          <div className="space-y-6">
-            {sortedModules.map((module) => (
-              <div key={module.moduleTitle}>
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                  {module.moduleTitle}
-                </h3>
-                <div className="space-y-2">
-                  {module.segments.map((segment) => (
-                    <label
-                      key={segment.id}
-                      className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-all duration-200 ${
-                        selectedIds.includes(segment.id)
-                          ? "border-theme-500/50 bg-theme-500/5"
-                          : "border-border/50 bg-card/30 hover:bg-card/50 hover:border-border"
-                      }`}
-                    >
-                      <Checkbox
-                        checked={selectedIds.includes(segment.id)}
-                        onCheckedChange={(checked) =>
-                          handleToggle(segment.id, !!checked)
-                        }
-                        className="mt-0.5"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-foreground">
-                            {segment.title}
-                          </span>
-                          {segment.isPremium && (
-                            <Badge
-                              variant="outline"
-                              className="bg-amber-500/10 text-amber-600 border-amber-500/30 text-xs"
-                            >
-                              <Crown className="h-3 w-3 mr-1" />
-                              Premium
-                            </Badge>
-                          )}
-                          {segment.isComingSoon && (
-                            <Badge
-                              variant="outline"
-                              className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-xs"
-                            >
-                              <Clock className="h-3 w-3 mr-1" />
-                              Coming Soon
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                          <Calendar className="h-3.5 w-3.5" />
-                          <span>
-                            {formatRelativeDate(new Date(segment.createdAt))}
-                          </span>
-                        </div>
-                      </div>
-                    </label>
-                  ))}
+        ) : segments && segments.length > 0 ? (
+          <div className="space-y-2">
+            {segments.map((segment) => (
+              <label
+                key={segment.id}
+                className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-all duration-200 ${
+                  selectedIds.includes(segment.id)
+                    ? "border-theme-500/50 bg-theme-500/5"
+                    : "border-border/50 bg-card/30 hover:bg-card/50 hover:border-border"
+                }`}
+              >
+                <Checkbox
+                  checked={selectedIds.includes(segment.id)}
+                  onCheckedChange={(checked) =>
+                    handleToggle(segment.id, !!checked)
+                  }
+                  className="mt-0.5"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-foreground">
+                      {segment.title}
+                    </span>
+                    {segment.isPremium && (
+                      <Badge
+                        variant="outline"
+                        className="bg-amber-500/10 text-amber-600 border-amber-500/30 text-xs"
+                      >
+                        <Crown className="h-3 w-3 mr-1" />
+                        Premium
+                      </Badge>
+                    )}
+                    {segment.isComingSoon && (
+                      <Badge
+                        variant="outline"
+                        className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-xs"
+                      >
+                        <Clock className="h-3 w-3 mr-1" />
+                        Coming Soon
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+                    <span className="text-xs text-muted-foreground/70">
+                      {segment.moduleTitle}
+                    </span>
+                    <span className="text-muted-foreground/30">|</span>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5" />
+                      <span>
+                        {formatRelativeDate(new Date(segment.updatedAt))}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </label>
             ))}
           </div>
         ) : (
@@ -205,7 +175,7 @@ export function SegmentSelector({
             <Video className="h-16 w-16 mx-auto mb-6 opacity-30" />
             <p className="text-lg">No recent segments found</p>
             <p className="text-sm">
-              Segments created in the last 30 days will appear here
+              Segments updated in the last 30 days will appear here
             </p>
           </div>
         )}

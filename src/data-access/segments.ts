@@ -126,8 +126,8 @@ export async function getRecentSegmentsWithModules(
     })
     .from(segments)
     .innerJoin(modules, eq(segments.moduleId, modules.id))
-    .where(gte(segments.createdAt, cutoffDate))
-    .orderBy(desc(segments.createdAt));
+    .where(gte(segments.updatedAt, cutoffDate))
+    .orderBy(desc(segments.updatedAt));
 
   return result.map((row) => ({
     ...row.segment,
