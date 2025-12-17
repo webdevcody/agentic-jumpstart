@@ -355,7 +355,7 @@ export const unsubscribeTokens = tableCreator(
   {
     id: serial("id").primaryKey(),
     token: text("token").notNull().unique(),
-    userId: serial("userId").references(() => users.id, {
+    userId: integer("userId").references(() => users.id, {
       onDelete: "cascade",
     }), // Nullable for newsletter-only subscribers
     emailAddress: text("emailAddress").notNull(),
