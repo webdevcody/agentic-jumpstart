@@ -4,6 +4,7 @@ import { marked } from "marked";
 import { env } from "~/utils/env";
 import { CourseUpdateEmail } from "~/components/emails/course-update-email";
 import { VideoNotificationEmail } from "~/components/emails/video-notification-email";
+import { MultiSegmentNotificationEmail } from "~/components/emails/multi-segment-notification-email";
 
 // Initialize SES client
 const sesClient = new SESClient({
@@ -231,5 +232,29 @@ export async function renderVideoNotificationEmail(
   } catch (error) {
     console.error("Failed to render video notification email:", error);
     throw new Error(`Failed to render video notification email: ${error}`);
+  }
+}
+
+// Render multi-segment notification email template
+export interface MultiSegmentNotificationTemplateProps {
+  segments: Array<{
+    title: string;
+    description: string;
+    url: string;
+    isPremium: boolean;
+  }>;
+  unsubscribeUrl?: string;
+  notificationType?: "new" | "updated";
+}
+
+export async function renderMultiSegmentNotificationEmail(
+  props: MultiSegmentNotificationTemplateProps
+): Promise<string> {
+  try {
+    const html = await render(MultiSegmentNotificationEmail(props));
+    return html;
+  } catch (error) {
+    console.error("Failed to render multi-segment notification email:", error);
+    throw new Error(`Failed to render multi-segment notification email: ${error}`);
   }
 }

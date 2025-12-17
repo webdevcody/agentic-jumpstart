@@ -65,6 +65,7 @@ import { Route as LearnSlugLayoutRouteImport } from './routes/learn/$slug/_layou
 import { Route as AdminNewsNewRouteImport } from './routes/admin/news/new'
 import { Route as AdminLaunchKitsTagsRouteImport } from './routes/admin/launch-kits/tags'
 import { Route as AdminEmailsWaitlistRouteImport } from './routes/admin/emails/waitlist'
+import { Route as AdminEmailsSegmentsRouteImport } from './routes/admin/emails/segments'
 import { Route as AdminEmailsHistoryRouteImport } from './routes/admin/emails/history'
 import { Route as AdminEmailsComposeRouteImport } from './routes/admin/emails/compose'
 import { Route as AdminEmailsAnalyticsRouteImport } from './routes/admin/emails/analytics'
@@ -357,6 +358,11 @@ const AdminEmailsWaitlistRoute = AdminEmailsWaitlistRouteImport.update({
   path: '/waitlist',
   getParentRoute: () => AdminEmailsRouteRoute,
 } as any)
+const AdminEmailsSegmentsRoute = AdminEmailsSegmentsRouteImport.update({
+  id: '/segments',
+  path: '/segments',
+  getParentRoute: () => AdminEmailsRouteRoute,
+} as any)
 const AdminEmailsHistoryRoute = AdminEmailsHistoryRouteImport.update({
   id: '/history',
   path: '/history',
@@ -509,6 +515,7 @@ export interface FileRoutesByFullPath {
   '/admin/emails/analytics': typeof AdminEmailsAnalyticsRoute
   '/admin/emails/compose': typeof AdminEmailsComposeRoute
   '/admin/emails/history': typeof AdminEmailsHistoryRoute
+  '/admin/emails/segments': typeof AdminEmailsSegmentsRoute
   '/admin/emails/waitlist': typeof AdminEmailsWaitlistRoute
   '/admin/launch-kits/tags': typeof AdminLaunchKitsTagsRoute
   '/admin/news/new': typeof AdminNewsNewRoute
@@ -574,6 +581,7 @@ export interface FileRoutesByTo {
   '/admin/emails/analytics': typeof AdminEmailsAnalyticsRoute
   '/admin/emails/compose': typeof AdminEmailsComposeRoute
   '/admin/emails/history': typeof AdminEmailsHistoryRoute
+  '/admin/emails/segments': typeof AdminEmailsSegmentsRoute
   '/admin/emails/waitlist': typeof AdminEmailsWaitlistRoute
   '/admin/launch-kits/tags': typeof AdminLaunchKitsTagsRoute
   '/admin/news/new': typeof AdminNewsNewRoute
@@ -641,6 +649,7 @@ export interface FileRoutesById {
   '/admin/emails/analytics': typeof AdminEmailsAnalyticsRoute
   '/admin/emails/compose': typeof AdminEmailsComposeRoute
   '/admin/emails/history': typeof AdminEmailsHistoryRoute
+  '/admin/emails/segments': typeof AdminEmailsSegmentsRoute
   '/admin/emails/waitlist': typeof AdminEmailsWaitlistRoute
   '/admin/launch-kits/tags': typeof AdminLaunchKitsTagsRoute
   '/admin/news/new': typeof AdminNewsNewRoute
@@ -711,6 +720,7 @@ export interface FileRouteTypes {
     | '/admin/emails/analytics'
     | '/admin/emails/compose'
     | '/admin/emails/history'
+    | '/admin/emails/segments'
     | '/admin/emails/waitlist'
     | '/admin/launch-kits/tags'
     | '/admin/news/new'
@@ -776,6 +786,7 @@ export interface FileRouteTypes {
     | '/admin/emails/analytics'
     | '/admin/emails/compose'
     | '/admin/emails/history'
+    | '/admin/emails/segments'
     | '/admin/emails/waitlist'
     | '/admin/launch-kits/tags'
     | '/admin/news/new'
@@ -842,6 +853,7 @@ export interface FileRouteTypes {
     | '/admin/emails/analytics'
     | '/admin/emails/compose'
     | '/admin/emails/history'
+    | '/admin/emails/segments'
     | '/admin/emails/waitlist'
     | '/admin/launch-kits/tags'
     | '/admin/news/new'
@@ -1345,6 +1357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEmailsWaitlistRouteImport
       parentRoute: typeof AdminEmailsRouteRoute
     }
+    '/admin/emails/segments': {
+      id: '/admin/emails/segments'
+      path: '/segments'
+      fullPath: '/admin/emails/segments'
+      preLoaderRoute: typeof AdminEmailsSegmentsRouteImport
+      parentRoute: typeof AdminEmailsRouteRoute
+    }
     '/admin/emails/history': {
       id: '/admin/emails/history'
       path: '/history'
@@ -1508,6 +1527,7 @@ interface AdminEmailsRouteRouteChildren {
   AdminEmailsAnalyticsRoute: typeof AdminEmailsAnalyticsRoute
   AdminEmailsComposeRoute: typeof AdminEmailsComposeRoute
   AdminEmailsHistoryRoute: typeof AdminEmailsHistoryRoute
+  AdminEmailsSegmentsRoute: typeof AdminEmailsSegmentsRoute
   AdminEmailsWaitlistRoute: typeof AdminEmailsWaitlistRoute
   AdminEmailsIndexRoute: typeof AdminEmailsIndexRoute
 }
@@ -1516,6 +1536,7 @@ const AdminEmailsRouteRouteChildren: AdminEmailsRouteRouteChildren = {
   AdminEmailsAnalyticsRoute: AdminEmailsAnalyticsRoute,
   AdminEmailsComposeRoute: AdminEmailsComposeRoute,
   AdminEmailsHistoryRoute: AdminEmailsHistoryRoute,
+  AdminEmailsSegmentsRoute: AdminEmailsSegmentsRoute,
   AdminEmailsWaitlistRoute: AdminEmailsWaitlistRoute,
   AdminEmailsIndexRoute: AdminEmailsIndexRoute,
 }

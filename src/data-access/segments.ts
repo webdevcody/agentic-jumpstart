@@ -1,6 +1,6 @@
 import { database } from "~/db";
-import { segments, attachments, progress } from "~/db/schema";
-import { and, eq } from "drizzle-orm";
+import { segments, attachments, progress, modules } from "~/db/schema";
+import { and, eq, gte, desc } from "drizzle-orm";
 import type { Progress, Segment, SegmentCreate } from "~/db/schema";
 
 export async function getSegments() {
@@ -108,4 +108,30 @@ export async function deleteAttachment(id: number) {
     .where(eq(attachments.id, id))
     .returning();
   return result[0];
+}
+
+export type SegmentWithModule = Segment & { moduleTitle: string; moduleOrder: number };
+
+export async function getRecentSegmentsWithModules(
+  days: number = 30
+): Promise<SegmentWithModule[]> {
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - days);
+
+  const result = await database
+    .select({
+      segment: segments,
+      moduleTitle: modules.title,
+      moduleOrder: modules.order,
+    })
+    .from(segments)
+    .innerJoin(modules, eq(segments.moduleId, modules.id))
+    .where(gte(segments.createdAt, cutoffDate))
+    .orderBy(desc(segments.createdAt));
+
+  return result.map((row) => ({
+    ...row.segment,
+    moduleTitle: row.moduleTitle,
+    moduleOrder: row.moduleOrder,
+  }));
 }

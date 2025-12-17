@@ -8,7 +8,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { PageHeader } from "../-components/page-header";
 import { Page } from "../-components/page";
 import { HeaderStats, HeaderStatCard } from "../-components/header-stats";
-import { Users, CheckCircle, Mail, Clock, Send, BarChart3 } from "lucide-react";
+import { Users, CheckCircle, Mail, Clock, Send, BarChart3, Video } from "lucide-react";
 import { getUsersForEmailingFn } from "~/fn/emails";
 import { useQuery } from "@tanstack/react-query";
 import { assertIsAdminFn } from "~/fn/auth";
@@ -55,6 +55,7 @@ function EmailsLayout() {
   const getCurrentTab = () => {
     const path = location.pathname;
     if (path.includes("/compose")) return "compose";
+    if (path.includes("/segments")) return "segments";
     if (path.includes("/waitlist")) return "waitlist";
     if (path.includes("/history")) return "history";
     if (path.includes("/analytics")) return "analytics";
@@ -111,7 +112,7 @@ function EmailsLayout() {
       <div className="w-full">
         <div className="flex flex-col gap-6">
           <Tabs value={getCurrentTab()} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <Link to="/admin/emails/analytics">
                 <TabsTrigger
                   value="analytics"
@@ -128,6 +129,15 @@ function EmailsLayout() {
                 >
                   <Send className="h-4 w-4" />
                   Compose
+                </TabsTrigger>
+              </Link>
+              <Link to="/admin/emails/segments">
+                <TabsTrigger
+                  value="segments"
+                  className="flex items-center gap-2 w-full"
+                >
+                  <Video className="h-4 w-4" />
+                  Segments
                 </TabsTrigger>
               </Link>
               <Link to="/admin/emails/waitlist">
