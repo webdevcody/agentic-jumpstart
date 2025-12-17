@@ -69,7 +69,7 @@ export async function updateSegment(
 ) {
   const result = await database
     .update(segments)
-    .set(segment)
+    .set({ ...segment, updatedAt: new Date() })
     .where(eq(segments.id, id))
     .returning();
   return result[0];
