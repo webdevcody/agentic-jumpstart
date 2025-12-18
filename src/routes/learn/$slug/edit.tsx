@@ -38,7 +38,6 @@ function RouteComponent() {
           onSubmit={onSubmit}
           isSubmitting={isSubmitting}
           uploadProgress={uploadProgress}
-          showNotifyUsers={true}
           segmentId={segment.id}
           existingVideoKey={segment.videoKey}
           defaultValues={{

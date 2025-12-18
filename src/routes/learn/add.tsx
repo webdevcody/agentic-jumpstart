@@ -40,7 +40,6 @@ function RouteComponent() {
           loadingText="Creating..."
           buttonIcon={Plus}
           moduleNames={moduleNames}
-          showNotifyUsers={true}
           onSubmit={onSubmit}
           isSubmitting={isSubmitting}
           uploadProgress={uploadProgress}

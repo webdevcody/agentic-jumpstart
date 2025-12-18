@@ -4,8 +4,8 @@ FROM node:22-alpine
 # Set working directory
 WORKDIR /app
 
-# Install ffmpeg for audio/video processing
-RUN apk add --no-cache ffmpeg
+# Install ffmpeg for audio/video processing and ImageMagick for thumbnail optimization
+RUN apk add --no-cache ffmpeg imagemagick
 
 # Copy package files
 COPY package*.json ./
