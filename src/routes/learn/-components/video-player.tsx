@@ -1,14 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { createServerFn, useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, lazy, Suspense } from "react";
 import { AuthenticationError } from "~/use-cases/errors";
 import { getSegmentByIdUseCase } from "~/use-cases/segments";
 import { getAuthenticatedUser } from "~/utils/auth";
 import { getStorage } from "~/utils/storage";
 import type { IStorage } from "~/utils/storage/storage.interface";
 import { Play, Loader2, Settings } from "lucide-react";
-import ReactPlayer from "react-player";
 import {
   getAvailableQualitiesFn,
   getThumbnailUrlFn,
@@ -20,6 +19,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import 'plyr-react/plyr.css';
+
+// Dynamically import Plyr to avoid SSR issues
+const Plyr = lazy(() => import('plyr-react'));
 
 const VIDEO_AVAILABILITY_MAX_ATTEMPTS = 5;
 const VIDEO_AVAILABILITY_INITIAL_DELAY_MS = 300;
@@ -69,7 +72,7 @@ export function VideoPlayer({
   initialThumbnailUrl,
 }: VideoPlayerProps) {
   const [isClient, setIsClient] = useState(false);
-  const playerRef = useRef<HTMLVideoElement>(null);
+  const playerRef = useRef<any>(null);
   const [selectedQuality, setSelectedQuality] = useState<string>("original");
   const [showQualityMenu, setShowQualityMenu] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(
@@ -160,8 +163,8 @@ export function VideoPlayer({
 
   // Handle quality change
   const handleQualityChange = (quality: string) => {
-    const videoElement = playerRef.current;
-    const currentTime = videoElement?.currentTime || playedSeconds;
+    const plyrInstance = playerRef.current?.plyr;
+    const currentTime = plyrInstance?.currentTime || playedSeconds;
     const wasPlaying = playing;
 
     setSelectedQuality(quality);
@@ -170,10 +173,10 @@ export function VideoPlayer({
 
     // Restore playback position after a short delay
     setTimeout(() => {
-      if (videoElement) {
-        videoElement.currentTime = currentTime;
+      if (plyrInstance) {
+        plyrInstance.currentTime = currentTime;
         if (wasPlaying) {
-          setPlaying(true);
+          plyrInstance.play();
         }
       }
     }, 100);
@@ -185,6 +188,97 @@ export function VideoPlayer({
       availableQualities.includes(quality)
     );
   }, [availableQualities]);
+
+  // Convert string URL to SourceInfo object for Plyr
+  const source = useMemo(() => ({
+    type: 'video' as const,
+    title: `Video ${segmentId}`,
+    sources: [
+      {
+        src: currentVideoUrl || '',
+        provider: 'html5' as const,
+        type: 'video/mp4' as const,
+      },
+    ],
+    poster: thumbnailUrl || undefined,
+  }), [currentVideoUrl, thumbnailUrl, segmentId]);
+
+  const plyrOptions = useMemo(() => ({
+    controls: [
+      'play-large',
+      'play',
+      'progress',
+      'current-time',
+      'mute',
+      'volume',
+      'captions',
+      'settings',
+      'pip',
+      'airplay',
+      'fullscreen',
+    ],
+    autoplay: false,
+    muted: false,
+    clickToPlay: true,
+    hideControls: false,
+    resetOnEnd: false,
+    keyboard: {
+      focused: true,
+      global: true,
+    },
+    ratio: '16:9', // Force a consistent aspect ratio
+  }), []);
+
+  const handlePlayClick = () => {
+    if (playerRef.current?.plyr) {
+      playerRef.current.plyr.play();
+    }
+  };
+
+  // Set up event listeners using the plyr instance
+  useEffect(() => {
+    if (playerRef.current) {
+      const plyrInstance = playerRef.current.plyr;
+      
+      if (plyrInstance) {
+        // Handle ready event
+        const readyHandler = () => {
+          setIsReady(true);
+        };
+        
+        // Handle error event
+        const errorHandler = (event: any) => {
+          console.error('Plyr error:', event);
+          setHasError(true);
+        };
+        
+        // Handle play event
+        const playHandler = () => {
+          setPlaying(true);
+          setHasError(false);
+        };
+        
+        // Handle pause event
+        const pauseHandler = () => {
+          setPlaying(false);
+        };
+
+        // Add event listeners using the correct plyr API
+        plyrInstance.on('ready', readyHandler);
+        plyrInstance.on('error', errorHandler);
+        plyrInstance.on('play', playHandler);
+        plyrInstance.on('pause', pauseHandler);
+
+        // Clean up event listeners on unmount
+        return () => {
+          plyrInstance.off('ready', readyHandler);
+          plyrInstance.off('error', errorHandler);
+          plyrInstance.off('play', playHandler);
+          plyrInstance.off('pause', pauseHandler);
+        };
+      }
+    }
+  }, [currentVideoUrl]);
 
   // Show thumbnail immediately if available, otherwise show minimal loading
   if (!isClient || isLoadingQualities) {
@@ -228,10 +322,6 @@ export function VideoPlayer({
     );
   }
 
-  const handlePlayClick = () => {
-    setPlaying(true);
-  };
-
   return (
     <div className="w-full h-full overflow-hidden relative group">
       {/* Thumbnail overlay that fades out when video starts playing */}
@@ -262,26 +352,22 @@ export function VideoPlayer({
         </div>
       )}
       <div className="relative z-10 w-full h-full">
-        <ReactPlayer
-          ref={playerRef}
-          src={currentVideoUrl}
-          playing={playing}
-          controls
-          width="100%"
-          height="100%"
-          onReady={() => setIsReady(true)}
-          onPlay={() => {
-            setPlaying(true);
-            setHasError(false);
-          }}
-          onPause={() => setPlaying(false)}
-          onError={(error) => {
-            console.error("Video player error:", error);
-            setHasError(true);
-            setIsReady(false);
-          }}
-          light={false}
-        />
+        <Suspense fallback={
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-background to-muted aspect-video">
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+              <p className="text-xs text-muted-foreground">Loading player...</p>
+            </div>
+          </div>
+        }>
+          <div className="plyr__video-embed w-full h-full">
+            <Plyr
+              ref={playerRef}
+              source={source}
+              options={plyrOptions}
+            />
+          </div>
+        </Suspense>
       </div>
       {hasError && (
         <div className="absolute inset-0 z-[20] flex items-center justify-center bg-black/50 backdrop-blur-sm">
