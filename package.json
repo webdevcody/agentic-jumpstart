@@ -77,6 +77,7 @@
     "marked": "^16.2.0",
     "nprogress": "^0.2.0",
     "pg": "^8.16.3",
+    "plyr-react": "^5.3.0",
     "react": "^19.1.0",
     "react-confetti": "^6.4.0",
     "react-dom": "^19.1.0",
