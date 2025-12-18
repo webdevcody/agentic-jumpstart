@@ -24,6 +24,7 @@ import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as NewsRouteImport } from './routes/news'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as DevLoginRouteImport } from './routes/dev-login'
 import { Route as CreateTestimonialRouteImport } from './routes/create-testimonial'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as CancelRouteImport } from './routes/cancel'
@@ -147,6 +148,11 @@ const MembersRoute = MembersRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DevLoginRoute = DevLoginRouteImport.update({
+  id: '/dev-login',
+  path: '/dev-login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CreateTestimonialRoute = CreateTestimonialRouteImport.update({
@@ -473,6 +479,7 @@ export interface FileRoutesByFullPath {
   '/cancel': typeof CancelRoute
   '/community': typeof CommunityRoute
   '/create-testimonial': typeof CreateTestimonialRoute
+  '/dev-login': typeof DevLoginRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/news': typeof NewsRoute
@@ -541,6 +548,7 @@ export interface FileRoutesByTo {
   '/cancel': typeof CancelRoute
   '/community': typeof CommunityRoute
   '/create-testimonial': typeof CreateTestimonialRoute
+  '/dev-login': typeof DevLoginRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/news': typeof NewsRoute
@@ -607,6 +615,7 @@ export interface FileRoutesById {
   '/cancel': typeof CancelRoute
   '/community': typeof CommunityRoute
   '/create-testimonial': typeof CreateTestimonialRoute
+  '/dev-login': typeof DevLoginRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/news': typeof NewsRoute
@@ -678,6 +687,7 @@ export interface FileRouteTypes {
     | '/cancel'
     | '/community'
     | '/create-testimonial'
+    | '/dev-login'
     | '/login'
     | '/members'
     | '/news'
@@ -746,6 +756,7 @@ export interface FileRouteTypes {
     | '/cancel'
     | '/community'
     | '/create-testimonial'
+    | '/dev-login'
     | '/login'
     | '/members'
     | '/news'
@@ -811,6 +822,7 @@ export interface FileRouteTypes {
     | '/cancel'
     | '/community'
     | '/create-testimonial'
+    | '/dev-login'
     | '/login'
     | '/members'
     | '/news'
@@ -881,6 +893,7 @@ export interface RootRouteChildren {
   CancelRoute: typeof CancelRoute
   CommunityRoute: typeof CommunityRoute
   CreateTestimonialRoute: typeof CreateTestimonialRoute
+  DevLoginRoute: typeof DevLoginRoute
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
   NewsRoute: typeof NewsRoute
@@ -1061,6 +1074,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dev-login': {
+      id: '/dev-login'
+      path: '/dev-login'
+      fullPath: '/dev-login'
+      preLoaderRoute: typeof DevLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/create-testimonial': {
@@ -1627,6 +1647,7 @@ const rootRouteChildren: RootRouteChildren = {
   CancelRoute: CancelRoute,
   CommunityRoute: CommunityRoute,
   CreateTestimonialRoute: CreateTestimonialRoute,
+  DevLoginRoute: DevLoginRoute,
   LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,
   NewsRoute: NewsRoute,
