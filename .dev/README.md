@@ -5,15 +5,15 @@ This directory contains development-only patches that enhance the local developm
 ## Quick Start
 
 ```bash
-# Apply all dev patches (or specific ones)
-git bypass-on              # Apply dev-login-bypass patch
+# Apply/remove ALL dev patches at once
+git dev-on                 # Apply all patches
+git dev-off                # Remove all patches
 
-# Remove patches before committing
-git bypass-off             # Remove dev-login-bypass patch
-
-# Or use the generic commands
-git dev-patch apply dev-login-bypass
-git dev-patch remove dev-login-bypass
+# Or apply individual patches
+git login-bypass-on        # Apply dev-login-bypass patch
+git login-bypass-off       # Remove dev-login-bypass patch
+git mock-storage-on        # Apply mock-storage patch
+git mock-storage-off       # Remove mock-storage patch
 ```
 
 ## Directory Structure
@@ -22,7 +22,8 @@ git dev-patch remove dev-login-bypass
 .dev/
 ├── README.md              # This file
 ├── patches/               # Patch files
-│   └── dev-login-bypass.patch
+│   ├── dev-login-bypass.patch
+│   └── mock-storage.patch
 └── hooks/                 # Git hooks for safety
     └── pre-commit-patch-guard.sh
 ```
@@ -49,14 +50,39 @@ Adds a floating dev menu for quick user switching and creation without Google OA
 
 **Requires:** `DEV_BYPASS_AUTH=true` in `.env`
 
+### mock-storage
+
+Bypasses R2/S3 storage to avoid SSL errors when R2 credentials aren't configured. Returns placeholder video (Big Buck Bunny) for all video requests.
+
+**Features:**
+- No R2/S3 connection required
+- Placeholder video for all video requests
+- Simulated uploads (stored in memory)
+- Console logging for storage operations
+
+**Files affected:**
+- `src/utils/storage/mock-storage.ts` (new)
+- `src/utils/storage/index.ts` (modified)
+- `src/utils/env.ts` (modified - adds DEV_MOCK_STORAGE)
+
+**Requires:** `DEV_MOCK_STORAGE=true` in `.env`
+
 ## Setting Up Git Aliases
 
 Run these commands once to set up cross-platform aliases:
 
 ```bash
 # Quick toggle for dev-login-bypass
-git config alias.bypass-on '!git apply "$(git rev-parse --show-toplevel)/.dev/patches/dev-login-bypass.patch"'
-git config alias.bypass-off '!git apply -R "$(git rev-parse --show-toplevel)/.dev/patches/dev-login-bypass.patch"'
+git config alias.login-bypass-on '!f() { git apply "$(git rev-parse --show-toplevel)/.dev/patches/dev-login-bypass.patch"; }; f'
+git config alias.login-bypass-off '!f() { git apply -R "$(git rev-parse --show-toplevel)/.dev/patches/dev-login-bypass.patch"; }; f'
+
+# Quick toggle for mock-storage
+git config alias.mock-storage-on '!f() { git apply "$(git rev-parse --show-toplevel)/.dev/patches/mock-storage.patch"; }; f'
+git config alias.mock-storage-off '!f() { git apply -R "$(git rev-parse --show-toplevel)/.dev/patches/mock-storage.patch"; }; f'
+
+# Apply/remove ALL patches at once
+git config alias.dev-on '!f() { for p in $(git rev-parse --show-toplevel)/.dev/patches/*.patch; do git apply "$p" 2>/dev/null && echo "Applied $(basename $p)" || echo "Skipped $(basename $p)"; done; }; f'
+git config alias.dev-off '!f() { for p in $(git rev-parse --show-toplevel)/.dev/patches/*.patch; do git apply -R "$p" 2>/dev/null && echo "Removed $(basename $p)" || echo "Skipped $(basename $p)"; done; }; f'
 
 # Generic patch commands (for future patches)
 git config alias.dev-patch '!f() {

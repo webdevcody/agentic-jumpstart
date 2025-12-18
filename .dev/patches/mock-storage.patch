@@ -1,0 +1,111 @@
+diff --git a/src/utils/env.ts b/src/utils/env.ts
+index d0d436d..5d93ab3 100644
+--- a/src/utils/env.ts
++++ b/src/utils/env.ts
+@@ -5,6 +5,7 @@ export const env = {
+   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || "",
+   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || "",
+   DEV_BYPASS_AUTH: process.env.DEV_BYPASS_AUTH === "true",
++  DEV_MOCK_STORAGE: process.env.DEV_MOCK_STORAGE === "true",
+   HOST_NAME: process.env.HOST_NAME!,
+   NODE_ENV: process.env.NODE_ENV!,
+   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY!,
+diff --git a/src/utils/storage/index.ts b/src/utils/storage/index.ts
+index aa47e5f..ceaf6cb 100644
+--- a/src/utils/storage/index.ts
++++ b/src/utils/storage/index.ts
+@@ -1,13 +1,22 @@
+ import type { IStorage } from "./storage.interface";
+ import { R2Storage } from "./r2";
++import { MockStorage } from "./mock-storage";
+ 
+ let storage: IStorage | null = null;
+ 
+-// Storage provider factory/singleton - R2 only
+-export function getStorage(): { storage: IStorage; type: "r2" } {
++type StorageType = "r2" | "mock";
++
++// Storage provider factory/singleton
++export function getStorage(): { storage: IStorage; type: StorageType } {
+   if (!storage) {
+-    storage = new R2Storage();
++    // Use mock storage in dev when DEV_MOCK_STORAGE is enabled
++    if (process.env.DEV_MOCK_STORAGE === "true") {
++      console.log("[Storage] Using MockStorage");
++      storage = new MockStorage();
++    } else {
++      storage = new R2Storage();
++    }
+   }
+ 
+-  return { storage, type: "r2" };
++  return { storage, type: storage instanceof MockStorage ? "mock" : "r2" };
+ }
+diff --git a/src/utils/storage/mock-storage.ts b/src/utils/storage/mock-storage.ts
+new file mode 100644
+index 0000000..9a91bad
+--- /dev/null
++++ b/src/utils/storage/mock-storage.ts
+@@ -0,0 +1,62 @@
++import type {
++  IStorage,
++  StreamFileResponse,
++} from "./storage.interface";
++
++/**
++ * Mock storage for development when R2/S3 is unavailable.
++ * Returns placeholder video URLs and simulates successful operations.
++ */
++export class MockStorage implements IStorage {
++  // Big Buck Bunny - free sample video
++  private readonly PLACEHOLDER_VIDEO = "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
++
++  // Store "uploaded" files in memory
++  private readonly files = new Map<string, { data: Buffer; contentType: string }>();
++
++  async upload(key: string, data: Buffer, contentType: string = "video/mp4") {
++    console.log(`[MockStorage] Simulated upload: ${key} (${data.length} bytes)`);
++    this.files.set(key, { data, contentType });
++  }
++
++  async delete(key: string) {
++    console.log(`[MockStorage] Simulated delete: ${key}`);
++    this.files.delete(key);
++  }
++
++  async exists(key: string): Promise<boolean> {
++    // Return true for any key to simulate existing files
++    return true;
++  }
++
++  async getStream(
++    key: string,
++    rangeHeader: string | null
++  ): Promise<StreamFileResponse> {
++    throw new Error(
++      "[MockStorage] getStream not supported. Use getPresignedUrl instead."
++    );
++  }
++
++  async getPresignedUrl(key: string): Promise<string> {
++    console.log(`[MockStorage] Returning placeholder URL for: ${key}`);
++    return this.PLACEHOLDER_VIDEO;
++  }
++
++  async getPresignedUploadUrl(key: string, contentType: string = "video/mp4"): Promise<string> {
++    // Return a fake URL that will "succeed" in dev
++    // The actual upload won't work, but the UI flow will complete
++    console.log(`[MockStorage] Returning mock upload URL for: ${key}`);
++    return `http://localhost:4000/api/mock-upload?key=${encodeURIComponent(key)}`;
++  }
++
++  async getBuffer(key: string): Promise<Buffer> {
++    const file = this.files.get(key);
++    if (file) {
++      return file.data;
++    }
++    // Return empty buffer for non-existent files
++    console.log(`[MockStorage] Returning empty buffer for: ${key}`);
++    return Buffer.alloc(0);
++  }
++}
