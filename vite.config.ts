@@ -4,6 +4,7 @@ import tsConfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
+import { nitro } from "nitro/vite";
 
 const DEFAULT_PORT = 4000;
 
@@ -13,7 +14,8 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     tsConfigPaths(),
-    tanstackStart({ target: "node-server", customViteReactPlugin: true }),
+    tanstackStart(),
+    nitro(),
     viteReact(),
   ],
 });
