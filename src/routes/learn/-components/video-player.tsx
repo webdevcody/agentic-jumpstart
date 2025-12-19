@@ -89,6 +89,15 @@ export function VideoPlayer({
     }
   }, []);
 
+  // Reset state when navigating to a different video segment
+  useEffect(() => {
+    setThumbnailUrl(initialThumbnailUrl || null);
+    setPlaying(false);
+    setPlayedSeconds(0);
+    setIsReady(false);
+    setHasError(false);
+  }, [segmentId, initialThumbnailUrl]);
+
   // Fetch thumbnail URL independently (never blocks video loading)
   // Only fetch if we don't already have an initial thumbnail
   useEffect(() => {
