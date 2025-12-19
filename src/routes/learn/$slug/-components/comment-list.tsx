@@ -428,7 +428,7 @@ function CommentItem({ comment, level = 0 }: CommentItemProps) {
         open={deleteCommentId !== null}
         onOpenChange={() => setDeleteCommentId(null)}
       >
-        <AlertDialogContent className="shadow-elevation-4">
+        <AlertDialogContent className="shadow-elevation-4" animation="slide-right">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Trash2 className="h-5 w-5 text-destructive" />

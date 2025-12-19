@@ -1,4 +1,4 @@
-import { createServerFileRoute } from "@tanstack/react-start/server";
+import { createFileRoute } from "@tanstack/react-router";
 import { OAuth2RequestError } from "arctic";
 import { getAccountByGoogleIdUseCase } from "~/use-cases/accounts";
 import { GoogleUser } from "~/use-cases/types";
@@ -9,69 +9,73 @@ import { deleteCookie, getCookie } from "@tanstack/react-start/server";
 
 const AFTER_LOGIN_URL = "/";
 
-export const ServerRoute = createServerFileRoute(
-  "/api/login/google/callback/"
-).methods({
-  GET: async ({ request }) => {
-    const url = new URL(request.url);
-    const code = url.searchParams.get("code");
-    const state = url.searchParams.get("state");
-    const storedState = getCookie("google_oauth_state") ?? null;
-    const codeVerifier = getCookie("google_code_verifier") ?? null;
-    const redirectUri = getCookie("google_redirect_uri") ?? AFTER_LOGIN_URL;
+export const Route = createFileRoute("/api/login/google/callback/")({
+  server: {
+    handlers: {
+      GET: async ({ request }) => {
+        const url = new URL(request.url);
+        const code = url.searchParams.get("code");
+        const state = url.searchParams.get("state");
+        const storedState = getCookie("google_oauth_state") ?? null;
+        const codeVerifier = getCookie("google_code_verifier") ?? null;
+        const redirectUri = getCookie("google_redirect_uri") ?? AFTER_LOGIN_URL;
 
-    if (
-      !code ||
-      !state ||
-      !storedState ||
-      state !== storedState ||
-      !codeVerifier
-    ) {
-      return new Response(null, { status: 400 });
-    }
+        if (
+          !code ||
+          !state ||
+          !storedState ||
+          state !== storedState ||
+          !codeVerifier
+        ) {
+          return new Response(null, { status: 400 });
+        }
 
-    deleteCookie("google_oauth_state");
-    deleteCookie("google_code_verifier");
-    deleteCookie("google_redirect_uri");
+        deleteCookie("google_oauth_state");
+        deleteCookie("google_code_verifier");
+        deleteCookie("google_redirect_uri");
 
-    try {
-      const tokens = await googleAuth.validateAuthorizationCode(
-        code,
-        codeVerifier
-      );
-      const response = await fetch(
-        "https://openidconnect.googleapis.com/v1/userinfo",
-        { headers: { Authorization: `Bearer ${tokens.accessToken()}` } }
-      );
+        try {
+          const tokens = await googleAuth.validateAuthorizationCode(
+            code,
+            codeVerifier
+          );
+          const response = await fetch(
+            "https://openidconnect.googleapis.com/v1/userinfo",
+            { headers: { Authorization: `Bearer ${tokens.accessToken()}` } }
+          );
 
-      const googleUser: GoogleUser = await response.json();
+          const googleUser: GoogleUser = await response.json();
 
-      const existingAccount = await getAccountByGoogleIdUseCase(googleUser.sub);
+          const existingAccount = await getAccountByGoogleIdUseCase(
+            googleUser.sub
+          );
 
-      if (existingAccount) {
-        await setSession(existingAccount.userId);
-        return new Response(null, {
-          status: 302,
-          headers: { Location: redirectUri },
-        });
-      }
+          if (existingAccount) {
+            await setSession(existingAccount.userId);
+            return new Response(null, {
+              status: 302,
+              headers: { Location: redirectUri },
+            });
+          }
 
-      const userId = await createGoogleUserUseCase(googleUser);
+          const userId = await createGoogleUserUseCase(googleUser);
 
-      await setSession(userId);
+          await setSession(userId);
 
-      return new Response(null, {
-        status: 302,
-        headers: { Location: redirectUri },
-      });
-    } catch (e) {
-      console.error(e);
-      // the specific error message depends on the provider
-      if (e instanceof OAuth2RequestError) {
-        // invalid code
-        return new Response(null, { status: 400 });
-      }
-      return new Response(null, { status: 500 });
-    }
+          return new Response(null, {
+            status: 302,
+            headers: { Location: redirectUri },
+          });
+        } catch (e) {
+          console.error(e);
+          // the specific error message depends on the provider
+          if (e instanceof OAuth2RequestError) {
+            // invalid code
+            return new Response(null, { status: 400 });
+          }
+          return new Response(null, { status: 500 });
+        }
+      },
+    },
   },
 });

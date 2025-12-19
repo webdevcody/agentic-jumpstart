@@ -11,20 +11,37 @@ export function useEditComment() {
   return useMutation({
     mutationFn: (variables: UpdateCommentSchema) =>
       updateCommentFn({ data: variables }),
-    onSuccess: () => {
-      queryClient.invalidateQueries(getCommentsQuery(segment.id));
+    onSuccess: async () => {
+      // Invalidate and refetch to ensure the UI updates
+      await queryClient.refetchQueries({
+        queryKey: getCommentsQuery(segment.id).queryKey,
+      });
     },
     onMutate: (variables) => {
       if (!user || !navigator.onLine) throw new Error("Something went wrong");
       const previousComments = queryClient.getQueryData(
         getCommentsQuery(segment.id).queryKey
       );
+      
+      // Optimistically update both top-level comments and nested replies
       queryClient.setQueryData(getCommentsQuery(segment.id).queryKey, (old) =>
-        old?.map((comment) =>
-          comment.id === variables.commentId
-            ? { ...comment, content: variables.content }
-            : comment
-        )
+        old?.map((comment) => {
+          if (comment.id === variables.commentId) {
+            return { ...comment, content: variables.content };
+          }
+          // Check if any nested child matches
+          if (comment.children?.some((child) => child.id === variables.commentId)) {
+            return {
+              ...comment,
+              children: comment.children.map((child) =>
+                child.id === variables.commentId
+                  ? { ...child, content: variables.content }
+                  : child
+              ),
+            };
+          }
+          return comment;
+        })
       );
       return { previousComments };
     },

@@ -26,13 +26,18 @@ export async function getComments(segmentId: number) {
 }
 
 export async function createComment(comment: CommentCreate) {
-  return database.insert(comments).values(comment);
+  const result = await database
+    .insert(comments)
+    .values(comment)
+    .returning();
+  return result[0];
 }
 
 export async function deleteComment(commentId: number, userId: number) {
-  return database
+  await database
     .delete(comments)
     .where(and(eq(comments.id, commentId), eq(comments.userId, userId)));
+  return { success: true };
 }
 
 export async function updateComment(
@@ -40,10 +45,12 @@ export async function updateComment(
   content: string,
   userId: number
 ) {
-  return database
+  const result = await database
     .update(comments)
     .set({ content })
-    .where(and(eq(comments.id, commentId), eq(comments.userId, userId)));
+    .where(and(eq(comments.id, commentId), eq(comments.userId, userId)))
+    .returning();
+  return result[0];
 }
 
 export async function getAllRecentComments(
@@ -97,5 +104,6 @@ export async function getAllRecentComments(
 }
 
 export async function deleteCommentAsAdmin(commentId: number) {
-  return database.delete(comments).where(eq(comments.id, commentId));
+  await database.delete(comments).where(eq(comments.id, commentId));
+  return { success: true };
 }

@@ -11,17 +11,30 @@ export function useDeleteComment() {
   return useMutation({
     mutationFn: (commentId: { commentId: number }) =>
       deleteCommentFn({ data: commentId }),
-    onSuccess: () => {
-      queryClient.invalidateQueries(getCommentsQuery(segment.id));
+    onSuccess: async () => {
+      // Invalidate and refetch to ensure the UI updates
+      await queryClient.refetchQueries({
+        queryKey: getCommentsQuery(segment.id).queryKey,
+      });
     },
     onMutate: (variables) => {
       if (!user || !navigator.onLine) throw new Error("Something went wrong");
       const previousComments = queryClient.getQueryData(
         getCommentsQuery(segment.id).queryKey
       );
-      queryClient.setQueryData(getCommentsQuery(segment.id).queryKey, (old) =>
-        old?.filter((comment) => comment.id !== variables.commentId)
-      );
+      
+      // Optimistically update both top-level comments and nested replies
+      queryClient.setQueryData(getCommentsQuery(segment.id).queryKey, (old) => {
+        if (!old) return old;
+        return old
+          .filter((comment) => comment.id !== variables.commentId)
+          .map((comment) => ({
+            ...comment,
+            children: comment.children?.filter(
+              (child) => child.id !== variables.commentId
+            ) || [],
+          }));
+      });
       return { previousComments };
     },
     onError: (_, __, context) => {

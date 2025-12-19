@@ -78,8 +78,9 @@ function AdminComments() {
   const deleteCommentMutation = useMutation({
     mutationFn: (commentId: number) =>
       deleteCommentAsAdminFn({ data: { commentId } }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "comments"] });
+    onSuccess: async () => {
+      // Invalidate and refetch to ensure the UI updates
+      await queryClient.refetchQueries({ queryKey: ["admin", "comments"] });
       setDeleteCommentId(null);
       toast.success("Comment deleted", {
         description: "The comment has been successfully deleted.",

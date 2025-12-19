@@ -21,6 +21,7 @@ import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as NewsRouteImport } from './routes/news'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as HealthRouteImport } from './routes/health'
 import { Route as CreateTestimonialRouteImport } from './routes/create-testimonial'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as CancelRouteImport } from './routes/cancel'
@@ -41,6 +42,8 @@ import { Route as LearnCourseCompletedRouteImport } from './routes/learn/course-
 import { Route as LearnAddRouteImport } from './routes/learn/add'
 import { Route as LaunchKitsSlugRouteImport } from './routes/launch-kits/$slug'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
+import { Route as ApiLogoutRouteImport } from './routes/api/logout'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as AgentsNewRouteImport } from './routes/agents/new'
 import { Route as AgentsSlugRouteImport } from './routes/agents/$slug'
 import { Route as AdminVideoProcessingRouteImport } from './routes/admin/video-processing'
@@ -59,6 +62,7 @@ import { Route as AdminConversionsIndexRouteImport } from './routes/admin/conver
 import { Route as AdminBlogIndexRouteImport } from './routes/admin/blog/index'
 import { Route as LearnSlugEditRouteImport } from './routes/learn/$slug/edit'
 import { Route as LearnSlugLayoutRouteImport } from './routes/learn/$slug/_layout'
+import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
 import { Route as AdminNewsNewRouteImport } from './routes/admin/news/new'
 import { Route as AdminLaunchKitsTagsRouteImport } from './routes/admin/launch-kits/tags'
 import { Route as AdminEmailsWaitlistRouteImport } from './routes/admin/emails/waitlist'
@@ -71,10 +75,13 @@ import { Route as AdminConversionsOverviewRouteImport } from './routes/admin/con
 import { Route as AdminConversionsEventsRouteImport } from './routes/admin/conversions/events'
 import { Route as AdminBlogNewRouteImport } from './routes/admin/blog/new'
 import { Route as LearnSlugLayoutIndexRouteImport } from './routes/learn/$slug/_layout.index'
+import { Route as ApiLoginGoogleIndexRouteImport } from './routes/api/login/google/index'
 import { Route as AdminLaunchKitsCreateIndexRouteImport } from './routes/admin/launch-kits/create/index'
+import { Route as ApiSegmentsSegmentIdVideoRouteImport } from './routes/api/segments/$segmentId/video'
 import { Route as AdminNewsIdEditRouteImport } from './routes/admin/news/$id/edit'
 import { Route as AdminLaunchKitsEditIdRouteImport } from './routes/admin/launch-kits/edit/$id'
 import { Route as AdminBlogIdEditRouteImport } from './routes/admin/blog/$id/edit'
+import { Route as ApiLoginGoogleCallbackIndexRouteImport } from './routes/api/login/google/callback/index'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -134,6 +141,11 @@ const MembersRoute = MembersRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HealthRoute = HealthRouteImport.update({
+  id: '/health',
+  path: '/health',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CreateTestimonialRoute = CreateTestimonialRouteImport.update({
@@ -236,6 +248,16 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
   path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiLogoutRoute = ApiLogoutRouteImport.update({
+  id: '/api/logout',
+  path: '/api/logout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AgentsNewRoute = AgentsNewRouteImport.update({
   id: '/agents/new',
   path: '/agents/new',
@@ -326,6 +348,11 @@ const LearnSlugLayoutRoute = LearnSlugLayoutRouteImport.update({
   path: '/learn/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
+  id: '/api/stripe/webhook',
+  path: '/api/stripe/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminNewsNewRoute = AdminNewsNewRouteImport.update({
   id: '/news/new',
   path: '/news/new',
@@ -387,11 +414,22 @@ const LearnSlugLayoutIndexRoute = LearnSlugLayoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LearnSlugLayoutRoute,
 } as any)
+const ApiLoginGoogleIndexRoute = ApiLoginGoogleIndexRouteImport.update({
+  id: '/api/login/google/',
+  path: '/api/login/google/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminLaunchKitsCreateIndexRoute =
   AdminLaunchKitsCreateIndexRouteImport.update({
     id: '/launch-kits/create/',
     path: '/launch-kits/create/',
     getParentRoute: () => AdminRouteRoute,
+  } as any)
+const ApiSegmentsSegmentIdVideoRoute =
+  ApiSegmentsSegmentIdVideoRouteImport.update({
+    id: '/api/segments/$segmentId/video',
+    path: '/api/segments/$segmentId/video',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const AdminNewsIdEditRoute = AdminNewsIdEditRouteImport.update({
   id: '/news/$id/edit',
@@ -408,6 +446,12 @@ const AdminBlogIdEditRoute = AdminBlogIdEditRouteImport.update({
   path: '/blog/$id/edit',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const ApiLoginGoogleCallbackIndexRoute =
+  ApiLoginGoogleCallbackIndexRouteImport.update({
+    id: '/api/login/google/callback/',
+    path: '/api/login/google/callback/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -418,6 +462,7 @@ export interface FileRoutesByFullPath {
   '/cancel': typeof CancelRoute
   '/community': typeof CommunityRoute
   '/create-testimonial': typeof CreateTestimonialRoute
+  '/health': typeof HealthRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/news': typeof NewsRoute
@@ -441,6 +486,8 @@ export interface FileRoutesByFullPath {
   '/admin/video-processing': typeof AdminVideoProcessingRoute
   '/agents/$slug': typeof AgentsSlugRoute
   '/agents/new': typeof AgentsNewRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/logout': typeof ApiLogoutRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/launch-kits/$slug': typeof LaunchKitsSlugRoute
   '/learn/add': typeof LearnAddRoute
@@ -464,6 +511,7 @@ export interface FileRoutesByFullPath {
   '/admin/emails/waitlist': typeof AdminEmailsWaitlistRoute
   '/admin/launch-kits/tags': typeof AdminLaunchKitsTagsRoute
   '/admin/news/new': typeof AdminNewsNewRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/learn/$slug': typeof LearnSlugLayoutRouteWithChildren
   '/learn/$slug/edit': typeof LearnSlugEditRoute
   '/admin/blog': typeof AdminBlogIndexRoute
@@ -474,8 +522,11 @@ export interface FileRoutesByFullPath {
   '/admin/blog/$id/edit': typeof AdminBlogIdEditRoute
   '/admin/launch-kits/edit/$id': typeof AdminLaunchKitsEditIdRoute
   '/admin/news/$id/edit': typeof AdminNewsIdEditRoute
+  '/api/segments/$segmentId/video': typeof ApiSegmentsSegmentIdVideoRoute
   '/admin/launch-kits/create': typeof AdminLaunchKitsCreateIndexRoute
+  '/api/login/google': typeof ApiLoginGoogleIndexRoute
   '/learn/$slug/': typeof LearnSlugLayoutIndexRoute
+  '/api/login/google/callback': typeof ApiLoginGoogleCallbackIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -486,6 +537,7 @@ export interface FileRoutesByTo {
   '/cancel': typeof CancelRoute
   '/community': typeof CommunityRoute
   '/create-testimonial': typeof CreateTestimonialRoute
+  '/health': typeof HealthRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/news': typeof NewsRoute
@@ -507,6 +559,8 @@ export interface FileRoutesByTo {
   '/admin/video-processing': typeof AdminVideoProcessingRoute
   '/agents/$slug': typeof AgentsSlugRoute
   '/agents/new': typeof AgentsNewRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/logout': typeof ApiLogoutRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/launch-kits/$slug': typeof LaunchKitsSlugRoute
   '/learn/add': typeof LearnAddRoute
@@ -530,6 +584,7 @@ export interface FileRoutesByTo {
   '/admin/emails/waitlist': typeof AdminEmailsWaitlistRoute
   '/admin/launch-kits/tags': typeof AdminLaunchKitsTagsRoute
   '/admin/news/new': typeof AdminNewsNewRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/learn/$slug/edit': typeof LearnSlugEditRoute
   '/admin/blog': typeof AdminBlogIndexRoute
   '/admin/conversions': typeof AdminConversionsIndexRoute
@@ -539,8 +594,11 @@ export interface FileRoutesByTo {
   '/admin/blog/$id/edit': typeof AdminBlogIdEditRoute
   '/admin/launch-kits/edit/$id': typeof AdminLaunchKitsEditIdRoute
   '/admin/news/$id/edit': typeof AdminNewsIdEditRoute
+  '/api/segments/$segmentId/video': typeof ApiSegmentsSegmentIdVideoRoute
   '/admin/launch-kits/create': typeof AdminLaunchKitsCreateIndexRoute
+  '/api/login/google': typeof ApiLoginGoogleIndexRoute
   '/learn/$slug': typeof LearnSlugLayoutIndexRoute
+  '/api/login/google/callback': typeof ApiLoginGoogleCallbackIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -552,6 +610,7 @@ export interface FileRoutesById {
   '/cancel': typeof CancelRoute
   '/community': typeof CommunityRoute
   '/create-testimonial': typeof CreateTestimonialRoute
+  '/health': typeof HealthRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/news': typeof NewsRoute
@@ -575,6 +634,8 @@ export interface FileRoutesById {
   '/admin/video-processing': typeof AdminVideoProcessingRoute
   '/agents/$slug': typeof AgentsSlugRoute
   '/agents/new': typeof AgentsNewRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/logout': typeof ApiLogoutRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/launch-kits/$slug': typeof LaunchKitsSlugRoute
   '/learn/add': typeof LearnAddRoute
@@ -598,6 +659,7 @@ export interface FileRoutesById {
   '/admin/emails/waitlist': typeof AdminEmailsWaitlistRoute
   '/admin/launch-kits/tags': typeof AdminLaunchKitsTagsRoute
   '/admin/news/new': typeof AdminNewsNewRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/learn/$slug/_layout': typeof LearnSlugLayoutRouteWithChildren
   '/learn/$slug/edit': typeof LearnSlugEditRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
@@ -608,8 +670,11 @@ export interface FileRoutesById {
   '/admin/blog/$id/edit': typeof AdminBlogIdEditRoute
   '/admin/launch-kits/edit/$id': typeof AdminLaunchKitsEditIdRoute
   '/admin/news/$id/edit': typeof AdminNewsIdEditRoute
+  '/api/segments/$segmentId/video': typeof ApiSegmentsSegmentIdVideoRoute
   '/admin/launch-kits/create/': typeof AdminLaunchKitsCreateIndexRoute
+  '/api/login/google/': typeof ApiLoginGoogleIndexRoute
   '/learn/$slug/_layout/': typeof LearnSlugLayoutIndexRoute
+  '/api/login/google/callback/': typeof ApiLoginGoogleCallbackIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -622,6 +687,7 @@ export interface FileRouteTypes {
     | '/cancel'
     | '/community'
     | '/create-testimonial'
+    | '/health'
     | '/login'
     | '/members'
     | '/news'
@@ -645,6 +711,8 @@ export interface FileRouteTypes {
     | '/admin/video-processing'
     | '/agents/$slug'
     | '/agents/new'
+    | '/api/health'
+    | '/api/logout'
     | '/blog/$slug'
     | '/launch-kits/$slug'
     | '/learn/add'
@@ -668,6 +736,7 @@ export interface FileRouteTypes {
     | '/admin/emails/waitlist'
     | '/admin/launch-kits/tags'
     | '/admin/news/new'
+    | '/api/stripe/webhook'
     | '/learn/$slug'
     | '/learn/$slug/edit'
     | '/admin/blog'
@@ -678,8 +747,11 @@ export interface FileRouteTypes {
     | '/admin/blog/$id/edit'
     | '/admin/launch-kits/edit/$id'
     | '/admin/news/$id/edit'
+    | '/api/segments/$segmentId/video'
     | '/admin/launch-kits/create'
+    | '/api/login/google'
     | '/learn/$slug/'
+    | '/api/login/google/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -690,6 +762,7 @@ export interface FileRouteTypes {
     | '/cancel'
     | '/community'
     | '/create-testimonial'
+    | '/health'
     | '/login'
     | '/members'
     | '/news'
@@ -711,6 +784,8 @@ export interface FileRouteTypes {
     | '/admin/video-processing'
     | '/agents/$slug'
     | '/agents/new'
+    | '/api/health'
+    | '/api/logout'
     | '/blog/$slug'
     | '/launch-kits/$slug'
     | '/learn/add'
@@ -734,6 +809,7 @@ export interface FileRouteTypes {
     | '/admin/emails/waitlist'
     | '/admin/launch-kits/tags'
     | '/admin/news/new'
+    | '/api/stripe/webhook'
     | '/learn/$slug/edit'
     | '/admin/blog'
     | '/admin/conversions'
@@ -743,8 +819,11 @@ export interface FileRouteTypes {
     | '/admin/blog/$id/edit'
     | '/admin/launch-kits/edit/$id'
     | '/admin/news/$id/edit'
+    | '/api/segments/$segmentId/video'
     | '/admin/launch-kits/create'
+    | '/api/login/google'
     | '/learn/$slug'
+    | '/api/login/google/callback'
   id:
     | '__root__'
     | '/'
@@ -755,6 +834,7 @@ export interface FileRouteTypes {
     | '/cancel'
     | '/community'
     | '/create-testimonial'
+    | '/health'
     | '/login'
     | '/members'
     | '/news'
@@ -778,6 +858,8 @@ export interface FileRouteTypes {
     | '/admin/video-processing'
     | '/agents/$slug'
     | '/agents/new'
+    | '/api/health'
+    | '/api/logout'
     | '/blog/$slug'
     | '/launch-kits/$slug'
     | '/learn/add'
@@ -801,6 +883,7 @@ export interface FileRouteTypes {
     | '/admin/emails/waitlist'
     | '/admin/launch-kits/tags'
     | '/admin/news/new'
+    | '/api/stripe/webhook'
     | '/learn/$slug/_layout'
     | '/learn/$slug/edit'
     | '/admin/blog/'
@@ -811,8 +894,11 @@ export interface FileRouteTypes {
     | '/admin/blog/$id/edit'
     | '/admin/launch-kits/edit/$id'
     | '/admin/news/$id/edit'
+    | '/api/segments/$segmentId/video'
     | '/admin/launch-kits/create/'
+    | '/api/login/google/'
     | '/learn/$slug/_layout/'
+    | '/api/login/google/callback/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -824,6 +910,7 @@ export interface RootRouteChildren {
   CancelRoute: typeof CancelRoute
   CommunityRoute: typeof CommunityRoute
   CreateTestimonialRoute: typeof CreateTestimonialRoute
+  HealthRoute: typeof HealthRoute
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
   NewsRoute: typeof NewsRoute
@@ -838,6 +925,8 @@ export interface RootRouteChildren {
   UnsubscribeRoute: typeof UnsubscribeRoute
   AgentsSlugRoute: typeof AgentsSlugRoute
   AgentsNewRoute: typeof AgentsNewRoute
+  ApiHealthRoute: typeof ApiHealthRoute
+  ApiLogoutRoute: typeof ApiLogoutRoute
   BlogSlugRoute: typeof BlogSlugRoute
   LaunchKitsSlugRoute: typeof LaunchKitsSlugRoute
   LearnAddRoute: typeof LearnAddRoute
@@ -850,8 +939,12 @@ export interface RootRouteChildren {
   BlogIndexRoute: typeof BlogIndexRoute
   LaunchKitsIndexRoute: typeof LaunchKitsIndexRoute
   LearnIndexRoute: typeof LearnIndexRoute
+  ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   LearnSlugLayoutRoute: typeof LearnSlugLayoutRouteWithChildren
   LearnSlugEditRoute: typeof LearnSlugEditRoute
+  ApiSegmentsSegmentIdVideoRoute: typeof ApiSegmentsSegmentIdVideoRoute
+  ApiLoginGoogleIndexRoute: typeof ApiLoginGoogleIndexRoute
+  ApiLoginGoogleCallbackIndexRoute: typeof ApiLoginGoogleCallbackIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -938,6 +1031,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/health': {
+      id: '/health'
+      path: '/health'
+      fullPath: '/health'
+      preLoaderRoute: typeof HealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/create-testimonial': {
@@ -1080,6 +1180,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/logout': {
+      id: '/api/logout'
+      path: '/api/logout'
+      fullPath: '/api/logout'
+      preLoaderRoute: typeof ApiLogoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/agents/new': {
       id: '/agents/new'
       path: '/agents/new'
@@ -1206,6 +1320,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LearnSlugLayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/stripe/webhook': {
+      id: '/api/stripe/webhook'
+      path: '/api/stripe/webhook'
+      fullPath: '/api/stripe/webhook'
+      preLoaderRoute: typeof ApiStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/news/new': {
       id: '/admin/news/new'
       path: '/news/new'
@@ -1290,12 +1411,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LearnSlugLayoutIndexRouteImport
       parentRoute: typeof LearnSlugLayoutRoute
     }
+    '/api/login/google/': {
+      id: '/api/login/google/'
+      path: '/api/login/google'
+      fullPath: '/api/login/google'
+      preLoaderRoute: typeof ApiLoginGoogleIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/launch-kits/create/': {
       id: '/admin/launch-kits/create/'
       path: '/launch-kits/create'
       fullPath: '/admin/launch-kits/create'
       preLoaderRoute: typeof AdminLaunchKitsCreateIndexRouteImport
       parentRoute: typeof AdminRouteRoute
+    }
+    '/api/segments/$segmentId/video': {
+      id: '/api/segments/$segmentId/video'
+      path: '/api/segments/$segmentId/video'
+      fullPath: '/api/segments/$segmentId/video'
+      preLoaderRoute: typeof ApiSegmentsSegmentIdVideoRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/news/$id/edit': {
       id: '/admin/news/$id/edit'
@@ -1317,6 +1452,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/blog/$id/edit'
       preLoaderRoute: typeof AdminBlogIdEditRouteImport
       parentRoute: typeof AdminRouteRoute
+    }
+    '/api/login/google/callback/': {
+      id: '/api/login/google/callback/'
+      path: '/api/login/google/callback'
+      fullPath: '/api/login/google/callback'
+      preLoaderRoute: typeof ApiLoginGoogleCallbackIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -1430,6 +1572,7 @@ const rootRouteChildren: RootRouteChildren = {
   CancelRoute: CancelRoute,
   CommunityRoute: CommunityRoute,
   CreateTestimonialRoute: CreateTestimonialRoute,
+  HealthRoute: HealthRoute,
   LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,
   NewsRoute: NewsRoute,
@@ -1444,6 +1587,8 @@ const rootRouteChildren: RootRouteChildren = {
   UnsubscribeRoute: UnsubscribeRoute,
   AgentsSlugRoute: AgentsSlugRoute,
   AgentsNewRoute: AgentsNewRoute,
+  ApiHealthRoute: ApiHealthRoute,
+  ApiLogoutRoute: ApiLogoutRoute,
   BlogSlugRoute: BlogSlugRoute,
   LaunchKitsSlugRoute: LaunchKitsSlugRoute,
   LearnAddRoute: LearnAddRoute,
@@ -1456,8 +1601,12 @@ const rootRouteChildren: RootRouteChildren = {
   BlogIndexRoute: BlogIndexRoute,
   LaunchKitsIndexRoute: LaunchKitsIndexRoute,
   LearnIndexRoute: LearnIndexRoute,
+  ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   LearnSlugLayoutRoute: LearnSlugLayoutRouteWithChildren,
   LearnSlugEditRoute: LearnSlugEditRoute,
+  ApiSegmentsSegmentIdVideoRoute: ApiSegmentsSegmentIdVideoRoute,
+  ApiLoginGoogleIndexRoute: ApiLoginGoogleIndexRoute,
+  ApiLoginGoogleCallbackIndexRoute: ApiLoginGoogleCallbackIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
