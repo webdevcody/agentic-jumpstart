@@ -28,5 +28,8 @@ RUN npm run build
 # Expose the port your app runs on (adjust if needed)
 EXPOSE 4000
 
+# Set HOST to 0.0.0.0 to listen on all interfaces (required for Railway and Docker)
+ENV HOST=0.0.0.0
+
 # Start the application
 CMD ["npm", "start"]
