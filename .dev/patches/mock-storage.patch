@@ -1,0 +1,887 @@
+diff --git a/src/fn/video-transcoding.ts b/src/fn/video-transcoding.ts
+index 5f742fe..b3095ff 100644
+--- a/src/fn/video-transcoding.ts
++++ b/src/fn/video-transcoding.ts
+@@ -169,7 +169,7 @@ export const getAvailableQualitiesFn = createServerFn({ method: "GET" })
+     // Generate presigned URLs for all available qualities
+     const urls: Record<string, string> = {};
+     for (const quality of qualities) {
+-      if (type === "r2") {
++      if (type === "r2" || type === "mock") {
+         urls[quality.quality] = await storage.getPresignedUrl(quality.key);
+       } else {
+         // For non-R2 storage, return the API route
+@@ -198,8 +198,8 @@ export const getThumbnailUrlFn = createServerFn({ method: "GET" })
+     const { segmentId } = data;
+     const { storage, type } = getStorage();
+ 
+-    // Only support R2 storage for thumbnails
+-    if (type !== "r2") {
++    // Only support R2/mock storage for thumbnails
++    if (type !== "r2" && type !== "mock") {
+       return { thumbnailUrl: null };
+     }
+ 
+diff --git a/src/routes/-components/hero.tsx b/src/routes/-components/hero.tsx
+index e060bdc..a628940 100644
+--- a/src/routes/-components/hero.tsx
++++ b/src/routes/-components/hero.tsx
+@@ -1,194 +1,194 @@
+-import { Link } from "@tanstack/react-router";
+-import { useContinueSlug } from "~/hooks/use-continue-slug";
+-import { createServerFn } from "@tanstack/react-start";
+-import { VideoPlayer } from "~/routes/learn/-components/video-player";
+-import { useQuery } from "@tanstack/react-query";
+-import { Play, ShoppingCart } from "lucide-react";
+-import { getStorage } from "~/utils/storage";
+-import { getThumbnailKey } from "~/utils/video-transcoding";
+-import { database } from "~/db";
+-import { segments, modules } from "~/db/schema";
+-import { eq } from "drizzle-orm";
+-
+-const getFirstVideoSegmentFn = createServerFn().handler(async () => {
+-  // Get segments ordered by module order, then segment order
+-  const result = await database
+-    .select({
+-      segment: segments,
+-      moduleOrder: modules.order,
+-    })
+-    .from(segments)
+-    .innerJoin(modules, eq(segments.moduleId, modules.id))
+-    .orderBy(modules.order, segments.order);
+-
+-  // Find the first segment that has a video and is not premium
+-  // (Landing page should show free preview content)
+-  const firstVideoSegment = result
+-    .map((row) => row.segment)
+-    .find(
+-      (segment) =>
+-        segment.videoKey && !segment.isPremium && !segment.isComingSoon
+-    );
+-
+-  // Get thumbnail URL server-side if available
+-  let thumbnailUrl: string | null = null;
+-  if (firstVideoSegment?.videoKey) {
+-    const { storage, type } = getStorage();
+-    if (type === "r2") {
+-      const thumbnailKey =
+-        firstVideoSegment.thumbnailKey ||
+-        getThumbnailKey(firstVideoSegment.videoKey);
+-      const exists = await storage.exists(thumbnailKey);
+-      if (exists) {
+-        thumbnailUrl = await storage.getPresignedUrl(thumbnailKey);
+-      }
+-    }
+-  }
+-
+-  return { segment: firstVideoSegment, thumbnailUrl };
+-});
+-
+-export function HeroSection() {
+-  const continueSlug = useContinueSlug();
+-
+-  const {
+-    data: firstVideoData,
+-    isLoading,
+-    error,
+-  } = useQuery({
+-    queryKey: ["first-video-segment"],
+-    queryFn: () => getFirstVideoSegmentFn(),
+-    staleTime: 1000 * 60 * 5, // 5 minutes
+-    gcTime: 1000 * 60 * 10, // 10 minutes
+-  });
+-
+-  const firstVideoSegment = firstVideoData?.segment;
+-  const thumbnailUrl = firstVideoData?.thumbnailUrl;
+-
+-  return (
+-    <section className="relative w-full py-12">
+-      {/* Modern AI-themed gradient background */}
+-      <div className="absolute inset-0 hero-background-ai"></div>
+-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-theme-500/5 dark:via-theme-950/20 to-transparent"></div>
+-
+-      {/* AI circuit pattern overlay */}
+-      <div className="absolute inset-0 opacity-5 dark:opacity-10">
+-        <div className="circuit-pattern absolute inset-0"></div>
+-      </div>
+-
+-      {/* AI-themed floating elements */}
+-      <div className="floating-elements">
+-        <div className="floating-element-1"></div>
+-        <div className="floating-element-2"></div>
+-        <div className="floating-element-3"></div>
+-        <div className="floating-element-small top-10 right-10"></div>
+-      </div>
+-
+-      {/* Content */}
+-      <div className="relative z-10 h-full">
+-        <div className="max-w-7xl mx-auto px-6 lg:px-12 h-full">
+-          <div className="flex items-center h-full">
+-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 w-full items-center">
+-              {/* Left side - Content */}
+-              <div className="hero-content">
+-                {/* Badge */}
+-                <div className="inline-flex items-center px-4 py-2 rounded-full bg-theme-50/50 dark:bg-background/20 backdrop-blur-sm border border-theme-200 dark:border-border/50 text-theme-600 dark:text-theme-400 text-sm font-medium mb-8">
+-                  <span className="w-2 h-2 bg-theme-500 dark:bg-theme-400 rounded-full mr-2"></span>
+-                  Agentic Coding Mastery Course
+-                </div>
+-
+-                <h1 className="text-6xl leading-tight mb-8">
+-                  Coding is <span className="text-theme-400">Changing</span>,
+-                  Master{" "}
+-                  <span className="text-theme-400">Agentic Coding</span>{" "}
+-                </h1>
+-
+-                <p className="text-description mb-12 max-w-xl">
+-                  Master AI-first development with Cursor IDE, Claude Code CLI,
+-                  and advanced AI models. Learn how to leverage Opus 4.5,
+-                  Composer1, GPT-5.1 Codex, and cutting-edge agentic programming
+-                  techniques to accelerate your development workflow and build
+-                  applications 10x faster than traditional programming methods.
+-                </p>
+-
+-                <div className="flex flex-col sm:flex-row gap-4">
+-                  <Link
+-                    to="/purchase"
+-                    className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 dark:bg-[#22d3ee] px-6 py-2 text-xs font-black text-white dark:text-[#0b101a] shadow-lg shadow-cyan-500/20 transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_15px_rgba(34,211,238,0.4)]"
+-                    onKeyDown={(e) => {
+-                      if (e.key === " ") {
+-                        e.preventDefault();
+-                        e.currentTarget.click();
+-                      }
+-                    }}
+-                  >
+-                    <ShoppingCart className="w-4 h-4 stroke-[3.5px]" />
+-                    Buy Now
+-                  </Link>
+-                  <Link
+-                    to={"/learn/$slug"}
+-                    params={{ slug: continueSlug }}
+-                    className="inline-flex items-center gap-2 rounded-xl glass px-5 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 transition-all hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
+-                    onKeyDown={(e) => {
+-                      if (e.key === " ") {
+-                        e.preventDefault();
+-                        e.currentTarget.click();
+-                      }
+-                    }}
+-                  >
+-                    <Play className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 fill-cyan-600 dark:fill-cyan-400" />
+-                    Start Learning
+-                  </Link>
+-                </div>
+-              </div>
+-
+-              {/* Right side - Video player */}
+-              <div className="flex items-center justify-center lg:justify-end">
+-                {isLoading ? (
+-                  <div className="w-full max-w-lg lg:max-w-xl aspect-video flex items-center justify-center bg-background/20 backdrop-blur-sm rounded-xl">
+-                    <div className="text-sm text-muted-foreground">
+-                      Loading video...
+-                    </div>
+-                  </div>
+-                ) : error ? (
+-                  <div className="w-full max-w-lg lg:max-w-xl aspect-video flex items-center justify-center bg-background/20 backdrop-blur-sm rounded-xl">
+-                    <div className="text-sm text-muted-foreground">
+-                      Unable to load video
+-                    </div>
+-                  </div>
+-                ) : firstVideoSegment ? (
+-                  <div className="w-full max-w-lg lg:max-w-xl">
+-                    {/* Video container with glass morphism effect */}
+-                    <div className="video-container">
+-                      <div className="video-wrapper aspect-video relative">
+-                        <VideoPlayer
+-                          segmentId={firstVideoSegment.id}
+-                          videoKey={firstVideoSegment.videoKey!}
+-                          initialThumbnailUrl={thumbnailUrl}
+-                        />
+-                      </div>
+-
+-                      {/* Decorative elements - using theme colors */}
+-                      <div className="video-decorative-1"></div>
+-                      <div className="video-decorative-2"></div>
+-                    </div>
+-                  </div>
+-                ) : (
+-                  <div className="w-full max-w-lg lg:max-w-xl aspect-video flex items-center justify-center bg-background/20 backdrop-blur-sm rounded-xl">
+-                    <div className="text-sm text-muted-foreground">
+-                      No video available
+-                    </div>
+-                  </div>
+-                )}
+-              </div>
+-            </div>
+-          </div>
+-        </div>
+-      </div>
+-
+-      {/* Bottom gradient fade with theme accent */}
+-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background via-background/80 to-transparent"></div>
+-      <div className="section-divider-glow-bottom"></div>
+-    </section>
+-  );
+-}
++import { Link } from "@tanstack/react-router";
++import { useContinueSlug } from "~/hooks/use-continue-slug";
++import { createServerFn } from "@tanstack/react-start";
++import { VideoPlayer } from "~/routes/learn/-components/video-player";
++import { useQuery } from "@tanstack/react-query";
++import { Play, ShoppingCart } from "lucide-react";
++import { getStorage } from "~/utils/storage";
++import { getThumbnailKey } from "~/utils/video-transcoding";
++import { database } from "~/db";
++import { segments, modules } from "~/db/schema";
++import { eq } from "drizzle-orm";
++
++const getFirstVideoSegmentFn = createServerFn().handler(async () => {
++  // Get segments ordered by module order, then segment order
++  const result = await database
++    .select({
++      segment: segments,
++      moduleOrder: modules.order,
++    })
++    .from(segments)
++    .innerJoin(modules, eq(segments.moduleId, modules.id))
++    .orderBy(modules.order, segments.order);
++
++  // Find the first segment that has a video and is not premium
++  // (Landing page should show free preview content)
++  const firstVideoSegment = result
++    .map((row) => row.segment)
++    .find(
++      (segment) =>
++        segment.videoKey && !segment.isPremium && !segment.isComingSoon
++    );
++
++  // Get thumbnail URL server-side if available
++  let thumbnailUrl: string | null = null;
++  if (firstVideoSegment?.videoKey) {
++    const { storage, type } = getStorage();
++    if (type === "r2" || type === "mock") {
++      const thumbnailKey =
++        firstVideoSegment.thumbnailKey ||
++        getThumbnailKey(firstVideoSegment.videoKey);
++      const exists = await storage.exists(thumbnailKey);
++      if (exists) {
++        thumbnailUrl = await storage.getPresignedUrl(thumbnailKey);
++      }
++    }
++  }
++
++  return { segment: firstVideoSegment, thumbnailUrl };
++});
++
++export function HeroSection() {
++  const continueSlug = useContinueSlug();
++
++  const {
++    data: firstVideoData,
++    isLoading,
++    error,
++  } = useQuery({
++    queryKey: ["first-video-segment"],
++    queryFn: () => getFirstVideoSegmentFn(),
++    staleTime: 1000 * 60 * 5, // 5 minutes
++    gcTime: 1000 * 60 * 10, // 10 minutes
++  });
++
++  const firstVideoSegment = firstVideoData?.segment;
++  const thumbnailUrl = firstVideoData?.thumbnailUrl;
++
++  return (
++    <section className="relative w-full py-12">
++      {/* Modern AI-themed gradient background */}
++      <div className="absolute inset-0 hero-background-ai"></div>
++      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-theme-500/5 dark:via-theme-950/20 to-transparent"></div>
++
++      {/* AI circuit pattern overlay */}
++      <div className="absolute inset-0 opacity-5 dark:opacity-10">
++        <div className="circuit-pattern absolute inset-0"></div>
++      </div>
++
++      {/* AI-themed floating elements */}
++      <div className="floating-elements">
++        <div className="floating-element-1"></div>
++        <div className="floating-element-2"></div>
++        <div className="floating-element-3"></div>
++        <div className="floating-element-small top-10 right-10"></div>
++      </div>
++
++      {/* Content */}
++      <div className="relative z-10 h-full">
++        <div className="max-w-7xl mx-auto px-6 lg:px-12 h-full">
++          <div className="flex items-center h-full">
++            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 w-full items-center">
++              {/* Left side - Content */}
++              <div className="hero-content">
++                {/* Badge */}
++                <div className="inline-flex items-center px-4 py-2 rounded-full bg-theme-50/50 dark:bg-background/20 backdrop-blur-sm border border-theme-200 dark:border-border/50 text-theme-600 dark:text-theme-400 text-sm font-medium mb-8">
++                  <span className="w-2 h-2 bg-theme-500 dark:bg-theme-400 rounded-full mr-2"></span>
++                  Agentic Coding Mastery Course
++                </div>
++
++                <h1 className="text-6xl leading-tight mb-8">
++                  Coding is <span className="text-theme-400">Changing</span>,
++                  Master{" "}
++                  <span className="text-theme-400">Agentic Coding</span>{" "}
++                </h1>
++
++                <p className="text-description mb-12 max-w-xl">
++                  Master AI-first development with Cursor IDE, Claude Code CLI,
++                  and advanced AI models. Learn how to leverage Opus 4.5,
++                  Composer1, GPT-5.1 Codex, and cutting-edge agentic programming
++                  techniques to accelerate your development workflow and build
++                  applications 10x faster than traditional programming methods.
++                </p>
++
++                <div className="flex flex-col sm:flex-row gap-4">
++                  <Link
++                    to="/purchase"
++                    className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 dark:bg-[#22d3ee] px-6 py-2 text-xs font-black text-white dark:text-[#0b101a] shadow-lg shadow-cyan-500/20 transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_15px_rgba(34,211,238,0.4)]"
++                    onKeyDown={(e) => {
++                      if (e.key === " ") {
++                        e.preventDefault();
++                        e.currentTarget.click();
++                      }
++                    }}
++                  >
++                    <ShoppingCart className="w-4 h-4 stroke-[3.5px]" />
++                    Buy Now
++                  </Link>
++                  <Link
++                    to={"/learn/$slug"}
++                    params={{ slug: continueSlug }}
++                    className="inline-flex items-center gap-2 rounded-xl glass px-5 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 transition-all hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
++                    onKeyDown={(e) => {
++                      if (e.key === " ") {
++                        e.preventDefault();
++                        e.currentTarget.click();
++                      }
++                    }}
++                  >
++                    <Play className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 fill-cyan-600 dark:fill-cyan-400" />
++                    Start Learning
++                  </Link>
++                </div>
++              </div>
++
++              {/* Right side - Video player */}
++              <div className="flex items-center justify-center lg:justify-end">
++                {isLoading ? (
++                  <div className="w-full max-w-lg lg:max-w-xl aspect-video flex items-center justify-center bg-background/20 backdrop-blur-sm rounded-xl">
++                    <div className="text-sm text-muted-foreground">
++                      Loading video...
++                    </div>
++                  </div>
++                ) : error ? (
++                  <div className="w-full max-w-lg lg:max-w-xl aspect-video flex items-center justify-center bg-background/20 backdrop-blur-sm rounded-xl">
++                    <div className="text-sm text-muted-foreground">
++                      Unable to load video
++                    </div>
++                  </div>
++                ) : firstVideoSegment ? (
++                  <div className="w-full max-w-lg lg:max-w-xl">
++                    {/* Video container with glass morphism effect */}
++                    <div className="video-container">
++                      <div className="video-wrapper aspect-video relative">
++                        <VideoPlayer
++                          segmentId={firstVideoSegment.id}
++                          videoKey={firstVideoSegment.videoKey!}
++                          initialThumbnailUrl={thumbnailUrl}
++                        />
++                      </div>
++
++                      {/* Decorative elements - using theme colors */}
++                      <div className="video-decorative-1"></div>
++                      <div className="video-decorative-2"></div>
++                    </div>
++                  </div>
++                ) : (
++                  <div className="w-full max-w-lg lg:max-w-xl aspect-video flex items-center justify-center bg-background/20 backdrop-blur-sm rounded-xl">
++                    <div className="text-sm text-muted-foreground">
++                      No video available
++                    </div>
++                  </div>
++                )}
++              </div>
++            </div>
++          </div>
++        </div>
++      </div>
++
++      {/* Bottom gradient fade with theme accent */}
++      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background via-background/80 to-transparent"></div>
++      <div className="section-divider-glow-bottom"></div>
++    </section>
++  );
++}
+diff --git a/src/utils/storage/index.ts b/src/utils/storage/index.ts
+index aa47e5f..6fc87aa 100644
+--- a/src/utils/storage/index.ts
++++ b/src/utils/storage/index.ts
+@@ -1,13 +1,21 @@
+ import type { IStorage } from "./storage.interface";
+ import { R2Storage } from "./r2";
++import { MockStorage } from "./mock-storage";
+ 
+ let storage: IStorage | null = null;
+ 
+-// Storage provider factory/singleton - R2 only
+-export function getStorage(): { storage: IStorage; type: "r2" } {
++type StorageType = "r2" | "mock";
++
++// Storage provider factory/singleton
++export function getStorage(): { storage: IStorage; type: StorageType } {
+   if (!storage) {
+-    storage = new R2Storage();
++    if (process.env.DEV_MOCK_STORAGE === "true") {
++      console.log("[Storage] Using MockStorage");
++      storage = new MockStorage();
++    } else {
++      storage = new R2Storage();
++    }
+   }
+ 
+-  return { storage, type: "r2" };
++  return { storage, type: storage instanceof MockStorage ? "mock" : "r2" };
+ }
+diff --git a/src/utils/video-transcoding.ts b/src/utils/video-transcoding.ts
+index 71d53ee..3111246 100644
+--- a/src/utils/video-transcoding.ts
++++ b/src/utils/video-transcoding.ts
+@@ -1,166 +1,169 @@
+-import { exec } from "node:child_process";
+-import { promisify } from "node:util";
+-import { writeFile, unlink, readFile } from "node:fs/promises";
+-import { join } from "node:path";
+-import { tmpdir } from "node:os";
+-
+-const execAsync = promisify(exec);
+-
+-export type VideoQuality = "720p" | "480p";
+-
+-export interface ThumbnailOptions {
+-  inputPath: string;
+-  outputPath: string;
+-  width?: number;
+-  seekTime?: number;
+-}
+-
+-export interface TranscodeOptions {
+-  inputPath: string;
+-  outputPath: string;
+-  quality: VideoQuality;
+-}
+-
+-const FFMPEG_PRESET = "medium";
+-const FFMPEG_CRF = "23";
+-
+-/**
+- * Transcodes a video file to the specified quality using ffmpeg
+- */
+-export async function transcodeVideo(options: TranscodeOptions): Promise<void> {
+-  const { inputPath, outputPath, quality } = options;
+-
+-  // Determine target height based on quality
+-  const targetHeight = quality === "720p" ? "720" : "480";
+-
+-  // Build ffmpeg command
+-  // -vf "scale=-2:HEIGHT" maintains aspect ratio, sets height
+-  // -c:v libx264 uses H.264 codec
+-  // -preset medium balances speed vs compression
+-  // -crf 23 provides good quality (lower = better quality, 18-28 is typical range)
+-  // -c:a aac uses AAC audio codec
+-  const command = `ffmpeg -i "${inputPath}" -vf "scale=-2:${targetHeight}" -c:v libx264 -preset ${FFMPEG_PRESET} -crf ${FFMPEG_CRF} -c:a aac -y "${outputPath}"`;
+-
+-  try {
+-    await execAsync(command);
+-  } catch (error) {
+-    throw new Error(
+-      `Failed to transcode video to ${quality}: ${error instanceof Error ? error.message : String(error)}`
+-    );
+-  }
+-}
+-
+-/**
+- * Creates a temporary file path for video processing
+- */
+-export function createTempVideoPath(
+-  prefix: string,
+-  suffix: string = ".mp4"
+-): string {
+-  const timestamp = Date.now();
+-  const random = Math.random().toString(36).substring(2, 9);
+-  return join(tmpdir(), `${prefix}_${timestamp}_${random}${suffix}`);
+-}
+-
+-/**
+- * Cleans up temporary files
+- */
+-export async function cleanupTempFiles(...paths: string[]): Promise<void> {
+-  await Promise.allSettled(
+-    paths.map(async (path) => {
+-      try {
+-        await unlink(path);
+-      } catch (error) {
+-        // Ignore errors if file doesn't exist
+-        if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+-          console.error(`Failed to delete temp file ${path}:`, error);
+-        }
+-      }
+-    })
+-  );
+-}
+-
+-/**
+- * Writes a buffer to a temporary file
+- */
+-export async function writeBufferToTempFile(
+-  buffer: Buffer,
+-  prefix: string,
+-  suffix: string = ".mp4"
+-): Promise<string> {
+-  const tempPath = createTempVideoPath(prefix, suffix);
+-  await writeFile(tempPath, buffer);
+-  return tempPath;
+-}
+-
+-/**
+- * Extracts a thumbnail from a video file using ffmpeg
+- * @param options - Thumbnail extraction options
+- * @returns Buffer containing the JPEG image data
+- */
+-export async function extractThumbnail(
+-  options: ThumbnailOptions
+-): Promise<Buffer> {
+-  const { inputPath, outputPath, width = 640, seekTime = 1 } = options;
+-
+-  // Create a temporary file for the initial extraction
+-  // Use a unique temp path to avoid conflicts
+-  const tempOutputPath = createTempThumbnailPath("temp_thumb");
+-
+-  // Build ffmpeg command to extract thumbnail
+-  // -ss 1 seeks to 1 second into the video (avoids black frames at start)
+-  // -vframes 1 extracts only 1 frame
+-  // -vf "scale=WIDTH:-1" scales to specified width maintaining aspect ratio
+-  // -q:v 2 sets JPEG quality (1-31, lower is better)
+-  const ffmpegCommand = `ffmpeg -ss ${seekTime} -i "${inputPath}" -vframes 1 -vf "scale=${width}:-1" -q:v 2 -y "${tempOutputPath}"`;
+-
+-  try {
+-    // Extract thumbnail with ffmpeg
+-    await execAsync(ffmpegCommand);
+-
+-    // Convert to progressive JPEG using ImageMagick for faster perceived loading
+-    // Progressive JPEGs display a low-quality version first and progressively improve
+-    // This makes the thumbnail appear faster even while still downloading
+-    const convertCommand = `convert "${tempOutputPath}" -interlace Plane -quality 85 "${outputPath}"`;
+-    await execAsync(convertCommand);
+-
+-    // Clean up temp file
+-    try {
+-      await unlink(tempOutputPath);
+-    } catch {
+-      // Ignore cleanup errors
+-    }
+-
+-    // Read the generated progressive JPEG thumbnail
+-    const thumbnailBuffer = await readFile(outputPath);
+-    return thumbnailBuffer;
+-  } catch (error) {
+-    // Clean up temp file on error
+-    try {
+-      await unlink(tempOutputPath);
+-    } catch {
+-      // Ignore cleanup errors
+-    }
+-    throw new Error(
+-      `Failed to extract thumbnail: ${error instanceof Error ? error.message : String(error)}`
+-    );
+-  }
+-}
+-
+-/**
+- * Creates a temporary file path for thumbnail processing
+- */
+-export function createTempThumbnailPath(prefix: string): string {
+-  const timestamp = Date.now();
+-  const random = Math.random().toString(36).substring(2, 9);
+-  return join(tmpdir(), `${prefix}_${timestamp}_${random}.jpg`);
+-}
+-
+-/**
+- * Generates a thumbnail key from a base video key
+- * @param baseKey - The original video key (e.g., "abc123.mp4")
+- * @returns The thumbnail key (e.g., "abc123_thumb.jpg")
+- */
+-export function getThumbnailKey(baseKey: string): string {
+-  return baseKey.replace(".mp4", "_thumb.jpg");
+-}
++import { exec } from "node:child_process";
++import { promisify } from "node:util";
++import { writeFile, unlink, readFile } from "node:fs/promises";
++import { join } from "node:path";
++import { tmpdir } from "node:os";
++
++const execAsync = promisify(exec);
++
++export type VideoQuality = "720p" | "480p";
++
++export interface ThumbnailOptions {
++  inputPath: string;
++  outputPath: string;
++  width?: number;
++  seekTime?: number;
++}
++
++export interface TranscodeOptions {
++  inputPath: string;
++  outputPath: string;
++  quality: VideoQuality;
++}
++
++const FFMPEG_PRESET = "medium";
++const FFMPEG_CRF = "23";
++
++/**
++ * Transcodes a video file to the specified quality using ffmpeg
++ */
++export async function transcodeVideo(options: TranscodeOptions): Promise<void> {
++  const { inputPath, outputPath, quality } = options;
++
++  // Determine target height based on quality
++  const targetHeight = quality === "720p" ? "720" : "480";
++
++  // Build ffmpeg command
++  // -vf "scale=-2:HEIGHT" maintains aspect ratio, sets height
++  // -c:v libx264 uses H.264 codec
++  // -preset medium balances speed vs compression
++  // -crf 23 provides good quality (lower = better quality, 18-28 is typical range)
++  // -c:a aac uses AAC audio codec
++  const command = `ffmpeg -i "${inputPath}" -vf "scale=-2:${targetHeight}" -c:v libx264 -preset ${FFMPEG_PRESET} -crf ${FFMPEG_CRF} -c:a aac -y "${outputPath}"`;
++
++  try {
++    await execAsync(command);
++  } catch (error) {
++    throw new Error(
++      `Failed to transcode video to ${quality}: ${error instanceof Error ? error.message : String(error)}`
++    );
++  }
++}
++
++/**
++ * Creates a temporary file path for video processing
++ */
++export function createTempVideoPath(
++  prefix: string,
++  suffix: string = ".mp4"
++): string {
++  const timestamp = Date.now();
++  const random = Math.random().toString(36).substring(2, 9);
++  return join(tmpdir(), `${prefix}_${timestamp}_${random}${suffix}`);
++}
++
++/**
++ * Cleans up temporary files
++ */
++export async function cleanupTempFiles(...paths: string[]): Promise<void> {
++  await Promise.allSettled(
++    paths.map(async (path) => {
++      try {
++        await unlink(path);
++      } catch (error) {
++        // Ignore errors if file doesn't exist
++        if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
++          console.error(`Failed to delete temp file ${path}:`, error);
++        }
++      }
++    })
++  );
++}
++
++/**
++ * Writes a buffer to a temporary file
++ */
++export async function writeBufferToTempFile(
++  buffer: Buffer,
++  prefix: string,
++  suffix: string = ".mp4"
++): Promise<string> {
++  const tempPath = createTempVideoPath(prefix, suffix);
++  await writeFile(tempPath, buffer);
++  return tempPath;
++}
++
++/**
++ * Extracts a thumbnail from a video file using ffmpeg
++ * @param options - Thumbnail extraction options
++ * @returns Buffer containing the JPEG image data
++ */
++export async function extractThumbnail(
++  options: ThumbnailOptions
++): Promise<Buffer> {
++  const { inputPath, outputPath, width = 640, seekTime = 1 } = options;
++
++  // Create a temporary file for the initial extraction
++  // Use a unique temp path to avoid conflicts
++  const tempOutputPath = createTempThumbnailPath("temp_thumb");
++
++  // Build ffmpeg command to extract thumbnail
++  // -ss 1 seeks to 1 second into the video (avoids black frames at start)
++  // -vframes 1 extracts only 1 frame
++  // -vf "scale=WIDTH:-1" scales to specified width maintaining aspect ratio
++  // -q:v 2 sets JPEG quality (1-31, lower is better)
++  const ffmpegCommand = `ffmpeg -ss ${seekTime} -i "${inputPath}" -vframes 1 -vf "scale=${width}:-1" -q:v 2 -y "${tempOutputPath}"`;
++
++  try {
++    // Extract thumbnail with ffmpeg
++    await execAsync(ffmpegCommand);
++
++    // Convert to progressive JPEG using ImageMagick for faster perceived loading
++    // Progressive JPEGs display a low-quality version first and progressively improve
++    // This makes the thumbnail appear faster even while still downloading
++    const convertCommand = `convert "${tempOutputPath}" -interlace Plane -quality 85 "${outputPath}"`;
++    await execAsync(convertCommand);
++
++    // Clean up temp file
++    try {
++      await unlink(tempOutputPath);
++    } catch {
++      // Ignore cleanup errors
++    }
++
++    // Read the generated progressive JPEG thumbnail
++    const thumbnailBuffer = await readFile(outputPath);
++    return thumbnailBuffer;
++  } catch (error) {
++    // Clean up temp file on error
++    try {
++      await unlink(tempOutputPath);
++    } catch {
++      // Ignore cleanup errors
++    }
++    throw new Error(
++      `Failed to extract thumbnail: ${error instanceof Error ? error.message : String(error)}`
++    );
++  }
++}
++
++/**
++ * Creates a temporary file path for thumbnail processing
++ */
++export function createTempThumbnailPath(prefix: string): string {
++  const timestamp = Date.now();
++  const random = Math.random().toString(36).substring(2, 9);
++  return join(tmpdir(), `${prefix}_${timestamp}_${random}.jpg`);
++}
++
++/**
++ * Generates a thumbnail key from a base video key
++ * @param baseKey - The original video key (e.g., "abc123.mp4")
++ * @returns The thumbnail key (e.g., "abc123_thumb.jpg")
++ */
++export function getThumbnailKey(baseKey: string): string {
++  if (baseKey.endsWith(".mp4")) {
++    return baseKey.replace(".mp4", "_thumb.jpg");
++  }
++  return `${baseKey}_thumb.jpg`;
++}
+diff --git a/src/utils/storage/mock-storage.ts b/src/utils/storage/mock-storage.ts
+new file mode 100644
+index 0000000..bddcaaf
+--- /dev/null
++++ b/src/utils/storage/mock-storage.ts
+@@ -0,0 +1,94 @@
++import type {
++  IStorage,
++  StreamFileResponse,
++} from "./storage.interface";
++
++/**
++ * Mock storage for development when R2/S3 is unavailable.
++ * Returns placeholder video/image URLs (no referrer restrictions).
++ */
++export class MockStorage implements IStorage {
++  // Free sample videos from Google (~2MB each, fast loading)
++  private readonly SAMPLE_VIDEOS = [
++    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
++    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
++    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
++    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
++  ];
++
++  // Thumbnail images from Unsplash (tech/coding themed)
++  private readonly SAMPLE_IMAGES = [
++    "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=640&h=360&fit=crop", // code on screen
++    "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=640&h=360&fit=crop", // laptop coding
++    "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=640&h=360&fit=crop", // code editor
++    "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=640&h=360&fit=crop", // programming
++  ];
++
++  // Store "uploaded" files in memory
++  private readonly files = new Map<string, { data: Buffer; contentType: string }>();
++
++  private isImageKey(key: string): boolean {
++    return /\.(jpg|jpeg|png|gif|webp)$/i.test(key) || key.includes("_thumb");
++  }
++
++  private getConsistentIndex(key: string, arrayLength: number): number {
++    // Use key hash for consistent results (same key = same video/image)
++    let hash = 0;
++    for (let i = 0; i < key.length; i++) {
++      hash = ((hash << 5) - hash) + key.charCodeAt(i);
++      hash |= 0;
++    }
++    return Math.abs(hash) % arrayLength;
++  }
++
++  async upload(key: string, data: Buffer, contentType: string = "video/mp4") {
++    console.log(`[MockStorage] Simulated upload: ${key} (${data.length} bytes)`);
++    this.files.set(key, { data, contentType });
++  }
++
++  async delete(key: string) {
++    console.log(`[MockStorage] Simulated delete: ${key}`);
++    this.files.delete(key);
++  }
++
++  async exists(key: string): Promise<boolean> {
++    return true;
++  }
++
++  async getStream(
++    key: string,
++    rangeHeader: string | null
++  ): Promise<StreamFileResponse> {
++    throw new Error(
++      "[MockStorage] getStream not supported. Use getPresignedUrl instead."
++    );
++  }
++
++  async getPresignedUrl(key: string): Promise<string> {
++    if (this.isImageKey(key)) {
++      const index = this.getConsistentIndex(key, this.SAMPLE_IMAGES.length);
++      const url = this.SAMPLE_IMAGES[index];
++      console.log(`[MockStorage] Image: ${key} -> index ${index} -> ${url.split('/').pop()}`);
++      return url;
++    }
++
++    const index = this.getConsistentIndex(key, this.SAMPLE_VIDEOS.length);
++    const url = this.SAMPLE_VIDEOS[index];
++    console.log(`[MockStorage] Video: ${key} -> index ${index} -> ${url.split('/').pop()}`);
++    return url;
++  }
++
++  async getPresignedUploadUrl(key: string, contentType: string = "video/mp4"): Promise<string> {
++    console.log(`[MockStorage] Returning mock upload URL for: ${key}`);
++    return `http://localhost:4000/api/mock-upload?key=${encodeURIComponent(key)}`;
++  }
++
++  async getBuffer(key: string): Promise<Buffer> {
++    const file = this.files.get(key);
++    if (file) {
++      return file.data;
++    }
++    console.log(`[MockStorage] Returning empty buffer for: ${key}`);
++    return Buffer.alloc(0);
++  }
++}
