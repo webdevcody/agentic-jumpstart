@@ -376,9 +376,21 @@ function AdminAffiliates() {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-3">
                         <span className="text-lg font-semibold text-foreground">
-                          {affiliate.userName ||
-                            affiliate.userEmail ||
-                            "Unknown User"}
+                          {/* Show public name based on useDisplayName setting */}
+                          {affiliate.useDisplayName === false && affiliate.userRealName
+                            ? affiliate.userRealName
+                            : affiliate.userName || affiliate.userEmail || "Unknown User"}
+                          {/* Show alternative name for admin context */}
+                          {affiliate.useDisplayName === false && affiliate.userName && (
+                            <span className="text-muted-foreground font-normal ml-2 text-sm">
+                              (alias: {affiliate.userName})
+                            </span>
+                          )}
+                          {affiliate.useDisplayName !== false && affiliate.userRealName && (
+                            <span className="text-muted-foreground font-normal ml-2 text-sm">
+                              (real: {affiliate.userRealName})
+                            </span>
+                          )}
                         </span>
                         {affiliate.isActive ? (
                           <span className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">

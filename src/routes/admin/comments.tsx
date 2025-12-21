@@ -416,9 +416,9 @@ function CommentItem({
                   className="size-full object-cover"
                   src={
                     comment.profile.image ??
-                    `https://api.dicebear.com/9.x/initials/svg?seed=${comment.profile.displayName || "user"}&backgroundColor=6366f1&textColor=ffffff`
+                    `https://api.dicebear.com/9.x/initials/svg?seed=${comment.profile.publicName || "user"}&backgroundColor=6366f1&textColor=ffffff`
                   }
-                  alt={comment.profile.displayName || "User"}
+                  alt={comment.profile.publicName || "User"}
                 />
                 {hasAdminReply && (
                   <div className="absolute -top-1 -right-1 size-4 bg-green-500 rounded-full border-2 border-background flex items-center justify-center">
@@ -429,7 +429,17 @@ function CommentItem({
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <span className="font-semibold text-foreground">
-                    {comment.profile.displayName || "Anonymous"}
+                    {comment.profile.publicName || comment.profile.displayName || "Anonymous"}
+                    {comment.profile.useDisplayName !== false && comment.profile.realName && (
+                      <span className="text-muted-foreground font-normal ml-2 text-sm">
+                        (real: {comment.profile.realName})
+                      </span>
+                    )}
+                    {comment.profile.useDisplayName === false && comment.profile.displayName && (
+                      <span className="text-muted-foreground font-normal ml-2 text-sm">
+                        (alias: {comment.profile.displayName})
+                      </span>
+                    )}
                   </span>
                   {hasAdminReply && (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
@@ -560,15 +570,25 @@ function CommentItem({
                           className="size-full object-cover"
                           src={
                             child.profile.image ??
-                            `https://api.dicebear.com/9.x/initials/svg?seed=${child.profile.displayName || "user"}&backgroundColor=6366f1&textColor=ffffff`
+                            `https://api.dicebear.com/9.x/initials/svg?seed=${child.profile.publicName || "user"}&backgroundColor=6366f1&textColor=ffffff`
                           }
-                          alt={child.profile.displayName || "User"}
+                          alt={child.profile.publicName || "User"}
                         />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <span className="text-sm font-semibold text-foreground">
-                            {child.profile.displayName || "Anonymous"}
+                            {child.profile.publicName || child.profile.displayName || "Anonymous"}
+                            {child.profile.useDisplayName !== false && child.profile.realName && (
+                              <span className="text-muted-foreground font-normal ml-1 text-xs">
+                                (real: {child.profile.realName})
+                              </span>
+                            )}
+                            {child.profile.useDisplayName === false && child.profile.displayName && (
+                              <span className="text-muted-foreground font-normal ml-1 text-xs">
+                                (alias: {child.profile.displayName})
+                              </span>
+                            )}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {getTimeAgo(child.createdAt)}

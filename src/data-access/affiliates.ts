@@ -224,6 +224,8 @@ export async function getAllAffiliatesWithStats() {
       userId: affiliates.userId,
       userEmail: users.email,
       userName: profiles.displayName,
+      userRealName: profiles.realName,
+      useDisplayName: profiles.useDisplayName,
       affiliateCode: affiliates.affiliateCode,
       paymentLink: affiliates.paymentLink,
       commissionRate: affiliates.commissionRate,
