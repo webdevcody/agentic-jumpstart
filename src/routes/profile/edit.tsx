@@ -33,7 +33,7 @@ import {
   updateProjectFn,
   deleteProjectFn,
 } from "~/fn/profiles";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState } from "react";
@@ -56,6 +56,8 @@ import { assertAuthenticatedFn } from "~/fn/auth";
 
 const profileFormSchema = z.object({
   displayName: z.string().min(1, "Display name is required").max(100),
+  realName: z.string().max(100).optional().or(z.literal("")),
+  useDisplayName: z.boolean().optional(),
   bio: z.string().max(500).optional(),
   twitterHandle: z.string().max(50).optional(),
   githubHandle: z.string().max(50).optional(),
@@ -112,6 +114,8 @@ function EditProfilePage() {
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       displayName: profile?.displayName || "",
+      realName: profile?.realName || "",
+      useDisplayName: profile?.useDisplayName ?? true,
       bio: profile?.bio || "",
       twitterHandle: profile?.twitterHandle || "",
       githubHandle: profile?.githubHandle || "",
@@ -390,6 +394,56 @@ function EditProfilePage() {
                     )}
                   </div>
 
+                  {/* Use Display Name Toggle */}
+                  <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="useDisplayName" className="text-base">
+                        Use Display Name
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Show your alias instead of real name publicly
+                      </p>
+                    </div>
+                    <Controller
+                      name="useDisplayName"
+                      control={profileForm.control}
+                      render={({ field }) => (
+                        <Switch
+                          id="useDisplayName"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      )}
+                    />
+                  </div>
+
+                  {/* Real Name */}
+                  <div className="space-y-2">
+                    <Label htmlFor="realName">Real Name</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="realName"
+                        {...profileForm.register("realName")}
+                        placeholder="Your real name (optional)"
+                      />
+                      {profileForm.watch("realName") && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            profileForm.setValue("realName", "");
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Required for affiliate program. Clear for privacy.
+                    </p>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="bio">Bio</Label>
                     <Textarea
@@ -447,12 +501,16 @@ function EditProfilePage() {
                         Show your profile on the community members page
                       </p>
                     </div>
-                    <Switch
-                      id="isPublicProfile"
-                      checked={profileForm.watch("isPublicProfile")}
-                      onCheckedChange={(checked) =>
-                        profileForm.setValue("isPublicProfile", checked)
-                      }
+                    <Controller
+                      name="isPublicProfile"
+                      control={profileForm.control}
+                      render={({ field }) => (
+                        <Switch
+                          id="isPublicProfile"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      )}
                     />
                   </div>
                 </div>

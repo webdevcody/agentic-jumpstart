@@ -17,6 +17,8 @@ import { getStorage } from "~/utils/storage";
 
 const profileUpdateSchema = z.object({
   displayName: z.string().min(1).max(100).optional(),
+  realName: z.string().max(100).optional().nullable(),
+  useDisplayName: z.boolean().optional(),
   bio: z.string().max(500).optional(),
   twitterHandle: z.string().max(50).optional(),
   githubHandle: z.string().max(50).optional(),

@@ -6,11 +6,16 @@ import {
 } from "~/data-access/users";
 import { PublicError } from "./errors";
 import { GoogleUser, UserId, UserSession } from "./types";
-import { createProfile, getProfile } from "~/data-access/profiles";
+import {
+  createProfile,
+  getProfile,
+  displayNameExists,
+} from "~/data-access/profiles";
 import { createAccountViaGoogle } from "~/data-access/accounts";
 import { createOrUpdateEmailPreferences } from "~/data-access/emails";
 import { getCurrentUser } from "~/utils/session";
 import { isAdmin } from "~/lib/auth";
+import { generateUniqueAlias } from "~/utils/alias-generator";
 
 export async function deleteUserUseCase(
   authenticatedUser: UserSession,
@@ -48,7 +53,10 @@ export async function createGoogleUserUseCase(googleUser: GoogleUser) {
 
   await createAccountViaGoogle(existingUser.id, googleUser.sub);
 
-  await createProfile(existingUser.id, googleUser.name, googleUser.picture);
+  // Generate a unique alias instead of using real name for privacy
+  const alias = await generateUniqueAlias(displayNameExists);
+  // Store both alias (displayName) and original name (realName) separately
+  await createProfile(existingUser.id, alias, googleUser.picture, googleUser.name);
 
   return existingUser.id;
 }
