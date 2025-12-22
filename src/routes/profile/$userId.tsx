@@ -137,11 +137,13 @@ function ProfilePage() {
 
   const publicName = profileData.publicName || profileData.displayName || "User";
   const initials = publicName
-    .split(" ")
+    .trim()
+    .split(/\s+/)
+    .filter((n) => n.length > 0)
     .map((n) => n[0])
     .join("")
     .toUpperCase()
-    .slice(0, 2);
+    .slice(0, 2) || "U";
 
   return (
     <Page>
