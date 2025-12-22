@@ -5,4 +5,33 @@ dist
 test-results
 playwright-report
 coverage
+yarn.lock
 
+.DS_Store
+.cache
+.env
+.env.test
+.env.postgres
+.vercel
+.vinxi
+
+/build/
+/api/
+/server/build
+/public/build
+.env.sentry-build-plugin
+.labs
+/blob-report/
+/playwright/.cache/
+files/*
+backups/*
+.nitro/
+.tanstack/
+
+.automaker/features
+.idea/
+.swarm/
+
+# Docker specific
+Dockerfile
+.dockerignore
