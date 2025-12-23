@@ -1,4 +1,4 @@
-import { createMiddleware, createServerFn } from "@tanstack/react-start";
+import { createServerFn } from "@tanstack/react-start";
 import { eq, like } from "drizzle-orm";
 import { z } from "zod";
 import { database } from "~/db";
@@ -7,6 +7,7 @@ import { getAccountByGoogleIdUseCase } from "~/use-cases/accounts";
 import type { GoogleUser } from "~/use-cases/types";
 import { createGoogleUserUseCase } from "~/use-cases/users";
 import { getCurrentUser, setSession } from "~/utils/session";
+import { DevGuardMiddleware } from "./middleware";
 
 type DevLoginInput = { email: string; name: string; isAdmin: boolean; isPremium: boolean };
 
@@ -20,14 +21,6 @@ const DICEBEAR_STYLES = [
   "personas",
   "pixel-art"
 ];
-
-const DevGuardMiddleware = createMiddleware()
-  .server(async ({ next }) => {
-    const isDev = process.env.NODE_ENV === "development";
-    if (!isDev) throw new Error("Dev auth functions can only be used in development mode.");
-    return next();
-  })
-
 
 function simpleHash(str: string): number {
   let hash = 0;
@@ -58,7 +51,6 @@ export const devLoginFn = createServerFn({ method: "POST" })
   .inputValidator((data: DevLoginInput) => data)
   .middleware([DevGuardMiddleware])
   .handler(async ({ data }: { data: DevLoginInput }) => {
-
     const { email, name, isAdmin, isPremium } = data;
     const mockGoogleUser = createMockGoogleUser(email, name);
     const existingAccount = await getAccountByGoogleIdUseCase(mockGoogleUser.sub);
@@ -78,7 +70,6 @@ export const devLoginFn = createServerFn({ method: "POST" })
 export const getDevUsersFn = createServerFn({ method: "GET" })
   .middleware([DevGuardMiddleware])
   .handler(async () => {
-
     const devAccounts = await database.query.accounts.findMany({ where: like(accounts.googleId, "dev-%") });
     const userIds = devAccounts.map((a) => a.userId);
     if (userIds.length === 0) return [];

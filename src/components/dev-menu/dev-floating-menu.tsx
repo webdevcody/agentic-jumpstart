@@ -8,8 +8,7 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Switch } from "~/components/ui/switch";
 import { DevUserCard, type DevUser } from "./dev-user-card";
 import { generateRandomEmail, generateRandomName } from "./random-email-generator";
-import { getDevUsersFn, devLoginFn, switchDevUserFn } from "~/fn/dev-auth";
-import { getDevSettingsFn, setStorageModeFn, setAuthModeFn } from "~/fn/dev-settings";
+import { getDevUsersFn, devLoginFn, switchDevUserFn, getDevSettingsFn, setStorageModeFn, setAuthModeFn } from "~/fn/dev";
 
 type Corner = "top-left" | "top-right" | "bottom-left" | "bottom-right";
 type Tab = "users" | "settings";

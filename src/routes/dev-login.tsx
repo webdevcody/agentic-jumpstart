@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/com
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Checkbox } from "~/components/ui/checkbox";
-import { devLoginFn } from "~/fn/dev-auth";
+import { devLoginFn } from "~/fn/dev";
 
 export const Route = createFileRoute("/dev-login")({
   validateSearch: (search: Record<string, unknown>) => ({

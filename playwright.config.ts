@@ -77,7 +77,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: `npm run build && cross-env PORT=3001 DATABASE_URL=${process.env.DATABASE_URL_TEST || "postgresql://postgres:example@localhost:5436/postgres"} DATABASE_URL_TEST=${process.env.DATABASE_URL_TEST || "postgresql://postgres:example@localhost:5436/postgres"} IS_TEST=true vite dev`,
+    command: `npm run build && cross-env PORT=3001 vite dev`,
     url: "http://localhost:3001",
     reuseExistingServer: true,
     timeout: 120 * 1000,
@@ -85,10 +85,10 @@ export default defineConfig({
       IS_TEST: "true",
       DATABASE_URL:
         process.env.DATABASE_URL_TEST ||
-        "postgresql://postgres:example@localhost:5436/postgres",
+        "postgresql://postgres:example@localhost:5433/postgres",
       DATABASE_URL_TEST:
         process.env.DATABASE_URL_TEST ||
-        "postgresql://postgres:example@localhost:5436/postgres",
+        "postgresql://postgres:example@localhost:5433/postgres",
     },
   },
 });

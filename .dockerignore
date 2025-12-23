@@ -1,37 +1,41 @@
+# Dependencies - installed fresh in container
 node_modules
+
+# Git - not needed for build
 .git
+
+# Build outputs - rebuilt in container
 .output
 dist
+.nitro/
+.tanstack/
+.vinxi
+
+# Test artifacts
 test-results
 playwright-report
 coverage
-yarn.lock
+/blob-report/
+/playwright/.cache/
 
-.DS_Store
-.cache
+# Environment files
 .env
 .env.test
 .env.postgres
-.vercel
-.vinxi
-
-/build/
-/api/
-/server/build
-/public/build
 .env.sentry-build-plugin
-.labs
-/blob-report/
-/playwright/.cache/
-files/*
-backups/*
-.nitro/
-.tanstack/
 
-.automaker/features
+# OS/Editor
+.DS_Store
+.cache
 .idea/
+
+# Lockfiles (npm install fresh in container)
+yarn.lock
+
+# Local tooling
+.automaker/
 .swarm/
 
-# Docker specific
+# Docker files
 Dockerfile
 .dockerignore
