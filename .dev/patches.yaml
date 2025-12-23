@@ -1,6 +1,0 @@
-# Dev Patches State
-# Toggle patches on/off with: git dev-patch toggle <name>
-
-patches:
-  dev-login-bypass: off
-  mock-storage: off

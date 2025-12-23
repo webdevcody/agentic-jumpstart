@@ -1,10 +1,4 @@
-import type {
-  IStorage,
-  StreamFileRange,
-  StreamFileResponse,
-} from "./storage.interface";
-
-import type { Readable } from "node:stream";
+import type { IStorage, StreamFileResponse } from "./storage.interface";
 
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import {

@@ -22,6 +22,8 @@ import "nprogress/nprogress.css";
 import { shouldShowEarlyAccessFn } from "~/fn/early-access";
 import { useAnalytics } from "~/hooks/use-analytics";
 import { publicEnv } from "~/utils/env-public";
+import { DevFloatingMenu } from "~/components/dev-menu/dev-floating-menu";
+import { getCurrentUser } from "~/utils/session";
 
 // OpenGraph image configuration
 const OG_IMAGE_PATH = "/marketing.png";
@@ -29,6 +31,8 @@ const getOgImageUrl = () => {
   const baseUrl = publicEnv.VITE_HOST_NAME.replace(/\/$/, "");
   return `${baseUrl}${OG_IMAGE_PATH}`;
 };
+
+const isDev = process.env.NODE_ENV === "development";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   {
@@ -40,7 +44,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     },
     loader: async () => {
       const shouldShowEarlyAccess = await shouldShowEarlyAccessFn();
-      return { shouldShowEarlyAccess };
+
+      // Dev mode: get current user for dev menu
+      let currentUserId: number | null = null;
+      if (isDev) {
+        const user = await getCurrentUser();
+        currentUserId = user?.id ?? null;
+      }
+
+      return { shouldShowEarlyAccess, isDev, currentUserId };
     },
     head: () => ({
       meta: [
@@ -125,6 +137,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const shouldShowEarlyAccess = loaderData?.shouldShowEarlyAccess ?? false;
   const bannerMessage = publicEnv.VITE_BANNER_MESSAGE;
   const showBanner = !!bannerMessage;
+  const showDevMenu = loaderData?.isDev ?? false;
+  const currentUserId = loaderData?.currentUserId ?? null;
+
   const showFooter =
     !routerState.location.pathname.startsWith("/learn") &&
     !routerState.location.pathname.startsWith("/admin") &&
@@ -179,20 +194,20 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 const MILLISECONDS_PER_DAY = 864e5;
                 const DARK_MODE_MEDIA_QUERY = '(prefers-color-scheme: dark)';
                 const THEME_CLASSES = { LIGHT: 'light', DARK: 'dark' };
-                
+
                 // Get theme from cookie
                 let theme = document.cookie.match(new RegExp('(^| )' + THEME_COOKIE_NAME + '=([^;]+)'))?.[2];
-                
+
                 let resolvedTheme;
                 let root = document.documentElement;
-                
+
                 // Clear any existing theme classes
                 root.classList.remove(THEME_CLASSES.LIGHT, THEME_CLASSES.DARK);
-                
+
                 if (!theme || theme === 'system') {
                   // Use system preference for system theme or if no theme is set
                   resolvedTheme = window.matchMedia(DARK_MODE_MEDIA_QUERY).matches ? THEME_CLASSES.DARK : THEME_CLASSES.LIGHT;
-                  
+
                   if (!theme) {
                     // Set cookie with system preference on first visit
                     const expires = new Date(Date.now() + COOKIE_EXPIRY_DAYS * MILLISECONDS_PER_DAY).toUTCString();
@@ -201,9 +216,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 } else {
                   resolvedTheme = theme;
                 }
-                
+
                 root.classList.add(resolvedTheme);
-                
+
                 // Add data attribute for debugging
                 root.setAttribute('data-theme', theme || 'system');
                 root.setAttribute('data-resolved-theme', resolvedTheme);
@@ -255,8 +270,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             </div>
           )}
           <Toaster />
-          {/* <TanStackRouterDevtools position="bottom-right" />
-          <ReactQueryDevtools buttonPosition="bottom-left" /> */}
+          {showDevMenu && <DevFloatingMenu currentUserId={currentUserId} />}
           <Scripts />
         </ThemeProvider>
       </body>

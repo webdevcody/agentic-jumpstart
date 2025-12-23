@@ -12,6 +12,13 @@ export const Route = createFileRoute("/api/login/google/")({
         const url = new URL(request.url);
         const redirectUri = url.searchParams.get("redirect_uri") || "/";
 
+        // Dev mode: bypass OAuth, redirect to dev login
+        if (process.env.NODE_ENV === "development") {
+          const devLoginUrl = new URL("/dev-login", url.origin);
+          devLoginUrl.searchParams.set("redirect_uri", redirectUri);
+          return Response.redirect(devLoginUrl.href);
+        }
+
         const state = generateState();
         const codeVerifier = generateCodeVerifier();
         const authorizationInfo = googleAuth.createAuthorizationURL(
@@ -21,7 +28,6 @@ export const Route = createFileRoute("/api/login/google/")({
         );
 
         // Force Google to show account selection on every login
-        // Using just "select_account" instead of "consent select_account" to avoid re-consent
         authorizationInfo.searchParams.set("prompt", "select_account");
         authorizationInfo.searchParams.set("access_type", "online");
 
