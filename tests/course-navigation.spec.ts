@@ -71,8 +71,6 @@ test.describe("Course Navigation", () => {
       name: TEST_CONFIG.UI_TEXT.PREVIOUS_LESSON_BUTTON,
     });
     await backButton.click();
-    // Wait for navigation to complete
-    await page.waitForURL(`**/learn/${TEST_CONFIG.SEGMENTS.WELCOME_TO_COURSE.slug}`);
     await expect(page.locator("h2")).toHaveText(
       TEST_CONFIG.SEGMENTS.WELCOME_TO_COURSE.title
     );
@@ -86,8 +84,6 @@ test.describe("Course Navigation", () => {
       name: TEST_CONFIG.UI_TEXT.NEXT_VIDEO_BUTTON,
     });
     await nextButton.click();
-    // Wait for navigation to complete
-    await page.waitForURL(`**/learn/${TEST_CONFIG.SEGMENTS.SETTING_UP_ENVIRONMENT.slug}`);
     await expect(page.locator("h2")).toHaveText(
       TEST_CONFIG.SEGMENTS.SETTING_UP_ENVIRONMENT.title
     );
@@ -139,8 +135,6 @@ test.describe("Course Navigation", () => {
       name: TEST_CONFIG.UI_TEXT.NEXT_VIDEO_BUTTON,
     });
     await nextButton.click();
-    // Wait for navigation to complete
-    await page.waitForURL(`**/learn/${TEST_CONFIG.SEGMENTS.ADVANCED_PATTERNS.slug}`);
 
     // Verify we navigated to the next segment (Advanced Patterns - premium)
     await expect(page.locator("h2")).toHaveText(

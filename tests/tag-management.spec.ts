@@ -43,8 +43,20 @@ test.describe("Tag Management", () => {
 
       await page.goto(`/admin/launch-kits/edit/${testKit.id}`);
 
+      // Wait for the page to fully hydrate by waiting for the form
+      await page.waitForLoadState('networkidle');
+
+      // Wait for the page to load (form should be visible)
+      await page.waitForSelector('[data-testid="new-tag-button"]', { state: "visible", timeout: 10000 });
+
       // Open tag creation dialog
       await page.click('[data-testid="new-tag-button"]');
+
+      // Wait for dialog to appear (Radix portals to body)
+      await page.waitForSelector('[role="dialog"]', { state: "visible", timeout: 10000 });
+
+      // Wait for dialog form field to be ready
+      await page.waitForSelector('[data-testid="tag-name-input"]', { state: "visible", timeout: 10000 });
 
       // Fill tag form
       await page.fill('[data-testid="tag-name-input"]', "React");
@@ -99,7 +111,16 @@ test.describe("Tag Management", () => {
         .returning();
 
       await page.goto(`/admin/launch-kits/edit/${testKit.id}`);
-      await page.click('button:has-text("New Tag")');
+
+      // Wait for the page to fully hydrate
+      await page.waitForLoadState('networkidle');
+      await page.waitForSelector('[data-testid="new-tag-button"]', { state: "visible", timeout: 10000 });
+
+      await page.click('[data-testid="new-tag-button"]');
+
+      // Wait for dialog to open (Radix portals to body)
+      await page.waitForSelector('[role="dialog"]', { state: "visible", timeout: 10000 });
+      await page.waitForSelector('input[type="color"]', { state: "visible", timeout: 10000 });
 
       // Get initial color value
       const initialColor = await page
@@ -152,6 +173,9 @@ test.describe("Tag Management", () => {
         .returning();
 
       await page.goto(`/admin/launch-kits/edit/${testKit.id}`);
+
+      // Wait for the page to fully hydrate
+      await page.waitForLoadState('networkidle');
 
       // Click delete button for the tag
       await page.click(`button[aria-label="Delete tag Obsolete"]`);

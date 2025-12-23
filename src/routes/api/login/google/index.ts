@@ -1,7 +1,8 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { setCookie } from "@tanstack/react-start/server";
 import { generateCodeVerifier, generateState } from "arctic";
 import { googleAuth } from "~/utils/auth";
-import { setCookie } from "@tanstack/react-start/server";
+import { getAuthMode } from "~/utils/auth-mode";
 
 const MAX_COOKIE_AGE_SECONDS = 60 * 10;
 
@@ -12,8 +13,8 @@ export const Route = createFileRoute("/api/login/google/")({
         const url = new URL(request.url);
         const redirectUri = url.searchParams.get("redirect_uri") || "/";
 
-        // Dev mode: bypass OAuth, redirect to dev login
-        if (process.env.NODE_ENV === "development") {
+        // Dev mode: check auth preference (dev login vs real OAuth)
+        if (process.env.NODE_ENV === "development" && getAuthMode() === "dev") {
           const devLoginUrl = new URL("/dev-login", url.origin);
           devLoginUrl.searchParams.set("redirect_uri", redirectUri);
           return Response.redirect(devLoginUrl.href);

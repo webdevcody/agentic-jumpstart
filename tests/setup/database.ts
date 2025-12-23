@@ -7,13 +7,13 @@ import path from "path";
 import dotenv from "dotenv";
 import { TEST_CONFIG } from "./config";
 
-// Load environment variables
-dotenv.config();
+// Load test environment variables (must use .env.test for correct DATABASE_URL_TEST)
+dotenv.config({ path: path.resolve(process.cwd(), ".env.test") });
 
 async function globalSetup() {
   console.log("🔧 Setting up test database...");
 
-  // Create a connection to the test database
+  // Create a connection to the test database (port 5436 as per docker-compose.yml)
   const connectionString =
     process.env.DATABASE_URL_TEST ||
     "postgresql://postgres:example@localhost:5433/postgres";

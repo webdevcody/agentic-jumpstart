@@ -1,12 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
+import { eq, like } from "drizzle-orm";
+import { z } from "zod";
 import { database } from "~/db";
 import { accounts, profiles, users } from "~/db/schema";
-import { eq, like } from "drizzle-orm";
-import { setSession, getCurrentUser } from "~/utils/session";
-import { z } from "zod";
-import { GoogleUser } from "~/use-cases/types";
 import { getAccountByGoogleIdUseCase } from "~/use-cases/accounts";
+import type { GoogleUser } from "~/use-cases/types";
 import { createGoogleUserUseCase } from "~/use-cases/users";
+import { getCurrentUser, setSession } from "~/utils/session";
 
 type DevLoginInput = { email: string; name: string; isAdmin: boolean; isPremium: boolean };
 
@@ -39,7 +39,10 @@ function createMockGoogleUser(email: string, name: string): GoogleUser {
 
 export const devLoginFn = createServerFn({ method: "POST" })
   .inputValidator((data: DevLoginInput) => data)
-  .handler(async ({ data }) => {
+  .handler(async ({ data }: { data: DevLoginInput }) => {
+    if (process.env.NODE_ENV !== "development") {
+      throw new Error("Dev login is only available in development mode");
+    }
     const { email, name, isAdmin, isPremium } = data;
     const mockGoogleUser = createMockGoogleUser(email, name);
     const existingAccount = await getAccountByGoogleIdUseCase(mockGoogleUser.sub);
@@ -80,7 +83,10 @@ export const getDevUsersFn = createServerFn({ method: "GET" }).handler(async () 
 
 export const switchDevUserFn = createServerFn({ method: "POST" })
   .inputValidator(z.object({ userId: z.number() }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data }: { data: { userId: number } }) => {
+    if (process.env.NODE_ENV !== "development") {
+      throw new Error("Dev login is only available in development mode");
+    }
     const { userId } = data;
     const account = await database.query.accounts.findFirst({ where: eq(accounts.userId, userId) });
     if (!account || !account.googleId?.startsWith("dev-")) throw new Error("Not a dev user");
