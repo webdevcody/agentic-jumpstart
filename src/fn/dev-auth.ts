@@ -1,5 +1,8 @@
-import { createServerFn } from "@tanstack/react-start";
+import { createMiddleware, createServerFn } from "@tanstack/react-start";
+import type { } from "@tanstack/server-functions-plugin"
 import { eq, like } from "drizzle-orm";
+import { M } from "vitest/dist/chunks/environment.d.cL3nLXbE.js";
+import { an } from "vitest/dist/chunks/reporters.d.BFLkQcL6.js";
 import { z } from "zod";
 import { database } from "~/db";
 import { accounts, profiles, users } from "~/db/schema";
@@ -10,7 +13,24 @@ import { getCurrentUser, setSession } from "~/utils/session";
 
 type DevLoginInput = { email: string; name: string; isAdmin: boolean; isPremium: boolean };
 
-const DICEBEAR_STYLES = ["lorelei", "avataaars", "bottts", "fun-emoji", "notionists", "open-peeps", "personas", "pixel-art"];
+const DICEBEAR_STYLES = [
+  "lorelei",
+  "avataaars",
+  "bottts",
+  "fun-emoji",
+  "notionists",
+  "open-peeps",
+  "personas",
+  "pixel-art"
+];
+
+const DevGuardMiddleware = createMiddleware()
+  .server(async ({ next }) => {
+    const isDev = process.env.NODE_ENV === "development";
+    if (!isDev) throw new Error("Dev auth functions can only be used in development mode.");
+    return next();
+  })
+
 
 function simpleHash(str: string): number {
   let hash = 0;
@@ -39,10 +59,9 @@ function createMockGoogleUser(email: string, name: string): GoogleUser {
 
 export const devLoginFn = createServerFn({ method: "POST" })
   .inputValidator((data: DevLoginInput) => data)
+  .middleware([DevGuardMiddleware])
   .handler(async ({ data }: { data: DevLoginInput }) => {
-    if (process.env.NODE_ENV !== "development") {
-      throw new Error("Dev login is only available in development mode");
-    }
+
     const { email, name, isAdmin, isPremium } = data;
     const mockGoogleUser = createMockGoogleUser(email, name);
     const existingAccount = await getAccountByGoogleIdUseCase(mockGoogleUser.sub);
@@ -59,34 +78,35 @@ export const devLoginFn = createServerFn({ method: "POST" })
     return { success: true, userId };
   });
 
-export const getDevUsersFn = createServerFn({ method: "GET" }).handler(async () => {
-  const devAccounts = await database.query.accounts.findMany({ where: like(accounts.googleId, "dev-%") });
-  const userIds = devAccounts.map((a) => a.userId);
-  if (userIds.length === 0) return [];
+export const getDevUsersFn = createServerFn({ method: "GET" })
+  .middleware([DevGuardMiddleware])
+  .handler(async () => {
 
-  const devUsers = await Promise.all(
-    userIds.map(async (userId) => {
-      const user = await database.query.users.findFirst({ where: eq(users.id, userId) });
-      const profile = await database.query.profiles.findFirst({ where: eq(profiles.userId, userId) });
-      return {
-        id: userId,
-        email: user?.email ?? "",
-        name: profile?.displayName ?? "",
-        image: profile?.image ?? "",
-        isAdmin: user?.isAdmin ?? false,
-        isPremium: user?.isPremium ?? false,
-      };
-    })
-  );
-  return devUsers;
-});
+    const devAccounts = await database.query.accounts.findMany({ where: like(accounts.googleId, "dev-%") });
+    const userIds = devAccounts.map((a) => a.userId);
+    if (userIds.length === 0) return [];
+
+    const devUsers = await Promise.all(
+      userIds.map(async (userId) => {
+        const user = await database.query.users.findFirst({ where: eq(users.id, userId) });
+        const profile = await database.query.profiles.findFirst({ where: eq(profiles.userId, userId) });
+        return {
+          id: userId,
+          email: user?.email ?? "",
+          name: profile?.displayName ?? "",
+          image: profile?.image ?? "",
+          isAdmin: user?.isAdmin ?? false,
+          isPremium: user?.isPremium ?? false,
+        };
+      })
+    );
+    return devUsers;
+  });
 
 export const switchDevUserFn = createServerFn({ method: "POST" })
   .inputValidator(z.object({ userId: z.number() }))
+  .middleware([DevGuardMiddleware])
   .handler(async ({ data }: { data: { userId: number } }) => {
-    if (process.env.NODE_ENV !== "development") {
-      throw new Error("Dev login is only available in development mode");
-    }
     const { userId } = data;
     const account = await database.query.accounts.findFirst({ where: eq(accounts.userId, userId) });
     if (!account || !account.googleId?.startsWith("dev-")) throw new Error("Not a dev user");
@@ -94,7 +114,9 @@ export const switchDevUserFn = createServerFn({ method: "POST" })
     return { success: true };
   });
 
-export const getDevMenuConfigFn = createServerFn({ method: "GET" }).handler(async () => {
-  const user = await getCurrentUser();
-  return { isEnabled: true, currentUserId: user?.id ?? null };
-});
+export const getDevMenuConfigFn = createServerFn({ method: "GET" })
+  .middleware([DevGuardMiddleware])
+  .handler(async () => {
+    const user = await getCurrentUser();
+    return { isEnabled: true, currentUserId: user?.id ?? null };
+  });
