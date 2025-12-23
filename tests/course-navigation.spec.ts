@@ -18,7 +18,8 @@ test.describe("Course Navigation", () => {
     await page.goto(`/learn/${TEST_CONFIG.SEGMENTS.WELCOME_TO_COURSE.slug}`);
 
     // verify the title of the page says "Welcome to the Course"
-    await expect(page.locator("h1")).toHaveText(
+    // Note: segment title is in h2 (video-header), h1 is the site logo
+    await expect(page.locator("h2")).toHaveText(
       TEST_CONFIG.SEGMENTS.WELCOME_TO_COURSE.title
     );
 
@@ -35,7 +36,7 @@ test.describe("Course Navigation", () => {
       .locator(TEST_CONFIG.CSS_CLASSES.SEGMENT_ITEM)
       .filter({ has: segment });
     await expect(segmentItem).toHaveClass(
-      TEST_CONFIG.CSS_CLASSES.BORDER_THEME_200
+      TEST_CONFIG.CSS_CLASSES.SEGMENT_ACTIVE
     );
 
     // verify the next segment is visible
@@ -52,15 +53,15 @@ test.describe("Course Navigation", () => {
       page
         .locator(TEST_CONFIG.CSS_CLASSES.SEGMENT_ITEM)
         .filter({ has: nextSegment })
-    ).toHaveClass(TEST_CONFIG.CSS_CLASSES.BORDER_THEME_200);
+    ).toHaveClass(TEST_CONFIG.CSS_CLASSES.SEGMENT_ACTIVE);
 
     // previous segment should not be active
-    await expect(segmentItem).toHaveClass(
-      TEST_CONFIG.CSS_CLASSES.BORDER_TRANSPARENT
+    await expect(segmentItem).not.toHaveClass(
+      TEST_CONFIG.CSS_CLASSES.SEGMENT_ACTIVE
     );
 
     // verify the title of the course changes to "Setting Up Your Environment"
-    await expect(page.locator("h1")).toHaveText(
+    await expect(page.locator("h2")).toHaveText(
       TEST_CONFIG.SEGMENTS.SETTING_UP_ENVIRONMENT.title
     );
 
@@ -69,28 +70,29 @@ test.describe("Course Navigation", () => {
       name: TEST_CONFIG.UI_TEXT.PREVIOUS_LESSON_BUTTON,
     });
     await backButton.click();
-    await expect(page.locator("h1")).toHaveText(
+    await expect(page.locator("h2")).toHaveText(
       TEST_CONFIG.SEGMENTS.WELCOME_TO_COURSE.title
     );
 
     // verify a user can click the next button to go to the next segment
+    // Progress format is now "X/Y" instead of "X of Y completed"
     await expect(
-      module.locator("span", { hasText: "0 of 3 completed" })
+      module.locator("span", { hasText: "0/3" })
     ).toBeVisible();
     const nextButton = page.getByRole("button", {
       name: TEST_CONFIG.UI_TEXT.NEXT_VIDEO_BUTTON,
     });
     await nextButton.click();
-    await expect(page.locator("h1")).toHaveText(
+    await expect(page.locator("h2")).toHaveText(
       TEST_CONFIG.SEGMENTS.SETTING_UP_ENVIRONMENT.title
     );
 
     // verify the check icon exists in the previous segment (should be completed)
     await expect(segmentItem.locator(".lucide-check")).toBeVisible();
 
-    // Verify that the progress indicator shows 50%
+    // Verify that the progress indicator shows completion
     await expect(
-      module.locator("span", { hasText: "1 of 3 completed" })
+      module.locator("span", { hasText: "1/3" })
     ).toBeVisible();
   });
 
@@ -103,7 +105,7 @@ test.describe("Course Navigation", () => {
     await page.goto(`/learn/${TEST_CONFIG.SEGMENTS.FIRST_PROJECT.slug}`);
 
     // Verify we're on the correct page
-    await expect(page.locator("h1")).toHaveText(
+    await expect(page.locator("h2")).toHaveText(
       TEST_CONFIG.SEGMENTS.FIRST_PROJECT.title
     );
 
@@ -121,9 +123,9 @@ test.describe("Course Navigation", () => {
     );
     await expect(advancedPatternsSegment).toBeVisible();
 
-    // Verify initial progress is 0 of 2 for Advanced Topics module
+    // Verify initial progress is 0/2 for Advanced Topics module
     await expect(
-      advancedModule.locator("span", { hasText: "0 of 2 completed" })
+      advancedModule.locator("span", { hasText: "0/2" })
     ).toBeVisible();
 
     // Click the "Next Video" button - this should navigate to the next segment
@@ -134,14 +136,14 @@ test.describe("Course Navigation", () => {
     await nextButton.click();
 
     // Verify we navigated to the next segment (Advanced Patterns - premium)
-    await expect(page.locator("h1")).toHaveText(
+    await expect(page.locator("h2")).toHaveText(
       TEST_CONFIG.SEGMENTS.ADVANCED_PATTERNS.title
     );
 
-    // Verify the progress for Advanced Topics module is still 0 of 2
+    // Verify the progress for Advanced Topics module is still 0/2
     // The premium video should NOT have been marked as watched
     await expect(
-      advancedModule.locator("span", { hasText: "0 of 2 completed" })
+      advancedModule.locator("span", { hasText: "0/2" })
     ).toBeVisible();
 
     // The segment item should NOT have a check icon
@@ -151,15 +153,17 @@ test.describe("Course Navigation", () => {
     await expect(advancedPatternsSegmentItem.locator(".lucide-check")).not.toBeVisible();
   });
 
-  test("A user can manually mark a video as complete using the dropdown menu", async ({
+  test("A user can manually mark a video as complete using the Mark as Complete button", async ({
     page,
   }) => {
     await createAndLoginAsNewRegularUser(page);
-    await page.goto(`/learn/${TEST_CONFIG.SEGMENTS.WELCOME_TO_COURSE.slug}`);
+
+    // Navigate to Setting Up Your Environment segment
+    await page.goto(`/learn/${TEST_CONFIG.SEGMENTS.SETTING_UP_ENVIRONMENT.slug}`);
 
     // Verify we're on the correct page
-    await expect(page.locator("h1")).toHaveText(
-      TEST_CONFIG.SEGMENTS.WELCOME_TO_COURSE.title
+    await expect(page.locator("h2")).toHaveText(
+      TEST_CONFIG.SEGMENTS.SETTING_UP_ENVIRONMENT.title
     );
 
     // Get the module to check progress
@@ -168,12 +172,12 @@ test.describe("Course Navigation", () => {
     );
     await expect(module).toBeVisible();
 
-    // Verify initial progress is 0 of 3
+    // Verify initial progress is 0/3
     await expect(
-      module.locator("span", { hasText: "0 of 3 completed" })
+      module.locator("span", { hasText: "0/3" })
     ).toBeVisible();
 
-    // Find the segment item for "Setting Up Your Environment" (not the currently active one)
+    // Find the segment item for this segment
     const setupSegment = page.getByLabel(TEST_CONFIG.LABELS.SELECT_SEGMENT_SETUP);
     await expect(setupSegment).toBeVisible();
 
@@ -185,18 +189,10 @@ test.describe("Course Navigation", () => {
     await expect(setupSegmentItem.locator(".lucide-circle-play")).toBeVisible();
     await expect(setupSegmentItem.locator(".lucide-check")).not.toBeVisible();
 
-    // Hover over the segment item to reveal the dropdown menu trigger
-    await setupSegmentItem.hover();
-
-    // Click the dropdown menu trigger (the three dots button)
-    const menuTrigger = setupSegmentItem.getByLabel("Segment options");
-    await expect(menuTrigger).toBeVisible();
-    await menuTrigger.click();
-
-    // Click "Mark as Complete" option
-    const markCompleteOption = page.getByRole("menuitem", { name: /mark as complete/i });
-    await expect(markCompleteOption).toBeVisible();
-    await markCompleteOption.click();
+    // Click the "Mark as Complete" button in the video header
+    const markCompleteButton = page.getByRole("button", { name: /mark as complete/i });
+    await expect(markCompleteButton).toBeVisible();
+    await markCompleteButton.click();
 
     // Verify the success toast appears
     await expect(page.getByText("Video marked as complete")).toBeVisible();
@@ -204,13 +200,9 @@ test.describe("Course Navigation", () => {
     // Verify the segment now shows the check icon (completed)
     await expect(setupSegmentItem.locator(".lucide-check")).toBeVisible();
 
-    // Verify progress updated to 1 of 3
+    // Verify progress updated to 1/3
     await expect(
-      module.locator("span", { hasText: "1 of 3 completed" })
+      module.locator("span", { hasText: "1/3" })
     ).toBeVisible();
-
-    // Verify the dropdown menu is no longer visible for the completed segment
-    await setupSegmentItem.hover();
-    await expect(setupSegmentItem.getByLabel("Segment options")).not.toBeVisible();
   });
 });
