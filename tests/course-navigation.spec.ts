@@ -44,11 +44,12 @@ test.describe("Course Navigation", () => {
       TEST_CONFIG.LABELS.SELECT_SEGMENT_SETUP
     );
     await expect(nextSegment).toBeVisible();
-    // verify the check icon exists in the previous segment (should be completed)
-    segmentItem.screenshot();
+    // verify the play icon exists in the current segment (not yet completed)
     await expect(segmentItem.locator(".lucide-circle-play")).toBeVisible();
 
     await nextSegment.click();
+    // Wait for navigation to complete
+    await page.waitForURL(`**/learn/${TEST_CONFIG.SEGMENTS.SETTING_UP_ENVIRONMENT.slug}`);
     await expect(
       page
         .locator(TEST_CONFIG.CSS_CLASSES.SEGMENT_ITEM)
@@ -70,6 +71,8 @@ test.describe("Course Navigation", () => {
       name: TEST_CONFIG.UI_TEXT.PREVIOUS_LESSON_BUTTON,
     });
     await backButton.click();
+    // Wait for navigation to complete
+    await page.waitForURL(`**/learn/${TEST_CONFIG.SEGMENTS.WELCOME_TO_COURSE.slug}`);
     await expect(page.locator("h2")).toHaveText(
       TEST_CONFIG.SEGMENTS.WELCOME_TO_COURSE.title
     );
@@ -83,6 +86,8 @@ test.describe("Course Navigation", () => {
       name: TEST_CONFIG.UI_TEXT.NEXT_VIDEO_BUTTON,
     });
     await nextButton.click();
+    // Wait for navigation to complete
+    await page.waitForURL(`**/learn/${TEST_CONFIG.SEGMENTS.SETTING_UP_ENVIRONMENT.slug}`);
     await expect(page.locator("h2")).toHaveText(
       TEST_CONFIG.SEGMENTS.SETTING_UP_ENVIRONMENT.title
     );
@@ -134,6 +139,8 @@ test.describe("Course Navigation", () => {
       name: TEST_CONFIG.UI_TEXT.NEXT_VIDEO_BUTTON,
     });
     await nextButton.click();
+    // Wait for navigation to complete
+    await page.waitForURL(`**/learn/${TEST_CONFIG.SEGMENTS.ADVANCED_PATTERNS.slug}`);
 
     // Verify we navigated to the next segment (Advanced Patterns - premium)
     await expect(page.locator("h2")).toHaveText(
