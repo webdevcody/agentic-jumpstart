@@ -23,7 +23,7 @@ import { shouldShowEarlyAccessFn } from "~/fn/early-access";
 import { useAnalytics } from "~/hooks/use-analytics";
 import { publicEnv } from "~/utils/env-public";
 import { DevFloatingMenu } from "~/components/dev-menu/dev-floating-menu";
-import { getCurrentUser } from "~/utils/session";
+import { getCurrentUserIdFn } from "~/fn/auth";
 
 // OpenGraph image configuration
 const OG_IMAGE_PATH = "/marketing.png";
@@ -48,8 +48,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       // Dev mode: get current user for dev menu
       let currentUserId: number | null = null;
       if (isDev) {
-        const user = await getCurrentUser();
-        currentUserId = user?.id ?? null;
+        currentUserId = await getCurrentUserIdFn();
       }
 
       return { shouldShowEarlyAccess, isDev, currentUserId };

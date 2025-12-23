@@ -8,8 +8,6 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { createFileRoute } from '@tanstack/react-router'
-
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
@@ -85,8 +83,6 @@ import { Route as AdminNewsIdEditRouteImport } from './routes/admin/news/$id/edi
 import { Route as AdminLaunchKitsEditIdRouteImport } from './routes/admin/launch-kits/edit/$id'
 import { Route as AdminBlogIdEditRouteImport } from './routes/admin/blog/$id/edit'
 import { Route as ApiLoginGoogleCallbackIndexRouteImport } from './routes/api/login/google/callback/index'
-
-const LearnSlugRouteImport = createFileRoute('/learn/$slug')()
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -196,11 +192,6 @@ const AdminRouteRoute = AdminRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LearnSlugRoute = LearnSlugRouteImport.update({
-  id: '/learn/$slug',
-  path: '/learn/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LearnIndexRoute = LearnIndexRouteImport.update({
@@ -354,13 +345,14 @@ const AdminBlogIndexRoute = AdminBlogIndexRouteImport.update({
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const LearnSlugEditRoute = LearnSlugEditRouteImport.update({
-  id: '/edit',
-  path: '/edit',
-  getParentRoute: () => LearnSlugRoute,
+  id: '/learn/$slug/edit',
+  path: '/learn/$slug/edit',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const LearnSlugLayoutRoute = LearnSlugLayoutRouteImport.update({
-  id: '/_layout',
-  getParentRoute: () => LearnSlugRoute,
+  id: '/learn/$slug/_layout',
+  path: '/learn/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   id: '/api/stripe/webhook',
@@ -601,7 +593,6 @@ export interface FileRoutesByTo {
   '/admin/launch-kits/tags': typeof AdminLaunchKitsTagsRoute
   '/admin/news/new': typeof AdminNewsNewRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
-  '/learn/$slug': typeof LearnSlugLayoutIndexRoute
   '/learn/$slug/edit': typeof LearnSlugEditRoute
   '/admin/blog': typeof AdminBlogIndexRoute
   '/admin/conversions': typeof AdminConversionsIndexRoute
@@ -614,6 +605,7 @@ export interface FileRoutesByTo {
   '/api/segments/$segmentId/video': typeof ApiSegmentsSegmentIdVideoRoute
   '/admin/launch-kits/create': typeof AdminLaunchKitsCreateIndexRoute
   '/api/login/google': typeof ApiLoginGoogleIndexRoute
+  '/learn/$slug': typeof LearnSlugLayoutIndexRoute
   '/api/login/google/callback': typeof ApiLoginGoogleCallbackIndexRoute
 }
 export interface FileRoutesById {
@@ -677,7 +669,6 @@ export interface FileRoutesById {
   '/admin/launch-kits/tags': typeof AdminLaunchKitsTagsRoute
   '/admin/news/new': typeof AdminNewsNewRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
-  '/learn/$slug': typeof LearnSlugRouteWithChildren
   '/learn/$slug/_layout': typeof LearnSlugLayoutRouteWithChildren
   '/learn/$slug/edit': typeof LearnSlugEditRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
@@ -830,7 +821,6 @@ export interface FileRouteTypes {
     | '/admin/launch-kits/tags'
     | '/admin/news/new'
     | '/api/stripe/webhook'
-    | '/learn/$slug'
     | '/learn/$slug/edit'
     | '/admin/blog'
     | '/admin/conversions'
@@ -843,6 +833,7 @@ export interface FileRouteTypes {
     | '/api/segments/$segmentId/video'
     | '/admin/launch-kits/create'
     | '/api/login/google'
+    | '/learn/$slug'
     | '/api/login/google/callback'
   id:
     | '__root__'
@@ -905,7 +896,6 @@ export interface FileRouteTypes {
     | '/admin/launch-kits/tags'
     | '/admin/news/new'
     | '/api/stripe/webhook'
-    | '/learn/$slug'
     | '/learn/$slug/_layout'
     | '/learn/$slug/edit'
     | '/admin/blog/'
@@ -963,7 +953,8 @@ export interface RootRouteChildren {
   LaunchKitsIndexRoute: typeof LaunchKitsIndexRoute
   LearnIndexRoute: typeof LearnIndexRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
-  LearnSlugRoute: typeof LearnSlugRouteWithChildren
+  LearnSlugLayoutRoute: typeof LearnSlugLayoutRouteWithChildren
+  LearnSlugEditRoute: typeof LearnSlugEditRoute
   ApiSegmentsSegmentIdVideoRoute: typeof ApiSegmentsSegmentIdVideoRoute
   ApiLoginGoogleIndexRoute: typeof ApiLoginGoogleIndexRoute
   ApiLoginGoogleCallbackIndexRoute: typeof ApiLoginGoogleCallbackIndexRoute
@@ -1123,13 +1114,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/learn/$slug': {
-      id: '/learn/$slug'
-      path: '/learn/$slug'
-      fullPath: '/learn/$slug'
-      preLoaderRoute: typeof LearnSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/learn/': {
@@ -1344,17 +1328,17 @@ declare module '@tanstack/react-router' {
     }
     '/learn/$slug/edit': {
       id: '/learn/$slug/edit'
-      path: '/edit'
+      path: '/learn/$slug/edit'
       fullPath: '/learn/$slug/edit'
       preLoaderRoute: typeof LearnSlugEditRouteImport
-      parentRoute: typeof LearnSlugRoute
+      parentRoute: typeof rootRouteImport
     }
     '/learn/$slug/_layout': {
       id: '/learn/$slug/_layout'
       path: '/learn/$slug'
       fullPath: '/learn/$slug'
       preLoaderRoute: typeof LearnSlugLayoutRouteImport
-      parentRoute: typeof LearnSlugRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/stripe/webhook': {
       id: '/api/stripe/webhook'
@@ -1599,20 +1583,6 @@ const LearnSlugLayoutRouteWithChildren = LearnSlugLayoutRoute._addFileChildren(
   LearnSlugLayoutRouteChildren,
 )
 
-interface LearnSlugRouteChildren {
-  LearnSlugLayoutRoute: typeof LearnSlugLayoutRouteWithChildren
-  LearnSlugEditRoute: typeof LearnSlugEditRoute
-}
-
-const LearnSlugRouteChildren: LearnSlugRouteChildren = {
-  LearnSlugLayoutRoute: LearnSlugLayoutRouteWithChildren,
-  LearnSlugEditRoute: LearnSlugEditRoute,
-}
-
-const LearnSlugRouteWithChildren = LearnSlugRoute._addFileChildren(
-  LearnSlugRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRouteRoute: AdminRouteRouteWithChildren,
@@ -1653,7 +1623,8 @@ const rootRouteChildren: RootRouteChildren = {
   LaunchKitsIndexRoute: LaunchKitsIndexRoute,
   LearnIndexRoute: LearnIndexRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
-  LearnSlugRoute: LearnSlugRouteWithChildren,
+  LearnSlugLayoutRoute: LearnSlugLayoutRouteWithChildren,
+  LearnSlugEditRoute: LearnSlugEditRoute,
   ApiSegmentsSegmentIdVideoRoute: ApiSegmentsSegmentIdVideoRoute,
   ApiLoginGoogleIndexRoute: ApiLoginGoogleIndexRoute,
   ApiLoginGoogleCallbackIndexRoute: ApiLoginGoogleCallbackIndexRoute,
@@ -1661,3 +1632,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
