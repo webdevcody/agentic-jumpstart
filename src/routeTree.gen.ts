@@ -8,6 +8,8 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
+import { createFileRoute } from '@tanstack/react-router'
+
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
@@ -22,6 +24,7 @@ import { Route as NewsRouteImport } from './routes/news'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HealthRouteImport } from './routes/health'
+import { Route as DevLoginRouteImport } from './routes/dev-login'
 import { Route as CreateTestimonialRouteImport } from './routes/create-testimonial'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as CancelRouteImport } from './routes/cancel'
@@ -82,6 +85,8 @@ import { Route as AdminNewsIdEditRouteImport } from './routes/admin/news/$id/edi
 import { Route as AdminLaunchKitsEditIdRouteImport } from './routes/admin/launch-kits/edit/$id'
 import { Route as AdminBlogIdEditRouteImport } from './routes/admin/blog/$id/edit'
 import { Route as ApiLoginGoogleCallbackIndexRouteImport } from './routes/api/login/google/callback/index'
+
+const LearnSlugRouteImport = createFileRoute('/learn/$slug')()
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -148,6 +153,11 @@ const HealthRoute = HealthRouteImport.update({
   path: '/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevLoginRoute = DevLoginRouteImport.update({
+  id: '/dev-login',
+  path: '/dev-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CreateTestimonialRoute = CreateTestimonialRouteImport.update({
   id: '/create-testimonial',
   path: '/create-testimonial',
@@ -186,6 +196,11 @@ const AdminRouteRoute = AdminRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LearnSlugRoute = LearnSlugRouteImport.update({
+  id: '/learn/$slug',
+  path: '/learn/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LearnIndexRoute = LearnIndexRouteImport.update({
@@ -339,14 +354,13 @@ const AdminBlogIndexRoute = AdminBlogIndexRouteImport.update({
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const LearnSlugEditRoute = LearnSlugEditRouteImport.update({
-  id: '/learn/$slug/edit',
-  path: '/learn/$slug/edit',
-  getParentRoute: () => rootRouteImport,
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => LearnSlugRoute,
 } as any)
 const LearnSlugLayoutRoute = LearnSlugLayoutRouteImport.update({
-  id: '/learn/$slug/_layout',
-  path: '/learn/$slug',
-  getParentRoute: () => rootRouteImport,
+  id: '/_layout',
+  getParentRoute: () => LearnSlugRoute,
 } as any)
 const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   id: '/api/stripe/webhook',
@@ -462,6 +476,7 @@ export interface FileRoutesByFullPath {
   '/cancel': typeof CancelRoute
   '/community': typeof CommunityRoute
   '/create-testimonial': typeof CreateTestimonialRoute
+  '/dev-login': typeof DevLoginRoute
   '/health': typeof HealthRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -537,6 +552,7 @@ export interface FileRoutesByTo {
   '/cancel': typeof CancelRoute
   '/community': typeof CommunityRoute
   '/create-testimonial': typeof CreateTestimonialRoute
+  '/dev-login': typeof DevLoginRoute
   '/health': typeof HealthRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -585,6 +601,7 @@ export interface FileRoutesByTo {
   '/admin/launch-kits/tags': typeof AdminLaunchKitsTagsRoute
   '/admin/news/new': typeof AdminNewsNewRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/learn/$slug': typeof LearnSlugLayoutIndexRoute
   '/learn/$slug/edit': typeof LearnSlugEditRoute
   '/admin/blog': typeof AdminBlogIndexRoute
   '/admin/conversions': typeof AdminConversionsIndexRoute
@@ -597,7 +614,6 @@ export interface FileRoutesByTo {
   '/api/segments/$segmentId/video': typeof ApiSegmentsSegmentIdVideoRoute
   '/admin/launch-kits/create': typeof AdminLaunchKitsCreateIndexRoute
   '/api/login/google': typeof ApiLoginGoogleIndexRoute
-  '/learn/$slug': typeof LearnSlugLayoutIndexRoute
   '/api/login/google/callback': typeof ApiLoginGoogleCallbackIndexRoute
 }
 export interface FileRoutesById {
@@ -610,6 +626,7 @@ export interface FileRoutesById {
   '/cancel': typeof CancelRoute
   '/community': typeof CommunityRoute
   '/create-testimonial': typeof CreateTestimonialRoute
+  '/dev-login': typeof DevLoginRoute
   '/health': typeof HealthRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -660,6 +677,7 @@ export interface FileRoutesById {
   '/admin/launch-kits/tags': typeof AdminLaunchKitsTagsRoute
   '/admin/news/new': typeof AdminNewsNewRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/learn/$slug': typeof LearnSlugRouteWithChildren
   '/learn/$slug/_layout': typeof LearnSlugLayoutRouteWithChildren
   '/learn/$slug/edit': typeof LearnSlugEditRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
@@ -687,6 +705,7 @@ export interface FileRouteTypes {
     | '/cancel'
     | '/community'
     | '/create-testimonial'
+    | '/dev-login'
     | '/health'
     | '/login'
     | '/members'
@@ -762,6 +781,7 @@ export interface FileRouteTypes {
     | '/cancel'
     | '/community'
     | '/create-testimonial'
+    | '/dev-login'
     | '/health'
     | '/login'
     | '/members'
@@ -810,6 +830,7 @@ export interface FileRouteTypes {
     | '/admin/launch-kits/tags'
     | '/admin/news/new'
     | '/api/stripe/webhook'
+    | '/learn/$slug'
     | '/learn/$slug/edit'
     | '/admin/blog'
     | '/admin/conversions'
@@ -822,7 +843,6 @@ export interface FileRouteTypes {
     | '/api/segments/$segmentId/video'
     | '/admin/launch-kits/create'
     | '/api/login/google'
-    | '/learn/$slug'
     | '/api/login/google/callback'
   id:
     | '__root__'
@@ -834,6 +854,7 @@ export interface FileRouteTypes {
     | '/cancel'
     | '/community'
     | '/create-testimonial'
+    | '/dev-login'
     | '/health'
     | '/login'
     | '/members'
@@ -884,6 +905,7 @@ export interface FileRouteTypes {
     | '/admin/launch-kits/tags'
     | '/admin/news/new'
     | '/api/stripe/webhook'
+    | '/learn/$slug'
     | '/learn/$slug/_layout'
     | '/learn/$slug/edit'
     | '/admin/blog/'
@@ -910,6 +932,7 @@ export interface RootRouteChildren {
   CancelRoute: typeof CancelRoute
   CommunityRoute: typeof CommunityRoute
   CreateTestimonialRoute: typeof CreateTestimonialRoute
+  DevLoginRoute: typeof DevLoginRoute
   HealthRoute: typeof HealthRoute
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
@@ -940,8 +963,7 @@ export interface RootRouteChildren {
   LaunchKitsIndexRoute: typeof LaunchKitsIndexRoute
   LearnIndexRoute: typeof LearnIndexRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
-  LearnSlugLayoutRoute: typeof LearnSlugLayoutRouteWithChildren
-  LearnSlugEditRoute: typeof LearnSlugEditRoute
+  LearnSlugRoute: typeof LearnSlugRouteWithChildren
   ApiSegmentsSegmentIdVideoRoute: typeof ApiSegmentsSegmentIdVideoRoute
   ApiLoginGoogleIndexRoute: typeof ApiLoginGoogleIndexRoute
   ApiLoginGoogleCallbackIndexRoute: typeof ApiLoginGoogleCallbackIndexRoute
@@ -1040,6 +1062,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dev-login': {
+      id: '/dev-login'
+      path: '/dev-login'
+      fullPath: '/dev-login'
+      preLoaderRoute: typeof DevLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/create-testimonial': {
       id: '/create-testimonial'
       path: '/create-testimonial'
@@ -1094,6 +1123,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/learn/$slug': {
+      id: '/learn/$slug'
+      path: '/learn/$slug'
+      fullPath: '/learn/$slug'
+      preLoaderRoute: typeof LearnSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/learn/': {
@@ -1308,17 +1344,17 @@ declare module '@tanstack/react-router' {
     }
     '/learn/$slug/edit': {
       id: '/learn/$slug/edit'
-      path: '/learn/$slug/edit'
+      path: '/edit'
       fullPath: '/learn/$slug/edit'
       preLoaderRoute: typeof LearnSlugEditRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof LearnSlugRoute
     }
     '/learn/$slug/_layout': {
       id: '/learn/$slug/_layout'
       path: '/learn/$slug'
       fullPath: '/learn/$slug'
       preLoaderRoute: typeof LearnSlugLayoutRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof LearnSlugRoute
     }
     '/api/stripe/webhook': {
       id: '/api/stripe/webhook'
@@ -1563,6 +1599,20 @@ const LearnSlugLayoutRouteWithChildren = LearnSlugLayoutRoute._addFileChildren(
   LearnSlugLayoutRouteChildren,
 )
 
+interface LearnSlugRouteChildren {
+  LearnSlugLayoutRoute: typeof LearnSlugLayoutRouteWithChildren
+  LearnSlugEditRoute: typeof LearnSlugEditRoute
+}
+
+const LearnSlugRouteChildren: LearnSlugRouteChildren = {
+  LearnSlugLayoutRoute: LearnSlugLayoutRouteWithChildren,
+  LearnSlugEditRoute: LearnSlugEditRoute,
+}
+
+const LearnSlugRouteWithChildren = LearnSlugRoute._addFileChildren(
+  LearnSlugRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRouteRoute: AdminRouteRouteWithChildren,
@@ -1572,6 +1622,7 @@ const rootRouteChildren: RootRouteChildren = {
   CancelRoute: CancelRoute,
   CommunityRoute: CommunityRoute,
   CreateTestimonialRoute: CreateTestimonialRoute,
+  DevLoginRoute: DevLoginRoute,
   HealthRoute: HealthRoute,
   LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,
@@ -1602,8 +1653,7 @@ const rootRouteChildren: RootRouteChildren = {
   LaunchKitsIndexRoute: LaunchKitsIndexRoute,
   LearnIndexRoute: LearnIndexRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
-  LearnSlugLayoutRoute: LearnSlugLayoutRouteWithChildren,
-  LearnSlugEditRoute: LearnSlugEditRoute,
+  LearnSlugRoute: LearnSlugRouteWithChildren,
   ApiSegmentsSegmentIdVideoRoute: ApiSegmentsSegmentIdVideoRoute,
   ApiLoginGoogleIndexRoute: ApiLoginGoogleIndexRoute,
   ApiLoginGoogleCallbackIndexRoute: ApiLoginGoogleCallbackIndexRoute,
@@ -1611,12 +1661,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
