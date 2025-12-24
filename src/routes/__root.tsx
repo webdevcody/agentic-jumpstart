@@ -119,6 +119,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const routerState = useRouterState();
   const loaderData = Route.useLoaderData();
   const shouldShowEarlyAccess = loaderData?.shouldShowEarlyAccess ?? false;
+  const bannerMessage = publicEnv.VITE_BANNER_MESSAGE;
+  const showBanner = !!bannerMessage;
   const showFooter =
     !routerState.location.pathname.startsWith("/learn") &&
     !routerState.location.pathname.startsWith("/admin") &&
@@ -209,15 +211,25 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="min-h-screen flex flex-col">
         <ThemeProvider>
-          {/* Login bug banner */}
-          <div className="fixed top-0 left-0 right-0 z-[60] bg-yellow-500 dark:bg-yellow-600 text-yellow-900 dark:text-yellow-100 border-b border-yellow-600 dark:border-yellow-700">
-            <div className="container mx-auto px-4 py-2 text-center text-sm font-medium">
-              We are working on fixing a bug related to login. Thank you for your patience.
+          {/* Configurable banner */}
+          {showBanner && (
+            <div className="fixed top-0 left-0 right-0 z-[60] bg-yellow-500 dark:bg-yellow-600 text-yellow-900 dark:text-yellow-100 border-b border-yellow-600 dark:border-yellow-700">
+              <div className="container mx-auto px-4 py-2 text-center text-sm font-medium">
+                {bannerMessage}
+              </div>
             </div>
-          </div>
-          {showHeader && <Header />}
+          )}
+          {showHeader && <Header hasBanner={showBanner} />}
           <main
-            className={`overflow-x-hidden flex-1 ${showHeader ? "mt-[104px]" : "mt-[40px]"}`}
+            className={`overflow-x-hidden flex-1 ${
+              showHeader
+                ? showBanner
+                  ? "mt-[104px]"
+                  : "mt-16"
+                : showBanner
+                  ? "mt-[40px]"
+                  : ""
+            }`}
           >
             {children}
           </main>
