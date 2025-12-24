@@ -13,7 +13,7 @@ COPY package*.json ./
 # Install dependencies
 # Remove package-lock.json to work around npm bug with optional deps across platforms
 # (https://github.com/npm/cli/issues/4828) - this ensures correct platform binaries are resolved
-RUN npm ci
+RUN rm -f package-lock.json && npm install
 
 # Copy the rest of the application code
 COPY . .
