@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { OAuth2RequestError } from "arctic";
 import { getAccountByGoogleIdUseCase } from "~/use-cases/accounts";
 import { GoogleUser } from "~/use-cases/types";
@@ -31,7 +31,6 @@ export const Route = createFileRoute("/api/login/google/callback/")({
         }
 
         // Clear OAuth cookies by setting empty value with maxAge: 0
-        // Using setCookie instead of deleteCookie to avoid immutable headers error in production
         setCookie("google_oauth_state", "", {
           path: "/",
           httpOnly: true,
@@ -72,21 +71,24 @@ export const Route = createFileRoute("/api/login/google/callback/")({
 
           if (existingAccount) {
             await setSession(existingAccount.userId);
-            return new Response(null, {
-              status: 302,
-              headers: { Location: redirectUri },
-            });
+            // Use throw redirect() to avoid immutable headers error when combining setCookie with Response
+            throw redirect({ to: redirectUri });
           }
 
           const userId = await createGoogleUserUseCase(googleUser);
 
           await setSession(userId);
 
-          return new Response(null, {
-            status: 302,
-            headers: { Location: redirectUri },
-          });
+          // Use throw redirect() to avoid immutable headers error when combining setCookie with Response
+          throw redirect({ to: redirectUri });
         } catch (e) {
+          // Re-throw redirect errors - they're intentional control flow
+          if (
+            e instanceof Response ||
+            (e && typeof e === "object" && "to" in e)
+          ) {
+            throw e;
+          }
           console.error(e);
           // the specific error message depends on the provider
           if (e instanceof OAuth2RequestError) {

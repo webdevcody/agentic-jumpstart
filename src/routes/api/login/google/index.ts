@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { generateCodeVerifier, generateState } from "arctic";
 import { googleAuth } from "~/utils/auth";
 import { setCookie } from "@tanstack/react-start/server";
@@ -49,7 +49,8 @@ export const Route = createFileRoute("/api/login/google/")({
           maxAge: MAX_COOKIE_AGE_SECONDS,
         });
 
-        return Response.redirect(authorizationInfo.href);
+        // Use throw redirect() to avoid immutable headers error when combining setCookie with Response
+        throw redirect({ href: authorizationInfo.href });
       },
     },
   },
