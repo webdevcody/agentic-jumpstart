@@ -1,23 +1,8 @@
 node_modules
-npm-debug.log
 .git
-.gitignore
-.env
-.env.local
-.env.*.local
-.DS_Store
-*.log
-dist
 .output
-coverage
-.nyc_output
-playwright-report
+dist
 test-results
-*.md
-!README.md
-.vscode
-.idea
-*.swp
-*.swo
-*~
+playwright-report
+coverage
 
