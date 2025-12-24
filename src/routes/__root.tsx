@@ -81,6 +81,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           defer: true,
           "data-website-id": "a25b9b45-4772-4642-b752-052c04e52cf5",
         },
+        {
+          src: "https://www.googletagmanager.com/gtag/js?id=AW-11111910585",
+          async: true,
+        },
       ],
     }),
     errorComponent: (props) => {
@@ -154,6 +158,17 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     <html className="font-inter" suppressHydrationWarning>
       <head>
         <HeadContent />
+        {/* Google tag (gtag.js) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'AW-11111910585');
+            `,
+          }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
