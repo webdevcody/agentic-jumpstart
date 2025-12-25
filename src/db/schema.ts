@@ -892,11 +892,15 @@ export const analyticsSessions = tableCreator(
     firstSeen: timestamp("first_seen").notNull().defaultNow(),
     lastSeen: timestamp("last_seen").notNull().defaultNow(),
     referrerSource: text("referrerSource"),
+    gclid: text("gclid"), // Google Click ID for Google Ads tracking
     pageViews: integer("pageViews").notNull().default(0),
     hasPurchaseIntent: boolean("hasPurchaseIntent").notNull().default(false),
     hasConversion: boolean("hasConversion").notNull().default(false),
   },
-  (table) => [index("analytics_sessions_first_seen_idx").on(table.firstSeen)]
+  (table) => [
+    index("analytics_sessions_first_seen_idx").on(table.firstSeen),
+    index("analytics_sessions_gclid_idx").on(table.gclid),
+  ]
 );
 
 export const blogPosts = tableCreator(

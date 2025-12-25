@@ -9,6 +9,7 @@ import { getThumbnailKey } from "~/utils/video-transcoding";
 import { database } from "~/db";
 import { segments, modules } from "~/db/schema";
 import { eq } from "drizzle-orm";
+import { useAuth } from "~/hooks/use-auth";
 
 const getFirstVideoSegmentFn = createServerFn().handler(async () => {
   // Get segments ordered by module order, then segment order
@@ -50,6 +51,7 @@ const getFirstVideoSegmentFn = createServerFn().handler(async () => {
 
 export function HeroSection() {
   const continueSlug = useContinueSlug();
+  const user = useAuth();
 
   const {
     data: firstVideoData,
@@ -112,19 +114,21 @@ export function HeroSection() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Link
-                    to="/purchase"
-                    className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 dark:bg-[#22d3ee] px-6 py-2 text-xs font-black text-white dark:text-[#0b101a] shadow-lg shadow-cyan-500/20 transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_15px_rgba(34,211,238,0.4)]"
-                    onKeyDown={(e) => {
-                      if (e.key === " ") {
-                        e.preventDefault();
-                        e.currentTarget.click();
-                      }
-                    }}
-                  >
-                    <ShoppingCart className="w-4 h-4 stroke-[3.5px]" />
-                    Buy Now
-                  </Link>
+                  {!user?.isPremium && !user?.isAdmin && (
+                    <Link
+                      to="/purchase"
+                      className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 dark:bg-[#22d3ee] px-6 py-2 text-xs font-black text-white dark:text-[#0b101a] shadow-lg shadow-cyan-500/20 transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_15px_rgba(34,211,238,0.4)]"
+                      onKeyDown={(e) => {
+                        if (e.key === " ") {
+                          e.preventDefault();
+                          e.currentTarget.click();
+                        }
+                      }}
+                    >
+                      <ShoppingCart className="w-4 h-4 stroke-[3.5px]" />
+                      Buy Now
+                    </Link>
+                  )}
                   <Link
                     to={"/learn/$slug"}
                     params={{ slug: continueSlug }}

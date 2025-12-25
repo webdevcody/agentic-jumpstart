@@ -135,6 +135,7 @@ const pageViewSchema = z.object({
   sessionId: z.string(),
   pagePath: z.string(),
   fullUrl: z.string().optional(),
+  gclid: z.string().optional(), // Google Click ID
 });
 
 export const trackPageViewFn = createServerFn()
@@ -152,6 +153,7 @@ export const trackPageViewFn = createServerFn()
         headers,
         sessionId: data.sessionId,
         pagePath: data.pagePath, // pagePath now includes UTM params in query string
+        gclid: data.gclid,
       });
 
       return { success: true };

@@ -1,12 +1,16 @@
 import { Link } from "@tanstack/react-router";
-import { Button } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
 import { useEffect, useRef } from "react";
-import { ShoppingCart, Check } from "lucide-react";
+import { ShoppingCart, Check, ArrowRight } from "lucide-react";
 import { GlassPanel } from "~/components/ui/glass-panel";
 import { CircuitBoardPattern } from "~/components/ui/background-patterns";
+import { useAuth } from "~/hooks/use-auth";
+import { useContinueSlug } from "~/hooks/use-continue-slug";
 
 export function PricingSection() {
   const cardRef = useRef<HTMLDivElement>(null);
+  const user = useAuth();
+  const continueSlug = useContinueSlug();
 
   useEffect(() => {
     const card = cardRef.current;
@@ -99,12 +103,27 @@ export function PricingSection() {
                         </span>
                       </li>
                     </ul>
-                    <Link to="/purchase" className="block">
-                      <Button variant="cyan" size="lg" className="w-full rounded-xl px-6 py-2.5 text-sm font-bold">
-                        <ShoppingCart className="mr-2 h-4 w-4" />
-                        Buy Now
-                      </Button>
-                    </Link>
+                    {user?.isPremium || user?.isAdmin ? (
+                      <Link
+                        to="/learn/$slug"
+                        params={{ slug: continueSlug }}
+                        className={buttonVariants({
+                          variant: "glass",
+                          size: "lg",
+                          className: "w-full rounded-xl px-6 py-2.5 text-sm font-bold",
+                        })}
+                      >
+                        Continue with Course
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    ) : (
+                      <Link to="/purchase" className="block">
+                        <Button variant="cyan" size="lg" className="w-full rounded-xl px-6 py-2.5 text-sm font-bold">
+                          <ShoppingCart className="mr-2 h-4 w-4" />
+                          Buy Now
+                        </Button>
+                      </Link>
+                    )}
                   </div>
 
                   {/* Decorative elements - matching hero */}

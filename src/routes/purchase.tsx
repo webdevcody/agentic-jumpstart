@@ -1,3 +1,4 @@
+import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { stripe } from "~/lib/stripe";
@@ -33,6 +34,7 @@ import { PRICING_CONFIG } from "~/config";
 
 const searchSchema = z.object({
   ref: z.string().optional(),
+  checkout: z.boolean().optional(),
 });
 
 export const Route = createFileRoute("/purchase")({
@@ -68,13 +70,35 @@ const checkoutFn = createServerFn()
 
     if (data.analyticsSessionId) {
       metadata.analyticsSessionId = data.analyticsSessionId;
+
+      // Get gclid from analytics session for internal tracking
+      const { getAnalyticsSession } = await import("~/data-access/analytics");
+      const session = await getAnalyticsSession(data.analyticsSessionId);
+
+      console.log(
+        `[Checkout] Analytics session lookup for ${data.analyticsSessionId}:`,
+        {
+          found: !!session,
+          gclid: session?.gclid || "none",
+        }
+      );
+
+      if (session?.gclid) {
+        metadata.gclid = session.gclid;
+      }
+    } else {
+      console.warn(
+        "[Checkout] No analyticsSessionId provided - purchase won't be tracked"
+      );
     }
+
+    const successUrl = `${env.HOST_NAME}/success`;
 
     const sessionConfig: any = {
       payment_method_types: ["card"],
       line_items: [{ price: env.STRIPE_PRICE_ID, quantity: 1 }],
       mode: "payment",
-      success_url: `${env.HOST_NAME}/success`,
+      success_url: successUrl,
       customer_email: context.email,
       cancel_url: `${env.HOST_NAME}/purchase`,
       metadata,
@@ -134,8 +158,31 @@ const features = [
 function RouteComponent() {
   const user = useAuth();
   const continueSlug = useContinueSlug();
-  const { ref } = Route.useSearch();
+  const { ref, checkout } = Route.useSearch();
   const { sessionId } = useAnalytics();
+  const navigate = Route.useNavigate();
+  const hasTriggeredCheckout = React.useRef(false);
+
+  // Auto-trigger checkout if user just logged in with checkout intent
+  // Wait for sessionId to be available (from sessionStorage after OAuth redirect)
+  React.useEffect(() => {
+    if (
+      user &&
+      !user.isPremium &&
+      checkout &&
+      !hasTriggeredCheckout.current &&
+      sessionId
+    ) {
+      hasTriggeredCheckout.current = true;
+      // Remove the checkout param from URL to prevent re-triggering on refresh
+      navigate({
+        search: { ref, checkout: undefined },
+        replace: true,
+      });
+      // Proceed to checkout
+      proceedToCheckout(ref || "");
+    }
+  }, [user, checkout, ref, navigate, sessionId]);
 
   const handlePurchaseClick = async () => {
     // Track purchase intent
@@ -188,7 +235,11 @@ function RouteComponent() {
           <div className="flex items-center justify-center h-full">
             <div className="text-center max-w-5xl">
               {/* Badge - matching hero style */}
-              <GlassPanel variant="cyan" padding="sm" className="inline-block mb-8">
+              <GlassPanel
+                variant="cyan"
+                padding="sm"
+                className="inline-block mb-8"
+              >
                 <div className="inline-flex items-center text-sm font-medium text-slate-700 dark:text-cyan-400">
                   <span className="w-2 h-2 bg-cyan-600 dark:bg-cyan-400 rounded-full mr-2 animate-pulse"></span>
                   Limited Time Offer - {PRICING_CONFIG.DISCOUNT_PERCENTAGE}% OFF
@@ -197,7 +248,9 @@ function RouteComponent() {
 
               <h1 className="text-6xl leading-tight mb-8 text-slate-900 dark:text-white">
                 Agentic Coding{" "}
-                <span className="text-cyan-600 dark:text-cyan-400">Mastery Course</span>
+                <span className="text-cyan-600 dark:text-cyan-400">
+                  Mastery Course
+                </span>
               </h1>
 
               <p className="text-slate-600 dark:text-slate-400 text-xl mb-12 max-w-3xl mx-auto">
@@ -207,7 +260,11 @@ function RouteComponent() {
                 lifetime access to cutting-edge techniques.
               </p>
 
-              <GlassPanel variant="cyan" padding="lg" className="max-w-4xl mx-auto mb-16 relative">
+              <GlassPanel
+                variant="cyan"
+                padding="lg"
+                className="max-w-4xl mx-auto mb-16 relative"
+              >
                 <div className="relative z-10">
                   <div className="text-center mb-8">
                     <h2 className="text-4xl font-bold text-cyan-600 dark:text-cyan-400 mb-2">
@@ -267,7 +324,12 @@ function RouteComponent() {
                     <div className="flex flex-col items-center gap-4">
                       {user ? (
                         !user.isPremium ? (
-                          <Button variant="cyan" size="lg" onClick={handlePurchaseClick} className="rounded-xl px-6 py-2.5 text-sm font-bold">
+                          <Button
+                            variant="cyan"
+                            size="lg"
+                            onClick={handlePurchaseClick}
+                            className="rounded-xl px-6 py-2.5 text-sm font-bold"
+                          >
                             <ShoppingCart className="mr-2 h-4 w-4" />
                             Get Instant Access
                           </Button>
@@ -278,7 +340,8 @@ function RouteComponent() {
                             className={buttonVariants({
                               variant: "glass",
                               size: "lg",
-                              className: "rounded-xl px-5 py-2.5 text-xs font-bold",
+                              className:
+                                "rounded-xl px-5 py-2.5 text-xs font-bold",
                             })}
                           >
                             Continue with Course
@@ -287,7 +350,7 @@ function RouteComponent() {
                         )
                       ) : (
                         <a
-                          href={`/api/login/google?redirect_uri=${encodeURIComponent("/purchase")}`}
+                          href={`/api/login/google?redirect_uri=${encodeURIComponent(`/purchase?checkout=true${ref ? `&ref=${ref}` : ""}`)}`}
                           onClick={async () => {
                             if (sessionId) {
                               try {
@@ -306,7 +369,11 @@ function RouteComponent() {
                             }
                           }}
                         >
-                          <Button variant="cyan" size="lg" className="rounded-xl px-6 py-2.5 text-sm font-bold">
+                          <Button
+                            variant="cyan"
+                            size="lg"
+                            className="rounded-xl px-6 py-2.5 text-sm font-bold"
+                          >
                             <User className="mr-2 h-4 w-4" />
                             Login to Purchase
                           </Button>

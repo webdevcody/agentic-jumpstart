@@ -14,12 +14,51 @@ export const Route = createFileRoute("/api/stripe/webhook")({
         const sig = request.headers.get("stripe-signature");
         const payload = await request.text();
 
+        // Log webhook receipt for debugging
+        const userAgent = request.headers.get("user-agent") || "";
+        const isStripeCLI = userAgent.includes("Stripe/1.");
+        console.log("Webhook received:", {
+          hasSignature: !!sig,
+          payloadLength: payload.length,
+          webhookSecretSet: !!webhookSecret,
+          webhookSecretPrefix: webhookSecret?.substring(0, 10) + "...",
+          source: isStripeCLI ? "Stripe CLI" : "Stripe Dashboard/API",
+          userAgent: userAgent.substring(0, 50),
+          url: request.url,
+        });
+
+        if (!sig) {
+          console.error("Missing stripe-signature header");
+          return new Response(
+            JSON.stringify({ error: "Missing stripe-signature header" }),
+            {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+        }
+
+        if (!webhookSecret) {
+          console.error(
+            "STRIPE_WEBHOOK_SECRET environment variable is not set"
+          );
+          return new Response(
+            JSON.stringify({ error: "Webhook secret not configured" }),
+            {
+              status: 500,
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+        }
+
         try {
           const event = stripe.webhooks.constructEvent(
             payload,
-            sig!,
+            sig,
             webhookSecret
           );
+
+          console.log("Webhook event constructed successfully:", event.type);
 
           switch (event.type) {
             case "checkout.session.completed": {
@@ -27,6 +66,7 @@ export const Route = createFileRoute("/api/stripe/webhook")({
               const userId = session.metadata?.userId;
               const affiliateCode = session.metadata?.affiliateCode;
               const analyticsSessionId = session.metadata?.analyticsSessionId;
+              const gclid = session.metadata?.gclid;
 
               if (userId) {
                 await updateUserToPremiumUseCase(parseInt(userId));
@@ -37,22 +77,30 @@ export const Route = createFileRoute("/api/stripe/webhook")({
                   try {
                     await trackAnalyticsEvent({
                       sessionId: analyticsSessionId,
-                      userId: parseInt(userId),
                       eventType: "purchase_completed",
                       pagePath: "/success",
                       metadata: {
+                        userId: parseInt(userId),
                         amount: session.amount_total,
                         stripeSessionId: session.id,
                         affiliateCode,
+                        gclid,
                       },
                     });
                     console.log(
-                      `Tracked purchase completion for analytics session ${analyticsSessionId}`
+                      `Tracked purchase completion for analytics session ${analyticsSessionId}${gclid ? ` (Google Ads: ${gclid})` : ""}`
                     );
                   } catch (error) {
-                    console.error("Failed to track purchase completion:", error);
+                    console.error(
+                      "Failed to track purchase completion:",
+                      error
+                    );
                     // Don't fail the webhook for analytics errors
                   }
+                } else {
+                  console.warn(
+                    `No analyticsSessionId found in Stripe metadata for user ${userId}. Purchase not tracked in analytics.`
+                  );
                 }
 
                 // Process affiliate referral if code exists
@@ -79,7 +127,9 @@ export const Route = createFileRoute("/api/stripe/webhook")({
                       `Failed to process affiliate referral for code ${affiliateCode}, session ${session.id}:`,
                       {
                         error:
-                          error instanceof Error ? error.message : String(error),
+                          error instanceof Error
+                            ? error.message
+                            : String(error),
                         stack: error instanceof Error ? error.stack : undefined,
                         affiliateCode,
                         purchaserId: userId,
@@ -101,9 +151,16 @@ export const Route = createFileRoute("/api/stripe/webhook")({
             headers: { "Content-Type": "application/json" },
           });
         } catch (err) {
-          console.error("Webhook Error:", err);
+          console.error("Webhook Error:", {
+            error: err instanceof Error ? err.message : String(err),
+            stack: err instanceof Error ? err.stack : undefined,
+            errorType: err instanceof Error ? err.constructor.name : typeof err,
+          });
           return new Response(
-            JSON.stringify({ error: "Webhook handler failed" }),
+            JSON.stringify({
+              error: "Webhook handler failed",
+              message: err instanceof Error ? err.message : String(err),
+            }),
             {
               status: 400,
               headers: { "Content-Type": "application/json" },

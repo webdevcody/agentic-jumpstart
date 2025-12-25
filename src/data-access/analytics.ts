@@ -39,7 +39,8 @@ function parseUtmFromUrl(path: string): {
       utmSource: url.searchParams.get("utm_source") || undefined,
       utmMedium: url.searchParams.get("utm_medium") || undefined,
       // Use "utm" shorthand as campaign if utm_campaign not present
-      utmCampaign: url.searchParams.get("utm_campaign") || utmShorthand || undefined,
+      utmCampaign:
+        url.searchParams.get("utm_campaign") || utmShorthand || undefined,
       utmContent: url.searchParams.get("utm_content") || undefined,
       utmTerm: url.searchParams.get("utm_term") || undefined,
     };
@@ -333,9 +334,11 @@ export async function getMostCommentedSegments(limit: number = 10) {
 export async function createOrUpdateAnalyticsSession({
   sessionId,
   referrerSource,
+  gclid,
 }: {
   sessionId: string;
   referrerSource?: string;
+  gclid?: string;
 }) {
   // Try to find existing session
   const existingSession = await database
@@ -346,12 +349,20 @@ export async function createOrUpdateAnalyticsSession({
 
   if (existingSession.length > 0) {
     // Update last seen and increment page views
+    // Only update gclid if it's not already set (preserve first gclid)
+    const updateData: any = {
+      lastSeen: new Date(),
+      pageViews: sql`${analyticsSessions.pageViews} + 1`,
+    };
+
+    // Only set gclid if session doesn't have one yet and we have a new one
+    if (gclid && !existingSession[0].gclid) {
+      updateData.gclid = gclid;
+    }
+
     await database
       .update(analyticsSessions)
-      .set({
-        lastSeen: new Date(),
-        pageViews: sql`${analyticsSessions.pageViews} + 1`,
-      })
+      .set(updateData)
       .where(eq(analyticsSessions.id, sessionId));
 
     return existingSession[0];
@@ -362,6 +373,7 @@ export async function createOrUpdateAnalyticsSession({
       firstSeen: new Date(),
       lastSeen: new Date(),
       referrerSource,
+      gclid,
       pageViews: 1,
       hasPurchaseIntent: false,
       hasConversion: false,
@@ -542,8 +554,10 @@ export async function getDailyConversions(dateRange?: {
     .select({
       date: sql<string>`date(${analyticsEvents.createdAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York')`,
       pageViews: sql<number>`sum(case when ${analyticsEvents.eventType} = 'page_view' then 1 else 0 end)`,
+      googleAdsPageViews: sql<number>`sum(case when ${analyticsEvents.eventType} = 'page_view' and ${analyticsEvents.pagePath} like '%gclid=%' then 1 else 0 end)`,
       purchaseIntent: sql<number>`sum(case when ${analyticsEvents.eventType} = 'purchase_intent' then 1 else 0 end)`,
       purchaseCompleted: sql<number>`sum(case when ${analyticsEvents.eventType} = 'purchase_completed' then 1 else 0 end)`,
+      googleAdsPurchases: sql<number>`sum(case when ${analyticsEvents.eventType} = 'purchase_completed' and ${analyticsEvents.metadata} like '%"gclid"%' then 1 else 0 end)`,
     })
     .from(analyticsEvents)
     .where(whereCondition)
@@ -553,7 +567,7 @@ export async function getDailyConversions(dateRange?: {
     .orderBy(
       sql`date(${analyticsEvents.createdAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York')`
     )
-    .limit(30);
+    .limit(31);
 
   return dailyData;
 }
@@ -588,6 +602,17 @@ export async function getAllAnalyticsEvents(
     .limit(limit);
 
   return events;
+}
+
+// Get analytics session by sessionId (for retrieving gclid)
+export async function getAnalyticsSession(sessionId: string) {
+  const [session] = await database
+    .select()
+    .from(analyticsSessions)
+    .where(eq(analyticsSessions.id, sessionId))
+    .limit(1);
+
+  return session || null;
 }
 
 export async function getAllAnalyticsSessions(
@@ -896,5 +921,79 @@ export async function getUtmStats(dateRange?: { start: Date; end: Date }) {
     uniqueCampaigns: campaigns.size,
     uniqueSources: sources.size,
     uniqueMediums: mediums.size,
+  };
+}
+
+// Get purchases from Google Ads (by gclid)
+export async function getGoogleAdsPurchases(dateRange?: {
+  start: Date;
+  end: Date;
+}) {
+  const whereCondition = dateRange
+    ? and(
+        eq(analyticsEvents.eventType, "purchase_completed"),
+        like(analyticsEvents.metadata, "%gclid%"),
+        gte(analyticsEvents.createdAt, dateRange.start),
+        lte(analyticsEvents.createdAt, dateRange.end)
+      )
+    : and(
+        eq(analyticsEvents.eventType, "purchase_completed"),
+        like(analyticsEvents.metadata, "%gclid%")
+      );
+
+  const events = await database
+    .select({
+      id: analyticsEvents.id,
+      sessionId: analyticsEvents.sessionId,
+      metadata: analyticsEvents.metadata,
+      createdAt: analyticsEvents.createdAt,
+    })
+    .from(analyticsEvents)
+    .where(whereCondition)
+    .orderBy(desc(analyticsEvents.createdAt));
+
+  // Parse metadata to extract gclid and purchase details
+  const purchases = events.map((event) => {
+    let metadata: any = {};
+    try {
+      metadata = JSON.parse(event.metadata || "{}");
+    } catch {
+      // If metadata is not valid JSON, try to extract gclid from string
+      const gclidMatch = event.metadata?.match(/"gclid":"([^"]+)"/);
+      if (gclidMatch) {
+        metadata.gclid = gclidMatch[1];
+      }
+    }
+
+    return {
+      id: event.id,
+      sessionId: event.sessionId,
+      gclid: metadata.gclid,
+      amount: metadata.amount,
+      stripeSessionId: metadata.stripeSessionId,
+      createdAt: event.createdAt,
+    };
+  });
+
+  return purchases;
+}
+
+// Get Google Ads conversion stats
+export async function getGoogleAdsConversionStats(dateRange?: {
+  start: Date;
+  end: Date;
+}) {
+  const purchases = await getGoogleAdsPurchases(dateRange);
+
+  const totalPurchases = purchases.length;
+  const totalRevenue = purchases.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const uniqueGclids = new Set(purchases.map((p) => p.gclid).filter(Boolean))
+    .size;
+
+  return {
+    totalPurchases,
+    totalRevenue: totalRevenue / 100, // Convert from cents to dollars
+    uniqueGclids,
+    purchases,
   };
 }

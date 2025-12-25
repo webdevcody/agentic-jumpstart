@@ -99,6 +99,7 @@ const NAVIGATION_LINKS: NavLink[] = [
     to: "/purchase",
     label: "Pricing",
     icon: Tag,
+    condition: ({ user }) => !user?.isPremium && !user?.isAdmin,
     category: "primary",
   },
   // Community dropdown

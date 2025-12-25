@@ -12,6 +12,7 @@ import { database } from "~/db";
 import { segments, modules } from "~/db/schema";
 import { eq } from "drizzle-orm";
 import { GlassPanel } from "~/components/ui/glass-panel";
+import { useAuth } from "~/hooks/use-auth";
 
 const getFirstVideoSegmentFn = createServerFn().handler(async () => {
   // Get segments ordered by module order, then segment order
@@ -65,6 +66,7 @@ export function UnifiedHero({
   initialVideoData,
 }: UnifiedHeroProps) {
   const continueSlug = useContinueSlug();
+  const user = useAuth();
 
   const { data: firstVideoData } = useQuery({
     queryKey: ["first-video-segment"],
@@ -137,23 +139,25 @@ export function UnifiedHero({
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                  <Link
-                    to="/purchase"
-                    className={buttonVariants({
-                      variant: "cyan",
-                      size: "lg",
-                      className: "rounded-xl px-6 py-2.5 text-sm font-bold",
-                    })}
-                    onKeyDown={(e) => {
-                      if (e.key === " ") {
-                        e.preventDefault();
-                        e.currentTarget.click();
-                      }
-                    }}
-                  >
-                    <ShoppingCart className="mr-2 h-5 w-5" aria-hidden="true" />
-                    Get Lifetime Access
-                  </Link>
+                  {!user?.isPremium && !user?.isAdmin && (
+                    <Link
+                      to="/purchase"
+                      className={buttonVariants({
+                        variant: "cyan",
+                        size: "lg",
+                        className: "rounded-xl px-6 py-2.5 text-sm font-bold",
+                      })}
+                      onKeyDown={(e) => {
+                        if (e.key === " ") {
+                          e.preventDefault();
+                          e.currentTarget.click();
+                        }
+                      }}
+                    >
+                      <ShoppingCart className="mr-2 h-5 w-5" aria-hidden="true" />
+                      Get Lifetime Access
+                    </Link>
+                  )}
                   <Link
                     to={"/learn/$slug"}
                     params={{ slug: continueSlug }}

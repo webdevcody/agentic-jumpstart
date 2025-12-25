@@ -42,10 +42,12 @@ export async function trackPageView({
   headers,
   sessionId,
   pagePath,
+  gclid,
 }: {
   headers: Partial<Record<HTTPHeaderName, string | undefined>>;
   sessionId: string;
   pagePath: string;
+  gclid?: string;
 }) {
   const userAgent = headers["User-Agent"] || undefined;
   const referrer = headers["Referer"] || undefined;
@@ -55,10 +57,11 @@ export async function trackPageView({
   const referrerSource = extractReferrerSource(referrer);
   const ipAddressHash = hashIpAddress(ipAddress);
 
-  // Create or update session
+  // Create or update session (with gclid if present)
   await createOrUpdateAnalyticsSession({
     sessionId,
     referrerSource,
+    gclid,
   });
 
   // Track page view event (pagePath now includes UTM params in query string)

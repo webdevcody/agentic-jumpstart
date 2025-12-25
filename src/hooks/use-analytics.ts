@@ -2,11 +2,39 @@ import { useEffect, useRef } from "react";
 import { useLocation } from "@tanstack/react-router";
 import { generateSessionIdFn, trackPageViewFn } from "~/fn/analytics";
 
-// Store session ID in memory for the browser session
-let browserSessionId: string | null = null;
+const SESSION_STORAGE_KEY = "analytics_session_id";
+const GCLID_PROCESSED_KEY = "analytics_gclid_processed";
 
-// Track if UTM params have been processed this session
-let utmProcessed = false;
+// Get session ID from sessionStorage (persists across page reloads)
+function getStoredSessionId(): string | null {
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem(SESSION_STORAGE_KEY);
+}
+
+// Store session ID in sessionStorage
+function storeSessionId(sessionId: string): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(SESSION_STORAGE_KEY, sessionId);
+}
+
+// Check if gclid was already processed this session
+function wasGclidProcessed(): boolean {
+  if (typeof window === "undefined") return false;
+  return sessionStorage.getItem(GCLID_PROCESSED_KEY) === "true";
+}
+
+// Mark gclid as processed
+function markGclidProcessed(): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(GCLID_PROCESSED_KEY, "true");
+}
+
+// Initialize from sessionStorage immediately (synchronous)
+// This ensures sessionId is available on first render after OAuth redirect
+let browserSessionId: string | null =
+  typeof window !== "undefined"
+    ? sessionStorage.getItem(SESSION_STORAGE_KEY)
+    : null;
 
 // List of UTM parameter names
 const UTM_PARAMS = [
@@ -21,6 +49,16 @@ const UTM_PARAMS = [
 // Check if URL has any UTM parameters
 function hasUtmParams(url: URL): boolean {
   return UTM_PARAMS.some((param) => url.searchParams.has(param));
+}
+
+// Check if URL has gclid (Google Click ID)
+function hasGclid(url: URL): boolean {
+  return url.searchParams.has("gclid");
+}
+
+// Extract gclid from URL
+function getGclid(url: URL): string | null {
+  return url.searchParams.get("gclid");
 }
 
 // Remove UTM parameters from URL and update browser history
@@ -56,37 +94,62 @@ export function useAnalytics() {
         // Capture URL immediately before any async operations
         const capturedUrl = window.location.href;
 
-        // Generate session ID if not exists
+        // Get session ID from sessionStorage first (persists across OAuth redirects)
+        // Only generate new one if not found
         if (!browserSessionId) {
-          const result = await generateSessionIdFn();
-          browserSessionId = result.sessionId;
+          const storedSessionId = getStoredSessionId();
+          if (storedSessionId) {
+            browserSessionId = storedSessionId;
+          } else {
+            const result = await generateSessionIdFn();
+            browserSessionId = result.sessionId;
+            storeSessionId(browserSessionId);
+          }
         }
 
         const currentUrl = new URL(capturedUrl);
         const currentPathname = location.pathname;
         const hasUtm = hasUtmParams(currentUrl);
+        const hasGclidParam = hasGclid(currentUrl);
+        const gclid = getGclid(currentUrl);
 
-        // Check for UTM params on initial load only (once per session)
-        if (initialLoadRef.current && !utmProcessed && hasUtm) {
-          utmProcessed = true;
+        // Check for UTM params or gclid on initial load only (once per browser session)
+        // Uses sessionStorage to persist across OAuth redirects
+        const gclidAlreadyProcessed = wasGclidProcessed();
+        if (
+          initialLoadRef.current &&
+          !gclidAlreadyProcessed &&
+          (hasUtm || hasGclidParam)
+        ) {
+          markGclidProcessed();
 
-          // Track page view with full path including UTM query string
+          // Track page view with full path including UTM query string and gclid
           const fullPath = currentUrl.pathname + currentUrl.search;
 
           try {
             await trackPageViewFn({
               data: {
                 sessionId: browserSessionId,
-                pagePath: fullPath, // e.g., /purchase?utm_source=google&utm_medium=cpc
+                pagePath: fullPath, // e.g., /purchase?utm_source=google&utm_medium=cpc&gclid=...
                 fullUrl: capturedUrl,
+                gclid: gclid || undefined,
               },
             });
           } catch (error) {
-            console.error("[Analytics] Failed to track UTM page view:", error);
+            console.error(
+              "[Analytics] Failed to track UTM/gclid page view:",
+              error
+            );
           }
 
-          // Strip UTM params from URL after tracking
+          // Strip UTM params and gclid from URL after tracking
           stripUtmFromUrl();
+          if (gclid) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("gclid");
+            const newUrl = url.pathname + (url.search || "") + url.hash;
+            window.history.replaceState(window.history.state, "", newUrl);
+          }
 
           initialLoadRef.current = false;
           prevPathnameRef.current = currentPathname;
