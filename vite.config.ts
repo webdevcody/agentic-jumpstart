@@ -9,7 +9,12 @@ import { nitro } from "nitro/vite";
 const DEFAULT_PORT = 4000;
 
 export default defineConfig({
-  server: { port: parseInt(process.env.PORT || DEFAULT_PORT.toString(), 10) },
+  server: {
+    port: parseInt(process.env.PORT || DEFAULT_PORT.toString(), 10),
+    watch: {
+      ignored: ["**/routeTree.gen.ts"],
+    },
+  },
   ssr: { noExternal: ["react-dropzone"] },
   plugins: [
     tailwindcss(),

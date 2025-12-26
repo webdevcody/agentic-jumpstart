@@ -19,6 +19,7 @@ import { ThemeToggle } from "~/components/theme-toggle";
 import { Toaster } from "sonner";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
+import { NuqsAdapter } from "nuqs/adapters/react";
 import { shouldShowEarlyAccessFn } from "~/fn/early-access";
 import { useAnalytics } from "~/hooks/use-analytics";
 import { publicEnv } from "~/utils/env-public";
@@ -239,7 +240,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         `}</style>
       </head>
       <body className="min-h-screen flex flex-col">
-        <ThemeProvider>
+        <NuqsAdapter>
+          <ThemeProvider>
           {/* Configurable banner */}
           {showBanner && (
             <div className="fixed top-0 left-0 right-0 z-[60] bg-yellow-500 dark:bg-yellow-600 text-yellow-900 dark:text-yellow-100 border-b border-yellow-600 dark:border-yellow-700">
@@ -271,7 +273,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <Toaster />
           {showDevMenu && <DevFloatingMenu currentUserId={currentUserId} />}
           <Scripts />
-        </ThemeProvider>
+          </ThemeProvider>
+        </NuqsAdapter>
       </body>
     </html>
   );
