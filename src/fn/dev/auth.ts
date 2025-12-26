@@ -1,3 +1,4 @@
+import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { eq, like } from "drizzle-orm";
 import { z } from "zod";
@@ -108,3 +109,9 @@ export const getDevMenuConfigFn = createServerFn({ method: "GET" })
     const user = await getCurrentUser();
     return { isEnabled: true, currentUserId: user?.id ?? null };
   });
+
+export const assertDevModeFn = createServerFn().handler(async () => {
+  if (process.env.NODE_ENV !== "development") {
+    throw redirect({ to: "/" });
+  }
+});

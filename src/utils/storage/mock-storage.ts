@@ -1,4 +1,5 @@
 import type { IStorage, StreamFileResponse } from "./storage.interface";
+import { env } from "~/utils/env";
 
 /**
  * Mock storage for development when R2/S3 is unavailable.
@@ -77,7 +78,7 @@ export class MockStorage implements IStorage {
 
   async getPresignedUploadUrl(key: string, contentType: string = "video/mp4"): Promise<string> {
     console.log(`[MockStorage] Returning mock upload URL for: ${key}`);
-    return `http://localhost:4000/api/mock-upload?key=${encodeURIComponent(key)}`;
+    return `${env.HOST_NAME}/api/mock-upload?key=${encodeURIComponent(key)}`;
   }
 
   async getBuffer(key: string): Promise<Buffer> {

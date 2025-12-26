@@ -77,7 +77,9 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: `npm run build && npm run start:test`,
+    // CI builds and starts server separately, so just start:test here
+    // reuseExistingServer: true will detect the already-running CI server
+    command: `npm run start:test`,
     url: "http://localhost:3001",
     reuseExistingServer: true,
     timeout: 120 * 1000,

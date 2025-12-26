@@ -5,9 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/com
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Checkbox } from "~/components/ui/checkbox";
-import { devLoginFn } from "~/fn/dev";
+import { assertDevModeFn, devLoginFn } from "~/fn/dev";
 
 export const Route = createFileRoute("/dev-login")({
+  beforeLoad: () => assertDevModeFn(),
   validateSearch: (search: Record<string, unknown>) => ({
     redirect_uri: (search.redirect_uri as string) || "/",
   }),
@@ -32,7 +33,18 @@ function DevLoginPage() {
     setIsLoading(true);
     try {
       await devLoginFn({ data: formData });
-      window.location.href = redirectUri;
+      // Validate redirect is relative or same origin to prevent open redirect
+      try {
+        const url = new URL(redirectUri, window.location.origin);
+        if (url.origin === window.location.origin) {
+          window.location.href = url.pathname + url.search;
+        } else {
+          window.location.href = "/";
+        }
+      } catch {
+        // If URL parsing fails, redirect to home
+        window.location.href = "/";
+      }
     } catch (error) {
       console.error("Dev login failed:", error);
       setIsLoading(false);

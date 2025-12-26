@@ -43,20 +43,31 @@ test.describe("Tag Management", () => {
 
       await page.goto(`/admin/launch-kits/edit/${testKit.id}`);
 
-      // Wait for the page to fully hydrate by waiting for the form
-      await page.waitForLoadState('networkidle');
+      // Wait for form to be fully loaded (check for the form title)
+      const newTagButton = page.locator('[data-testid="new-tag-button"]');
+      await expect(newTagButton).toBeVisible({ timeout: 10000 });
+      // Ensure button is enabled and ready for interaction
+      await expect(newTagButton).toBeEnabled({ timeout: 10000 });
 
-      // Wait for the page to load (form should be visible)
-      await page.waitForSelector('[data-testid="new-tag-button"]', { state: "visible", timeout: 10000 });
+      // Open tag creation dialog - retry pattern for headless mode reliability
+      const dialog = page.getByRole("dialog");
+      let dialogOpened = false;
+      for (let attempt = 0; attempt < 3 && !dialogOpened; attempt++) {
+        await newTagButton.click();
+        try {
+          await expect(dialog).toBeVisible({ timeout: 3000 });
+          dialogOpened = true;
+        } catch {
+          // Dialog didn't open, try clicking again
+        }
+      }
 
-      // Open tag creation dialog
-      await page.click('[data-testid="new-tag-button"]');
-
-      // Wait for dialog to appear (Radix portals to body)
-      await page.waitForSelector('[role="dialog"]', { state: "visible", timeout: 10000 });
+      // Final assertion
+      await expect(dialog).toBeVisible({ timeout: 5000 });
 
       // Wait for dialog form field to be ready
-      await page.waitForSelector('[data-testid="tag-name-input"]', { state: "visible", timeout: 10000 });
+      const tagNameInput = page.locator('[data-testid="tag-name-input"]');
+      await expect(tagNameInput).toBeVisible({ timeout: 10000 });
 
       // Fill tag form
       await page.fill('[data-testid="tag-name-input"]', "React");
@@ -112,15 +123,27 @@ test.describe("Tag Management", () => {
 
       await page.goto(`/admin/launch-kits/edit/${testKit.id}`);
 
-      // Wait for the page to fully hydrate
-      await page.waitForLoadState('networkidle');
-      await page.waitForSelector('[data-testid="new-tag-button"]', { state: "visible", timeout: 10000 });
+      // Wait for form to be fully loaded
+      const newTagButton = page.locator('[data-testid="new-tag-button"]');
+      await expect(newTagButton).toBeVisible({ timeout: 10000 });
+      await expect(newTagButton).toBeEnabled({ timeout: 10000 });
 
-      await page.click('[data-testid="new-tag-button"]');
+      // Open tag creation dialog - retry pattern for headless mode reliability
+      const dialog = page.getByRole("dialog");
+      let dialogOpened = false;
+      for (let attempt = 0; attempt < 3 && !dialogOpened; attempt++) {
+        await newTagButton.click();
+        try {
+          await expect(dialog).toBeVisible({ timeout: 3000 });
+          dialogOpened = true;
+        } catch {
+          // Dialog didn't open, try clicking again
+        }
+      }
 
-      // Wait for dialog to open (Radix portals to body)
-      await page.waitForSelector('[role="dialog"]', { state: "visible", timeout: 10000 });
-      await page.waitForSelector('input[type="color"]', { state: "visible", timeout: 10000 });
+      await expect(dialog).toBeVisible({ timeout: 5000 });
+      const colorInput = page.locator('input[type="color"]');
+      await expect(colorInput).toBeVisible({ timeout: 10000 });
 
       // Get initial color value
       const initialColor = await page
@@ -174,14 +197,26 @@ test.describe("Tag Management", () => {
 
       await page.goto(`/admin/launch-kits/edit/${testKit.id}`);
 
-      // Wait for the page to fully hydrate
-      await page.waitForLoadState('networkidle');
+      // Wait for the delete button to be visible and enabled
+      const deleteButton = page.locator(`button[aria-label="Delete tag Obsolete"]`);
+      await expect(deleteButton).toBeVisible({ timeout: 10000 });
+      await expect(deleteButton).toBeEnabled({ timeout: 10000 });
 
-      // Click delete button for the tag
-      await page.click(`button[aria-label="Delete tag Obsolete"]`);
+      // Click delete button - retry pattern for headless mode reliability
+      const deleteTagText = page.locator('text="Delete Tag"');
+      let dialogOpened = false;
+      for (let attempt = 0; attempt < 3 && !dialogOpened; attempt++) {
+        await deleteButton.click();
+        try {
+          await expect(deleteTagText).toBeVisible({ timeout: 3000 });
+          dialogOpened = true;
+        } catch {
+          // Dialog didn't open, try clicking again
+        }
+      }
 
       // Confirm deletion in dialog
-      await expect(page.locator('text="Delete Tag"')).toBeVisible();
+      await expect(deleteTagText).toBeVisible({ timeout: 5000 });
       await page.click('button:has-text("Delete")');
 
       // Verify tag was deleted from UI

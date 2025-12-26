@@ -70,6 +70,7 @@ jobs:
       - name: Run Playwright tests
         run: npm run test
         env:
+          DATABASE_URL: postgresql://postgres:example@localhost:5433/postgres
           DATABASE_URL_TEST: postgresql://postgres:example@localhost:5433/postgres
           IS_TEST: true
 
