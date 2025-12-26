@@ -16,6 +16,7 @@ import {
   AlertCircle,
   TrendingUp,
   Video,
+  DollarSign,
 } from "lucide-react";
 import { useFeatureFlag } from "~/components/feature-flag";
 
@@ -103,6 +104,12 @@ const navigation: NavigationItem[] = [
     name: "UTM Analytics",
     href: "/admin/utm-analytics",
     icon: TrendingUp,
+    category: "business",
+  },
+  {
+    name: "Pricing",
+    href: "/admin/pricing",
+    icon: DollarSign,
     category: "business",
   },
 

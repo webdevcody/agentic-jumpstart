@@ -5,6 +5,8 @@ import { env } from "~/utils/env";
 import { CourseUpdateEmail } from "~/components/emails/course-update-email";
 import { VideoNotificationEmail } from "~/components/emails/video-notification-email";
 import { MultiSegmentNotificationEmail } from "~/components/emails/multi-segment-notification-email";
+import { AffiliatePayoutSuccessEmail } from "~/components/emails/affiliate-payout-success-email";
+import { AffiliatePayoutFailedEmail } from "~/components/emails/affiliate-payout-failed-email";
 
 // Initialize SES client
 const sesClient = new SESClient({
@@ -256,5 +258,58 @@ export async function renderMultiSegmentNotificationEmail(
   } catch (error) {
     console.error("Failed to render multi-segment notification email:", error);
     throw new Error(`Failed to render multi-segment notification email: ${error}`);
+  }
+}
+
+// Render and send affiliate payout success email
+export interface AffiliatePayoutSuccessEmailProps {
+  affiliateName: string;
+  payoutAmount: string;
+  payoutDate: string;
+  stripeTransferId: string;
+}
+
+export async function sendAffiliatePayoutSuccessEmail(
+  to: string,
+  props: AffiliatePayoutSuccessEmailProps
+): Promise<void> {
+  try {
+    const html = await render(AffiliatePayoutSuccessEmail(props));
+    await sendEmail({
+      to,
+      subject: `Your affiliate payout of ${props.payoutAmount} has been sent!`,
+      html,
+    });
+    console.log(
+      `[Affiliate Email] Sent payout success notification for ${props.stripeTransferId}`
+    );
+  } catch (error) {
+    console.error("Failed to send affiliate payout success email:", error);
+    // Don't throw - email failures shouldn't break the payout flow
+  }
+}
+
+// Render and send affiliate payout failed email
+export interface AffiliatePayoutFailedEmailProps {
+  affiliateName: string;
+  errorMessage: string;
+  failureDate: string;
+}
+
+export async function sendAffiliatePayoutFailedEmail(
+  to: string,
+  props: AffiliatePayoutFailedEmailProps
+): Promise<void> {
+  try {
+    const html = await render(AffiliatePayoutFailedEmail(props));
+    await sendEmail({
+      to,
+      subject: "Action required: Your affiliate payout could not be processed",
+      html,
+    });
+    console.log(`[Affiliate Email] Sent payout failure notification`);
+  } catch (error) {
+    console.error("Failed to send affiliate payout failed email:", error);
+    // Don't throw - email failures shouldn't break the webhook flow
   }
 }

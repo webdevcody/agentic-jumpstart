@@ -58,7 +58,7 @@ function AdminLayout() {
         
         {/* Main content */}
         <div className="relative z-10">
-          <div className="container mx-auto px-6 py-8 max-w-7xl lg:ml-0 lg:pt-8 pt-16">
+          <div className="px-6 py-8 lg:pt-8 pt-16">
             <Outlet />
           </div>
         </div>

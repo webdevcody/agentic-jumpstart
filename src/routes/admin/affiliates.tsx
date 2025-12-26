@@ -1,10 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
-
 import {
   Dialog,
   DialogContent,
@@ -27,61 +26,53 @@ import {
   adminGetAllAffiliatesFn,
   adminToggleAffiliateStatusFn,
   adminRecordPayoutFn,
+  adminProcessAutomaticPayoutsFn,
 } from "~/fn/affiliates";
+import {
+  getAffiliateCommissionRateFn,
+  setAffiliateCommissionRateFn,
+  getAffiliateMinimumPayoutFn,
+  setAffiliateMinimumPayoutFn,
+} from "~/fn/app-settings";
+import { AFFILIATE_CONFIG } from "~/config";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
   DollarSign,
   Users,
-  ExternalLink,
-  MoreVertical,
-  Calendar,
-  CreditCard,
   CheckCircle,
-  XCircle,
   AlertCircle,
-  Copy,
+  Zap,
+  RefreshCw,
+  TrendingUp,
+  Search,
+  Clock,
+  Minus,
+  Plus,
+  Save,
+  Loader2,
 } from "lucide-react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
+  ButtonGroup,
+  InputGroup,
+  InputGroupInput,
+  InputGroupAddon,
+} from "~/components/ui/button-group";
 import { PageHeader } from "./-components/page-header";
 import { Page } from "./-components/page";
+import { DataTable } from "~/components/data-table/data-table";
+import { DataTableViewOptions } from "~/components/data-table/data-table-view-options";
+import { useDataTable } from "~/hooks/use-data-table";
+import {
+  getAffiliateColumns,
+  type AffiliateRow,
+} from "./-affiliates-components/affiliates-columns";
+import { AffiliateDetailsSheet } from "./-affiliates-components/affiliate-details-sheet";
 
 // Skeleton components
 function CountSkeleton() {
-  return <div className="h-8 w-20 bg-muted/50 rounded animate-pulse"></div>;
-}
-
-function AffiliateCardSkeleton() {
-  return (
-    <div className="overflow-hidden rounded-xl bg-card/60 dark:bg-card/40 border border-border/50 p-6">
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="h-6 w-32 bg-muted/50 rounded animate-pulse"></div>
-          <div className="h-6 w-16 bg-muted/30 rounded animate-pulse"></div>
-          <div className="h-6 w-20 bg-muted/20 rounded animate-pulse"></div>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="space-y-1">
-              <div className="h-4 w-20 bg-muted/30 rounded animate-pulse"></div>
-              <div className="h-6 w-16 bg-muted/50 rounded animate-pulse"></div>
-            </div>
-          ))}
-        </div>
-        <div className="flex items-center gap-6">
-          <div className="h-4 w-24 bg-muted/30 rounded animate-pulse"></div>
-          <div className="h-4 w-28 bg-muted/30 rounded animate-pulse"></div>
-        </div>
-      </div>
-    </div>
-  );
+  return <div className="h-8 w-20 bg-muted/50 rounded animate-pulse" />;
 }
 
 const payoutSchema = z.object({
@@ -93,11 +84,141 @@ const payoutSchema = z.object({
 
 type PayoutFormValues = z.infer<typeof payoutSchema>;
 
+function useCommissionRate() {
+  const queryClient = useQueryClient();
+  const [localRate, setLocalRate] = useState<string>("");
+  const [hasLocalChanges, setHasLocalChanges] = useState(false);
+
+  const { data: commissionRate, isLoading } = useQuery({
+    queryKey: ["affiliateCommissionRate"],
+    queryFn: () => getAffiliateCommissionRateFn(),
+  });
+
+  const displayRate = hasLocalChanges
+    ? localRate
+    : (commissionRate?.toString() ?? AFFILIATE_CONFIG.DEFAULT_COMMISSION_RATE.toString());
+
+  const updateMutation = useMutation({
+    mutationFn: (rate: number) =>
+      setAffiliateCommissionRateFn({ data: { rate } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["affiliateCommissionRate"] });
+      toast.success("Commission rate updated successfully");
+      setHasLocalChanges(false);
+    },
+    onError: (error) => {
+      toast.error("Failed to update commission rate");
+      console.error("Failed to update commission rate:", error);
+    },
+  });
+
+  const handleRateChange = (value: string) => {
+    setLocalRate(value);
+    setHasLocalChanges(true);
+  };
+
+  const handleSave = () => {
+    const rate = parseInt(displayRate, 10);
+    if (isNaN(rate) || rate < 0 || rate > 100) {
+      toast.error("Commission rate must be between 0 and 100");
+      return;
+    }
+    updateMutation.mutate(rate);
+  };
+
+  const handleReset = () => {
+    setLocalRate(
+      commissionRate?.toString() ?? AFFILIATE_CONFIG.DEFAULT_COMMISSION_RATE.toString()
+    );
+    setHasLocalChanges(false);
+  };
+
+  return {
+    displayRate,
+    isLoading,
+    isPending: updateMutation.isPending,
+    hasLocalChanges,
+    handleRateChange,
+    handleSave,
+    handleReset,
+  };
+}
+
+function useMinimumPayout() {
+  const queryClient = useQueryClient();
+  const [localAmount, setLocalAmount] = useState<string>("");
+  const [hasLocalChanges, setHasLocalChanges] = useState(false);
+
+  const { data: minimumPayout, isLoading } = useQuery({
+    queryKey: ["affiliateMinimumPayout"],
+    queryFn: () => getAffiliateMinimumPayoutFn(),
+  });
+
+  // Display in dollars (cents / 100)
+  const displayAmount = hasLocalChanges
+    ? localAmount
+    : ((minimumPayout ?? AFFILIATE_CONFIG.DEFAULT_MINIMUM_PAYOUT) / 100).toString();
+
+  const updateMutation = useMutation({
+    mutationFn: (amount: number) =>
+      setAffiliateMinimumPayoutFn({ data: { amount } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["affiliateMinimumPayout"] });
+      toast.success("Minimum payout updated successfully");
+      setHasLocalChanges(false);
+    },
+    onError: (error) => {
+      toast.error("Failed to update minimum payout");
+      console.error("Failed to update minimum payout:", error);
+    },
+  });
+
+  const handleAmountChange = (value: string) => {
+    setLocalAmount(value);
+    setHasLocalChanges(true);
+  };
+
+  const handleSave = () => {
+    const dollars = parseInt(displayAmount, 10);
+    if (isNaN(dollars) || dollars < 0) {
+      toast.error("Minimum payout must be $0 or more");
+      return;
+    }
+    // Convert dollars to cents
+    updateMutation.mutate(dollars * 100);
+  };
+
+  const handleReset = () => {
+    setLocalAmount(
+      ((minimumPayout ?? AFFILIATE_CONFIG.DEFAULT_MINIMUM_PAYOUT) / 100).toString()
+    );
+    setHasLocalChanges(false);
+  };
+
+  return {
+    displayAmount,
+    isLoading,
+    isPending: updateMutation.isPending,
+    hasLocalChanges,
+    handleAmountChange,
+    handleSave,
+    handleReset,
+  };
+}
+
 export const Route = createFileRoute("/admin/affiliates")({
   loader: ({ context }) => {
     context.queryClient.ensureQueryData({
       queryKey: ["admin", "affiliates"],
       queryFn: () => adminGetAllAffiliatesFn(),
+    });
+    context.queryClient.ensureQueryData({
+      queryKey: ["affiliateCommissionRate"],
+      queryFn: () => getAffiliateCommissionRateFn(),
+    });
+    context.queryClient.ensureQueryData({
+      queryKey: ["affiliateMinimumPayout"],
+      queryFn: () => getAffiliateMinimumPayoutFn(),
     });
   },
   component: AdminAffiliates,
@@ -110,11 +231,57 @@ function AdminAffiliates() {
   );
   const [payoutAffiliateName, setPayoutAffiliateName] = useState<string>("");
   const [payoutUnpaidBalance, setPayoutUnpaidBalance] = useState<number>(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedAffiliate, setSelectedAffiliate] = useState<AffiliateRow | null>(null);
+  const [detailsSheetOpen, setDetailsSheetOpen] = useState(false);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const { data: affiliates, isLoading } = useQuery({
     queryKey: ["admin", "affiliates"],
     queryFn: () => adminGetAllAffiliatesFn(),
   });
+
+  // Keep selectedAffiliate in sync when affiliates list is refreshed
+  useEffect(() => {
+    if (selectedAffiliate && affiliates) {
+      const updated = affiliates.find((a) => a.id === selectedAffiliate.id);
+      if (updated) {
+        setSelectedAffiliate(updated as AffiliateRow);
+      }
+    }
+  }, [affiliates, selectedAffiliate?.id]);
+
+  // Filter affiliates based on debounced search query
+  const filteredAffiliates = useMemo(() => {
+    if (!affiliates) return [];
+    if (!debouncedSearchQuery.trim()) return affiliates;
+
+    const query = debouncedSearchQuery.toLowerCase();
+    return affiliates.filter((affiliate) => {
+      const searchableFields = [
+        affiliate.userName,
+        affiliate.userEmail,
+        affiliate.affiliateCode,
+        affiliate.isActive ? "active" : "inactive",
+        affiliate.paymentMethod,
+        String(affiliate.id),
+      ];
+      return searchableFields.some(
+        (field) => field && field.toLowerCase().includes(query)
+      );
+    });
+  }, [affiliates, debouncedSearchQuery]);
+
+  const commissionRateState = useCommissionRate();
+  const minimumPayoutState = useMinimumPayout();
 
   const form = useForm<PayoutFormValues>({
     resolver: zodResolver(payoutSchema),
@@ -158,6 +325,21 @@ function AdminAffiliates() {
     },
   });
 
+  const autoPayoutMutation = useMutation({
+    mutationFn: adminProcessAutomaticPayoutsFn,
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "affiliates"] });
+      toast.success("Auto-Payouts Triggered", {
+        description: `Processed ${result.processed} affiliates: ${result.successful} successful, ${result.failed} failed`,
+      });
+    },
+    onError: (error) => {
+      toast.error("Auto-Payout Failed", {
+        description: error.message || "Failed to trigger automatic payouts.",
+      });
+    },
+  });
+
   const handleToggleStatus = async (
     affiliateId: number,
     currentStatus: boolean
@@ -167,13 +349,17 @@ function AdminAffiliates() {
     });
   };
 
-  const openPayoutDialog = (affiliate: any) => {
+  const handleTriggerAutoPayouts = async () => {
+    await autoPayoutMutation.mutateAsync();
+  };
+
+  const openPayoutDialog = (affiliate: AffiliateRow) => {
     setPayoutAffiliateId(affiliate.id);
     setPayoutAffiliateName(
       affiliate.userName || affiliate.userEmail || "Unknown"
     );
     setPayoutUnpaidBalance(affiliate.unpaidBalance);
-    form.setValue("amount", affiliate.unpaidBalance / 100); // Convert cents to dollars
+    form.setValue("amount", affiliate.unpaidBalance / 100);
   };
 
   const onSubmitPayout = async (values: PayoutFormValues) => {
@@ -182,7 +368,7 @@ function AdminAffiliates() {
     await recordPayoutMutation.mutateAsync({
       data: {
         affiliateId: payoutAffiliateId,
-        amount: Math.round(values.amount * 100), // Convert dollars to cents
+        amount: Math.round(values.amount * 100),
         paymentMethod: values.paymentMethod,
         transactionId: values.transactionId || undefined,
         notes: values.notes || undefined,
@@ -195,15 +381,6 @@ function AdminAffiliates() {
       style: "currency",
       currency: "USD",
     }).format(cents / 100);
-  };
-
-  const formatDate = (date: Date | string | null) => {
-    if (!date) return "Never";
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
   };
 
   const copyToClipboard = (text: string) => {
@@ -224,6 +401,36 @@ function AdminAffiliates() {
     { totalUnpaid: 0, totalPaid: 0, totalEarnings: 0, activeCount: 0 }
   ) || { totalUnpaid: 0, totalPaid: 0, totalEarnings: 0, activeCount: 0 };
 
+  // Columns for DataTable
+  const columns = useMemo(
+    () =>
+      getAffiliateColumns({
+        onCopyLink: copyToClipboard,
+        onViewLink: (link) => window.open(link, "_blank"),
+        onRecordPayout: openPayoutDialog,
+        onToggleStatus: handleToggleStatus,
+        onViewDetails: (affiliate) => {
+          setSelectedAffiliate(affiliate);
+          setDetailsSheetOpen(true);
+        },
+      }),
+    []
+  );
+
+  // Data table setup
+  const { table } = useDataTable({
+    data: (filteredAffiliates as AffiliateRow[]) ?? [],
+    columns,
+    pageCount: Math.ceil((filteredAffiliates?.length ?? 0) / 10),
+    initialState: {
+      pagination: { pageSize: 10, pageIndex: 0 },
+      sorting: [{ id: "balance", desc: true }],
+    },
+    getRowId: (row) => String(row.id),
+    shallow: false,
+    clearOnDefault: true,
+  });
+
   return (
     <Page>
       <PageHeader
@@ -232,299 +439,261 @@ function AdminAffiliates() {
         description="Manage affiliate accounts, view earnings, and process payouts"
       />
 
-      {/* Stats Overview */}
+      {/* Top Controls Row - Search + Multiplier + Batch Settle */}
       <div
-        className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12 animate-in fade-in slide-in-from-bottom-2 duration-500"
+        className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 animate-in fade-in slide-in-from-bottom-2 duration-500"
         style={{ animationDelay: "0.1s", animationFillMode: "both" }}
       >
-        {/* Total Unpaid */}
-        <div
-          className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-          style={{ animationDelay: "0.2s", animationFillMode: "both" }}
-        >
-          <div className="module-card p-6 h-full">
-            <div className="flex flex-row items-center justify-between space-y-0 mb-4">
-              <div className="text-sm font-medium text-muted-foreground">
-                Total Unpaid
-              </div>
-              <div className="w-10 h-10 rounded-full bg-orange-500/10 dark:bg-orange-400/20 flex items-center justify-center group-hover:bg-orange-500/20 dark:group-hover:bg-orange-400/30 transition-colors duration-300">
-                <AlertCircle className="h-5 w-5 text-orange-500 dark:text-orange-400" />
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors duration-300">
-              {isLoading ? (
-                <CountSkeleton />
+        {/* Search Input */}
+        <div className="relative flex-1 max-w-xl">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by identity, ID or status..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 h-11 bg-card/60 border-border/50"
+          />
+        </div>
+
+        {/* Right side controls */}
+        <div className="flex items-center gap-4">
+          {/* Minimum Payout */}
+          <ButtonGroup>
+            <InputGroup className="w-36 h-10">
+              <InputGroupAddon align="inline-start" className="text-xs text-muted-foreground">Min</InputGroupAddon>
+              <InputGroupAddon align="inline-start">$</InputGroupAddon>
+              <InputGroupInput
+                id="minimum-payout"
+                type="text"
+                inputMode="numeric"
+                value={minimumPayoutState.displayAmount}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "" || /^\d+$/.test(val)) {
+                    let numVal = val === "" ? 0 : parseInt(val, 10);
+                    if (numVal < 0) numVal = 0;
+                    minimumPayoutState.handleAmountChange(numVal.toString());
+                  }
+                }}
+                disabled={
+                  minimumPayoutState.isLoading || minimumPayoutState.isPending
+                }
+                className="text-center text-sm h-10"
+              />
+            </InputGroup>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-10 w-10"
+              onClick={() => minimumPayoutState.handleSave()}
+              disabled={!minimumPayoutState.hasLocalChanges || minimumPayoutState.isPending}
+            >
+              {minimumPayoutState.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                formatCurrency(totals.totalUnpaid)
+                <Save className="h-4 w-4" />
               )}
-            </div>
-            <p className="text-sm text-muted-foreground">Pending payouts</p>
-          </div>
-        </div>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-10 w-10"
+              onClick={() => {
+                const current = parseInt(minimumPayoutState.displayAmount) || 0;
+                minimumPayoutState.handleAmountChange(Math.max(0, current - 10).toString());
+              }}
+              disabled={minimumPayoutState.isLoading || minimumPayoutState.isPending}
+            >
+              <Minus className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-10 w-10"
+              onClick={() => {
+                const current = parseInt(minimumPayoutState.displayAmount) || 0;
+                minimumPayoutState.handleAmountChange((current + 10).toString());
+              }}
+              disabled={minimumPayoutState.isLoading || minimumPayoutState.isPending}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </ButtonGroup>
 
-        {/* Total Paid */}
-        <div
-          className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-          style={{ animationDelay: "0.3s", animationFillMode: "both" }}
-        >
-          <div className="module-card p-6 h-full">
-            <div className="flex flex-row items-center justify-between space-y-0 mb-4">
-              <div className="text-sm font-medium text-muted-foreground">
-                Total Paid
-              </div>
-              <div className="w-10 h-10 rounded-full bg-green-500/10 dark:bg-green-400/20 flex items-center justify-center group-hover:bg-green-500/20 dark:group-hover:bg-green-400/30 transition-colors duration-300">
-                <CheckCircle className="h-5 w-5 text-green-500 dark:text-green-400" />
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
-              {isLoading ? <CountSkeleton /> : formatCurrency(totals.totalPaid)}
-            </div>
-            <p className="text-sm text-muted-foreground">Lifetime payouts</p>
-          </div>
-        </div>
-
-        {/* Total Earnings */}
-        <div
-          className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-          style={{ animationDelay: "0.4s", animationFillMode: "both" }}
-        >
-          <div className="module-card p-6 h-full">
-            <div className="flex flex-row items-center justify-between space-y-0 mb-4">
-              <div className="text-sm font-medium text-muted-foreground">
-                Total Earnings
-              </div>
-              <div className="w-10 h-10 rounded-full bg-theme-500/10 dark:bg-theme-400/20 flex items-center justify-center group-hover:bg-theme-500/20 dark:group-hover:bg-theme-400/30 transition-colors duration-300">
-                <DollarSign className="h-5 w-5 text-theme-500 dark:text-theme-400" />
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-theme-600 dark:group-hover:text-theme-400 transition-colors duration-300">
-              {isLoading ? (
-                <CountSkeleton />
+          {/* Default Multiplier */}
+          <ButtonGroup>
+            <InputGroup className="w-32 h-10">
+              <InputGroupAddon align="inline-start" className="text-xs text-muted-foreground">Rate</InputGroupAddon>
+              <InputGroupInput
+                id="commission-rate"
+                type="text"
+                inputMode="numeric"
+                value={commissionRateState.displayRate}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "" || /^\d+$/.test(val)) {
+                    let numVal = val === "" ? 0 : parseInt(val, 10);
+                    if (numVal > 100) numVal = 100;
+                    if (numVal < 0) numVal = 0;
+                    commissionRateState.handleRateChange(numVal.toString());
+                  }
+                }}
+                disabled={
+                  commissionRateState.isLoading || commissionRateState.isPending
+                }
+                className="text-center text-sm h-10"
+              />
+              <InputGroupAddon align="inline-end">%</InputGroupAddon>
+            </InputGroup>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-10 w-10"
+              onClick={() => commissionRateState.handleSave()}
+              disabled={!commissionRateState.hasLocalChanges || commissionRateState.isPending}
+            >
+              {commissionRateState.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                formatCurrency(totals.totalEarnings)
+                <Save className="h-4 w-4" />
               )}
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Generated for affiliates
-            </p>
-          </div>
-        </div>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-10 w-10"
+              onClick={() => {
+                const current = parseInt(commissionRateState.displayRate) || 0;
+                commissionRateState.handleRateChange(Math.max(0, current - 1).toString());
+              }}
+              disabled={commissionRateState.isLoading || commissionRateState.isPending}
+            >
+              <Minus className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-10 w-10"
+              onClick={() => {
+                const current = parseInt(commissionRateState.displayRate) || 0;
+                commissionRateState.handleRateChange(Math.min(100, current + 1).toString());
+              }}
+              disabled={commissionRateState.isLoading || commissionRateState.isPending}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </ButtonGroup>
 
-        {/* Active Affiliates */}
-        <div
-          className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-          style={{ animationDelay: "0.5s", animationFillMode: "both" }}
-        >
-          <div className="module-card p-6 h-full">
-            <div className="flex flex-row items-center justify-between space-y-0 mb-4">
-              <div className="text-sm font-medium text-muted-foreground">
-                Active Affiliates
-              </div>
-              <div className="w-10 h-10 rounded-full bg-blue-500/10 dark:bg-blue-400/20 flex items-center justify-center group-hover:bg-blue-500/20 dark:group-hover:bg-blue-400/30 transition-colors duration-300">
-                <Users className="h-5 w-5 text-blue-500 dark:text-blue-400" />
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
-              {isLoading ? <CountSkeleton /> : totals.activeCount}
-            </div>
-            <p className="text-sm text-muted-foreground">
-              of {isLoading ? "..." : affiliates?.length || 0} total
-            </p>
-          </div>
+          {/* Batch Settle Button */}
+          <Button
+            onClick={handleTriggerAutoPayouts}
+            disabled={autoPayoutMutation.isPending}
+            className="bg-theme-500 hover:bg-theme-600 h-10 px-6"
+          >
+            {autoPayoutMutation.isPending ? (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Zap className="h-4 w-4 mr-2" />
+                Batch Settle
+              </>
+            )}
+          </Button>
         </div>
       </div>
 
-      {/* Affiliates List */}
+      {/* Stats Cards */}
       <div
-        className="module-card animate-in fade-in slide-in-from-bottom-2 duration-500"
-        style={{ animationDelay: "0.6s", animationFillMode: "both" }}
+        className="grid gap-4 grid-cols-2 lg:grid-cols-4 mb-6 animate-in fade-in slide-in-from-bottom-2 duration-500"
+        style={{ animationDelay: "0.15s", animationFillMode: "both" }}
       >
-        <div className="p-6 border-b border-border/50">
-          <h2 className="text-2xl font-semibold mb-2">All Affiliates</h2>
-          <p className="text-muted-foreground">
-            View and manage all affiliate accounts
-          </p>
+        {/* Escrow/Unpaid */}
+        <div className="bg-card/60 dark:bg-card/40 border border-border/50 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Escrow / Unpaid
+            </span>
+            <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </div>
+          <div className="text-2xl font-bold text-orange-500">
+            {isLoading ? <CountSkeleton /> : formatCurrency(totals.totalUnpaid)}
+          </div>
         </div>
-        <div className="p-6">
-          {isLoading ? (
-            <div className="space-y-6">
-              {[...Array(3)].map((_, idx) => (
-                <AffiliateCardSkeleton key={idx} />
-              ))}
+
+        {/* Settled Volume */}
+        <div className="bg-card/60 dark:bg-card/40 border border-border/50 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Settled Volume
+            </span>
+            <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center">
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </div>
-          ) : affiliates?.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Users className="h-16 w-16 mx-auto mb-6 opacity-30" />
-              <p className="text-lg">No affiliates registered yet</p>
+          </div>
+          <div className="text-2xl font-bold text-cyan-500">
+            {isLoading ? <CountSkeleton /> : formatCurrency(totals.totalPaid)}
+          </div>
+        </div>
+
+        {/* Gross Generated */}
+        <div className="bg-card/60 dark:bg-card/40 border border-border/50 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Gross Generated
+            </span>
+            <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center">
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
             </div>
-          ) : (
-            <div className="space-y-6">
-              {affiliates?.map((affiliate, index) => (
-                <div
-                  key={affiliate.id}
-                  className="group relative overflow-hidden rounded-xl bg-card/60 dark:bg-card/40 border border-border/50 p-6 hover:bg-card/80 dark:hover:bg-card/60 hover:border-theme-400/30 hover:shadow-elevation-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2"
-                  style={{
-                    animationDelay: `${0.7 + index * 0.1}s`,
-                    animationFillMode: "both",
-                    animationDuration: "500ms",
-                  }}
-                >
-                  {/* Subtle hover glow effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-theme-500/5 to-theme-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl"></div>
+          </div>
+          <div className="text-2xl font-bold text-green-500">
+            {isLoading ? <CountSkeleton /> : formatCurrency(totals.totalEarnings)}
+          </div>
+        </div>
 
-                  <div className="relative flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <span className="text-lg font-semibold text-foreground">
-                          {/* Show public name based on useDisplayName setting */}
-                          {affiliate.useDisplayName === false && affiliate.userRealName
-                            ? affiliate.userRealName
-                            : affiliate.userName || affiliate.userEmail || "Unknown User"}
-                          {/* Show alternative name for admin context */}
-                          {affiliate.useDisplayName === false && affiliate.userName && (
-                            <span className="text-muted-foreground font-normal ml-2 text-sm">
-                              (alias: {affiliate.userName})
-                            </span>
-                          )}
-                          {affiliate.useDisplayName !== false && affiliate.userRealName && (
-                            <span className="text-muted-foreground font-normal ml-2 text-sm">
-                              (real: {affiliate.userRealName})
-                            </span>
-                          )}
-                        </span>
-                        {affiliate.isActive ? (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
-                            <CheckCircle className="h-3.5 w-3.5" />
-                            Active
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">
-                            <XCircle className="h-3.5 w-3.5" />
-                            Inactive
-                          </span>
-                        )}
-                        <span className="px-2 py-1 text-xs font-mono bg-muted rounded border">
-                          {affiliate.affiliateCode}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        <div className="space-y-1">
-                          <div className="text-sm text-muted-foreground">
-                            Unpaid Balance
-                          </div>
-                          <div className="text-xl font-bold text-orange-600 dark:text-orange-400">
-                            {formatCurrency(affiliate.unpaidBalance)}
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <div className="text-sm text-muted-foreground">
-                            Total Paid
-                          </div>
-                          <div className="text-xl font-bold text-green-600 dark:text-green-400">
-                            {formatCurrency(affiliate.paidAmount)}
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <div className="text-sm text-muted-foreground">
-                            Total Earnings
-                          </div>
-                          <div className="text-xl font-bold text-theme-600 dark:text-theme-400">
-                            {formatCurrency(affiliate.totalEarnings)}
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <div className="text-sm text-muted-foreground">
-                            Sales Count
-                          </div>
-                          <div className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                            {affiliate.totalReferrals}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-6 mt-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4" />
-                          <span>Joined {formatDate(affiliate.createdAt)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <CreditCard className="h-4 w-4" />
-                          <span>
-                            Last sale {formatDate(affiliate.lastReferralDate)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="relative z-10"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuItem
-                          onClick={() =>
-                            window.open(affiliate.paymentLink, "_blank")
-                          }
-                        >
-                          <ExternalLink className="mr-2 h-4 w-4" />
-                          View Payment Link
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => copyToClipboard(affiliate.paymentLink)}
-                        >
-                          <Copy className="mr-2 h-4 w-4" />
-                          Copy Payment Link
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => openPayoutDialog(affiliate)}
-                          disabled={affiliate.unpaidBalance < 5000}
-                          className={
-                            affiliate.unpaidBalance < 5000 ? "opacity-50" : ""
-                          }
-                        >
-                          <DollarSign className="mr-2 h-4 w-4" />
-                          Record Payout
-                          {affiliate.unpaidBalance < 5000 && (
-                            <span className="ml-auto text-xs text-muted-foreground">
-                              Min $50
-                            </span>
-                          )}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            handleToggleStatus(affiliate.id, affiliate.isActive)
-                          }
-                        >
-                          {affiliate.isActive ? (
-                            <>
-                              <XCircle className="mr-2 h-4 w-4" />
-                              Deactivate
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                              Activate
-                            </>
-                          )}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              ))}
+        {/* Active Nodes */}
+        <div className="bg-card/60 dark:bg-card/40 border border-border/50 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Active Nodes
+            </span>
+            <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center">
+              <Users className="h-4 w-4 text-muted-foreground" />
             </div>
-          )}
+          </div>
+          <div className="text-2xl font-bold text-foreground">
+            {isLoading ? <CountSkeleton /> : totals.activeCount}
+          </div>
         </div>
       </div>
 
+      {/* Affiliates Data Table */}
+      <div
+        className="animate-in fade-in slide-in-from-bottom-2 duration-500 w-full"
+        style={{ animationDelay: "0.2s", animationFillMode: "both" }}
+      >
+        {/* Table toolbar */}
+        <div className="flex items-center justify-end mb-3">
+          <DataTableViewOptions table={table} />
+        </div>
+
+        <div className="bg-card/60 dark:bg-card/40 border border-border/50 rounded-xl overflow-hidden w-full">
+          <DataTable table={table} className="w-full [&_table]:w-full [&_.overflow-hidden]:border-0 [&_.flex.flex-col.gap-2\.5:last-child]:p-4" />
+        </div>
+      </div>
+
+      {/* Affiliate Details Sheet */}
+      <AffiliateDetailsSheet
+        affiliate={selectedAffiliate}
+        open={detailsSheetOpen}
+        onOpenChange={setDetailsSheetOpen}
+      />
+
+      {/* Payout Dialog */}
       <Dialog
         open={payoutAffiliateId !== null}
         onOpenChange={(open) => !open && setPayoutAffiliateId(null)}
@@ -636,7 +805,7 @@ function AdminAffiliates() {
                 >
                   {recordPayoutMutation.isPending ? (
                     <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white/70"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white/70" />
                       <span>Recording...</span>
                     </div>
                   ) : (

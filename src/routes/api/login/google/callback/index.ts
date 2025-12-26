@@ -65,9 +65,7 @@ export const Route = createFileRoute("/api/login/google/callback/")({
 
           const googleUser: GoogleUser = await response.json();
 
-          const existingAccount = await getAccountByGoogleIdUseCase(
-            googleUser.sub
-          );
+          const existingAccount = await getAccountByGoogleIdUseCase(googleUser.sub);
 
           if (existingAccount) {
             await setSession(existingAccount.userId);
@@ -90,9 +88,7 @@ export const Route = createFileRoute("/api/login/google/callback/")({
             throw e;
           }
           console.error(e);
-          // the specific error message depends on the provider
           if (e instanceof OAuth2RequestError) {
-            // invalid code
             return new Response(null, { status: 400 });
           }
           return new Response(null, { status: 500 });
