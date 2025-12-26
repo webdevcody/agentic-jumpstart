@@ -721,7 +721,7 @@ export async function getAffiliateAnalyticsUseCase(userId: number) {
     );
   }
 
-  const [stats, referrals, payouts, monthlyEarnings] = await Promise.all([
+  const [stats, referralsResult, payoutsResult, monthlyEarnings] = await Promise.all([
     getAffiliateStats(affiliate.id),
     getAffiliateReferrals(affiliate.id),
     getAffiliatePayouts(affiliate.id),
@@ -731,8 +731,8 @@ export async function getAffiliateAnalyticsUseCase(userId: number) {
   return {
     affiliate,
     stats,
-    referrals,
-    payouts,
+    referrals: referralsResult.items,
+    payouts: payoutsResult.items,
     monthlyEarnings,
   };
 }
