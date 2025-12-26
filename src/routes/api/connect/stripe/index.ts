@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { setCookie } from "@tanstack/react-start/server";
 import { stripe } from "~/lib/stripe";
 import { assertAuthenticated } from "~/utils/session";
 import {
@@ -13,6 +12,11 @@ import { StripeAccountStatus } from "~/utils/stripe-status";
 import { generateCsrfState } from "~/utils/crypto";
 
 const MAX_COOKIE_AGE_SECONDS = 60 * 10; // 10 minutes
+
+function buildCookie(name: string, value: string, maxAge: number): string {
+  const secure = env.NODE_ENV === "production" ? "; Secure" : "";
+  return `${name}=${value}; Path=/; HttpOnly; SameSite=lax; Max-Age=${maxAge}${secure}`;
+}
 
 /**
  * Stripe Connect OAuth initiation route.
@@ -64,26 +68,6 @@ export const Route = createFileRoute("/api/connect/stripe/")({
     // Generate CSRF state token
     const state = generateCsrfState();
 
-    // Store state in HTTP-only cookie for CSRF protection
-    // Note: sameSite "lax" is required for OAuth flows - "strict" would block
-    // cookies on the redirect back from Stripe (cross-site navigation)
-    setCookie("stripe_connect_state", state, {
-      path: "/",
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: MAX_COOKIE_AGE_SECONDS,
-    });
-
-    // Store affiliate ID in cookie for callback
-    setCookie("stripe_connect_affiliate_id", String(affiliate.id), {
-      path: "/",
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: MAX_COOKIE_AGE_SECONDS,
-    });
-
     try {
       let accountId = affiliate.stripeConnectAccountId;
 
@@ -114,7 +98,12 @@ export const Route = createFileRoute("/api/connect/stripe/")({
         type: "account_onboarding",
       });
 
-      return Response.redirect(accountLink.url);
+      // Return redirect with cookies in headers (avoids TanStack Start immutable headers bug)
+      const headers = new Headers();
+      headers.set("Location", accountLink.url);
+      headers.append("Set-Cookie", buildCookie("stripe_connect_state", state, MAX_COOKIE_AGE_SECONDS));
+      headers.append("Set-Cookie", buildCookie("stripe_connect_affiliate_id", String(affiliate.id), MAX_COOKIE_AGE_SECONDS));
+      return new Response(null, { status: 302, headers });
     } catch (error) {
       console.error("Stripe Connect account creation error:", error);
       return new Response("Failed to initiate Stripe Connect onboarding", {

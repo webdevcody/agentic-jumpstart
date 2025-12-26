@@ -48,17 +48,8 @@ import {
   TrendingUp,
   Search,
   Clock,
-  Minus,
-  Plus,
-  Save,
-  Loader2,
 } from "lucide-react";
-import {
-  ButtonGroup,
-  InputGroup,
-  InputGroupInput,
-  InputGroupAddon,
-} from "~/components/ui/button-group";
+import { NumberInputWithControls } from "~/components/blocks/number-input-with-controls";
 import { PageHeader } from "./-components/page-header";
 import { Page } from "./-components/page";
 import { DataTable } from "~/components/data-table/data-table";
@@ -458,131 +449,35 @@ function AdminAffiliates() {
         {/* Right side controls */}
         <div className="flex items-center gap-4">
           {/* Minimum Payout */}
-          <ButtonGroup>
-            <InputGroup className="w-36 h-10">
-              <InputGroupAddon align="inline-start" className="text-xs text-muted-foreground">Min</InputGroupAddon>
-              <InputGroupAddon align="inline-start">$</InputGroupAddon>
-              <InputGroupInput
-                id="minimum-payout"
-                type="text"
-                inputMode="numeric"
-                value={minimumPayoutState.displayAmount}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === "" || /^\d+$/.test(val)) {
-                    let numVal = val === "" ? 0 : parseInt(val, 10);
-                    if (numVal < 0) numVal = 0;
-                    minimumPayoutState.handleAmountChange(numVal.toString());
-                  }
-                }}
-                disabled={
-                  minimumPayoutState.isLoading || minimumPayoutState.isPending
-                }
-                className="text-center text-sm h-10"
-              />
-            </InputGroup>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-10 w-10"
-              onClick={() => minimumPayoutState.handleSave()}
-              disabled={!minimumPayoutState.hasLocalChanges || minimumPayoutState.isPending}
-            >
-              {minimumPayoutState.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-10 w-10"
-              onClick={() => {
-                const current = parseInt(minimumPayoutState.displayAmount) || 0;
-                minimumPayoutState.handleAmountChange(Math.max(0, current - 10).toString());
-              }}
-              disabled={minimumPayoutState.isLoading || minimumPayoutState.isPending}
-            >
-              <Minus className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-10 w-10"
-              onClick={() => {
-                const current = parseInt(minimumPayoutState.displayAmount) || 0;
-                minimumPayoutState.handleAmountChange((current + 10).toString());
-              }}
-              disabled={minimumPayoutState.isLoading || minimumPayoutState.isPending}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </ButtonGroup>
+          <NumberInputWithControls
+            value={minimumPayoutState.displayAmount}
+            onChange={minimumPayoutState.handleAmountChange}
+            onSave={minimumPayoutState.handleSave}
+            label="Min"
+            prefix="$"
+            step={10}
+            min={0}
+            disabled={minimumPayoutState.isLoading}
+            isPending={minimumPayoutState.isPending}
+            hasChanges={minimumPayoutState.hasLocalChanges}
+            inputWidth="w-28"
+          />
 
           {/* Default Multiplier */}
-          <ButtonGroup>
-            <InputGroup className="w-32 h-10">
-              <InputGroupAddon align="inline-start" className="text-xs text-muted-foreground">Rate</InputGroupAddon>
-              <InputGroupInput
-                id="commission-rate"
-                type="text"
-                inputMode="numeric"
-                value={commissionRateState.displayRate}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === "" || /^\d+$/.test(val)) {
-                    let numVal = val === "" ? 0 : parseInt(val, 10);
-                    if (numVal > 100) numVal = 100;
-                    if (numVal < 0) numVal = 0;
-                    commissionRateState.handleRateChange(numVal.toString());
-                  }
-                }}
-                disabled={
-                  commissionRateState.isLoading || commissionRateState.isPending
-                }
-                className="text-center text-sm h-10"
-              />
-              <InputGroupAddon align="inline-end">%</InputGroupAddon>
-            </InputGroup>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-10 w-10"
-              onClick={() => commissionRateState.handleSave()}
-              disabled={!commissionRateState.hasLocalChanges || commissionRateState.isPending}
-            >
-              {commissionRateState.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-10 w-10"
-              onClick={() => {
-                const current = parseInt(commissionRateState.displayRate) || 0;
-                commissionRateState.handleRateChange(Math.max(0, current - 1).toString());
-              }}
-              disabled={commissionRateState.isLoading || commissionRateState.isPending}
-            >
-              <Minus className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-10 w-10"
-              onClick={() => {
-                const current = parseInt(commissionRateState.displayRate) || 0;
-                commissionRateState.handleRateChange(Math.min(100, current + 1).toString());
-              }}
-              disabled={commissionRateState.isLoading || commissionRateState.isPending}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </ButtonGroup>
+          <NumberInputWithControls
+            value={commissionRateState.displayRate}
+            onChange={commissionRateState.handleRateChange}
+            onSave={commissionRateState.handleSave}
+            label="Rate"
+            suffix="%"
+            step={1}
+            min={0}
+            max={100}
+            disabled={commissionRateState.isLoading}
+            isPending={commissionRateState.isPending}
+            hasChanges={commissionRateState.hasLocalChanges}
+            inputWidth="w-24"
+          />
 
           {/* Batch Settle Button */}
           <Button

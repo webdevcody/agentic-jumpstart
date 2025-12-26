@@ -51,6 +51,7 @@ import { Route as AdminVideoProcessingRouteImport } from './routes/admin/video-p
 import { Route as AdminUtmAnalyticsRouteImport } from './routes/admin/utm-analytics'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
+import { Route as AdminPricingRouteImport } from './routes/admin/pricing'
 import { Route as AdminCommentsRouteImport } from './routes/admin/comments'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AdminAffiliatesRouteImport } from './routes/admin/affiliates'
@@ -77,12 +78,17 @@ import { Route as AdminConversionsEventsRouteImport } from './routes/admin/conve
 import { Route as AdminBlogNewRouteImport } from './routes/admin/blog/new'
 import { Route as LearnSlugLayoutIndexRouteImport } from './routes/learn/$slug/_layout.index'
 import { Route as ApiLoginGoogleIndexRouteImport } from './routes/api/login/google/index'
+import { Route as ApiConnectStripeIndexRouteImport } from './routes/api/connect/stripe/index'
 import { Route as AdminLaunchKitsCreateIndexRouteImport } from './routes/admin/launch-kits/create/index'
 import { Route as ApiSegmentsSegmentIdVideoRouteImport } from './routes/api/segments/$segmentId/video'
 import { Route as AdminNewsIdEditRouteImport } from './routes/admin/news/$id/edit'
 import { Route as AdminLaunchKitsEditIdRouteImport } from './routes/admin/launch-kits/edit/$id'
 import { Route as AdminBlogIdEditRouteImport } from './routes/admin/blog/$id/edit'
 import { Route as ApiLoginGoogleCallbackIndexRouteImport } from './routes/api/login/google/callback/index'
+import { Route as ApiConnectStripeRefreshIndexRouteImport } from './routes/api/connect/stripe/refresh/index'
+import { Route as ApiConnectStripeOauthIndexRouteImport } from './routes/api/connect/stripe/oauth/index'
+import { Route as ApiConnectStripeCallbackIndexRouteImport } from './routes/api/connect/stripe/callback/index'
+import { Route as ApiConnectStripeOauthCallbackIndexRouteImport } from './routes/api/connect/stripe/oauth/callback/index'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -294,6 +300,11 @@ const AdminSettingsRoute = AdminSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminPricingRoute = AdminPricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminCommentsRoute = AdminCommentsRouteImport.update({
   id: '/comments',
   path: '/comments',
@@ -425,6 +436,11 @@ const ApiLoginGoogleIndexRoute = ApiLoginGoogleIndexRouteImport.update({
   path: '/api/login/google/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiConnectStripeIndexRoute = ApiConnectStripeIndexRouteImport.update({
+  id: '/api/connect/stripe/',
+  path: '/api/connect/stripe/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminLaunchKitsCreateIndexRoute =
   AdminLaunchKitsCreateIndexRouteImport.update({
     id: '/launch-kits/create/',
@@ -458,6 +474,30 @@ const ApiLoginGoogleCallbackIndexRoute =
     path: '/api/login/google/callback/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiConnectStripeRefreshIndexRoute =
+  ApiConnectStripeRefreshIndexRouteImport.update({
+    id: '/api/connect/stripe/refresh/',
+    path: '/api/connect/stripe/refresh/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiConnectStripeOauthIndexRoute =
+  ApiConnectStripeOauthIndexRouteImport.update({
+    id: '/api/connect/stripe/oauth/',
+    path: '/api/connect/stripe/oauth/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiConnectStripeCallbackIndexRoute =
+  ApiConnectStripeCallbackIndexRouteImport.update({
+    id: '/api/connect/stripe/callback/',
+    path: '/api/connect/stripe/callback/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiConnectStripeOauthCallbackIndexRoute =
+  ApiConnectStripeOauthCallbackIndexRouteImport.update({
+    id: '/api/connect/stripe/oauth/callback/',
+    path: '/api/connect/stripe/oauth/callback/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -487,6 +527,7 @@ export interface FileRoutesByFullPath {
   '/admin/affiliates': typeof AdminAffiliatesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/comments': typeof AdminCommentsRoute
+  '/admin/pricing': typeof AdminPricingRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/utm-analytics': typeof AdminUtmAnalyticsRoute
@@ -531,9 +572,14 @@ export interface FileRoutesByFullPath {
   '/admin/news/$id/edit': typeof AdminNewsIdEditRoute
   '/api/segments/$segmentId/video': typeof ApiSegmentsSegmentIdVideoRoute
   '/admin/launch-kits/create': typeof AdminLaunchKitsCreateIndexRoute
+  '/api/connect/stripe': typeof ApiConnectStripeIndexRoute
   '/api/login/google': typeof ApiLoginGoogleIndexRoute
   '/learn/$slug/': typeof LearnSlugLayoutIndexRoute
+  '/api/connect/stripe/callback': typeof ApiConnectStripeCallbackIndexRoute
+  '/api/connect/stripe/oauth': typeof ApiConnectStripeOauthIndexRoute
+  '/api/connect/stripe/refresh': typeof ApiConnectStripeRefreshIndexRoute
   '/api/login/google/callback': typeof ApiLoginGoogleCallbackIndexRoute
+  '/api/connect/stripe/oauth/callback': typeof ApiConnectStripeOauthCallbackIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -561,6 +607,7 @@ export interface FileRoutesByTo {
   '/admin/affiliates': typeof AdminAffiliatesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/comments': typeof AdminCommentsRoute
+  '/admin/pricing': typeof AdminPricingRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/utm-analytics': typeof AdminUtmAnalyticsRoute
@@ -604,9 +651,14 @@ export interface FileRoutesByTo {
   '/admin/news/$id/edit': typeof AdminNewsIdEditRoute
   '/api/segments/$segmentId/video': typeof ApiSegmentsSegmentIdVideoRoute
   '/admin/launch-kits/create': typeof AdminLaunchKitsCreateIndexRoute
+  '/api/connect/stripe': typeof ApiConnectStripeIndexRoute
   '/api/login/google': typeof ApiLoginGoogleIndexRoute
   '/learn/$slug': typeof LearnSlugLayoutIndexRoute
+  '/api/connect/stripe/callback': typeof ApiConnectStripeCallbackIndexRoute
+  '/api/connect/stripe/oauth': typeof ApiConnectStripeOauthIndexRoute
+  '/api/connect/stripe/refresh': typeof ApiConnectStripeRefreshIndexRoute
   '/api/login/google/callback': typeof ApiLoginGoogleCallbackIndexRoute
+  '/api/connect/stripe/oauth/callback': typeof ApiConnectStripeOauthCallbackIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -637,6 +689,7 @@ export interface FileRoutesById {
   '/admin/affiliates': typeof AdminAffiliatesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/comments': typeof AdminCommentsRoute
+  '/admin/pricing': typeof AdminPricingRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/utm-analytics': typeof AdminUtmAnalyticsRoute
@@ -681,9 +734,14 @@ export interface FileRoutesById {
   '/admin/news/$id/edit': typeof AdminNewsIdEditRoute
   '/api/segments/$segmentId/video': typeof ApiSegmentsSegmentIdVideoRoute
   '/admin/launch-kits/create/': typeof AdminLaunchKitsCreateIndexRoute
+  '/api/connect/stripe/': typeof ApiConnectStripeIndexRoute
   '/api/login/google/': typeof ApiLoginGoogleIndexRoute
   '/learn/$slug/_layout/': typeof LearnSlugLayoutIndexRoute
+  '/api/connect/stripe/callback/': typeof ApiConnectStripeCallbackIndexRoute
+  '/api/connect/stripe/oauth/': typeof ApiConnectStripeOauthIndexRoute
+  '/api/connect/stripe/refresh/': typeof ApiConnectStripeRefreshIndexRoute
   '/api/login/google/callback/': typeof ApiLoginGoogleCallbackIndexRoute
+  '/api/connect/stripe/oauth/callback/': typeof ApiConnectStripeOauthCallbackIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -715,6 +773,7 @@ export interface FileRouteTypes {
     | '/admin/affiliates'
     | '/admin/analytics'
     | '/admin/comments'
+    | '/admin/pricing'
     | '/admin/settings'
     | '/admin/users'
     | '/admin/utm-analytics'
@@ -759,9 +818,14 @@ export interface FileRouteTypes {
     | '/admin/news/$id/edit'
     | '/api/segments/$segmentId/video'
     | '/admin/launch-kits/create'
+    | '/api/connect/stripe'
     | '/api/login/google'
     | '/learn/$slug/'
+    | '/api/connect/stripe/callback'
+    | '/api/connect/stripe/oauth'
+    | '/api/connect/stripe/refresh'
     | '/api/login/google/callback'
+    | '/api/connect/stripe/oauth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -789,6 +853,7 @@ export interface FileRouteTypes {
     | '/admin/affiliates'
     | '/admin/analytics'
     | '/admin/comments'
+    | '/admin/pricing'
     | '/admin/settings'
     | '/admin/users'
     | '/admin/utm-analytics'
@@ -832,9 +897,14 @@ export interface FileRouteTypes {
     | '/admin/news/$id/edit'
     | '/api/segments/$segmentId/video'
     | '/admin/launch-kits/create'
+    | '/api/connect/stripe'
     | '/api/login/google'
     | '/learn/$slug'
+    | '/api/connect/stripe/callback'
+    | '/api/connect/stripe/oauth'
+    | '/api/connect/stripe/refresh'
     | '/api/login/google/callback'
+    | '/api/connect/stripe/oauth/callback'
   id:
     | '__root__'
     | '/'
@@ -864,6 +934,7 @@ export interface FileRouteTypes {
     | '/admin/affiliates'
     | '/admin/analytics'
     | '/admin/comments'
+    | '/admin/pricing'
     | '/admin/settings'
     | '/admin/users'
     | '/admin/utm-analytics'
@@ -908,9 +979,14 @@ export interface FileRouteTypes {
     | '/admin/news/$id/edit'
     | '/api/segments/$segmentId/video'
     | '/admin/launch-kits/create/'
+    | '/api/connect/stripe/'
     | '/api/login/google/'
     | '/learn/$slug/_layout/'
+    | '/api/connect/stripe/callback/'
+    | '/api/connect/stripe/oauth/'
+    | '/api/connect/stripe/refresh/'
     | '/api/login/google/callback/'
+    | '/api/connect/stripe/oauth/callback/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -956,8 +1032,13 @@ export interface RootRouteChildren {
   LearnSlugLayoutRoute: typeof LearnSlugLayoutRouteWithChildren
   LearnSlugEditRoute: typeof LearnSlugEditRoute
   ApiSegmentsSegmentIdVideoRoute: typeof ApiSegmentsSegmentIdVideoRoute
+  ApiConnectStripeIndexRoute: typeof ApiConnectStripeIndexRoute
   ApiLoginGoogleIndexRoute: typeof ApiLoginGoogleIndexRoute
+  ApiConnectStripeCallbackIndexRoute: typeof ApiConnectStripeCallbackIndexRoute
+  ApiConnectStripeOauthIndexRoute: typeof ApiConnectStripeOauthIndexRoute
+  ApiConnectStripeRefreshIndexRoute: typeof ApiConnectStripeRefreshIndexRoute
   ApiLoginGoogleCallbackIndexRoute: typeof ApiLoginGoogleCallbackIndexRoute
+  ApiConnectStripeOauthCallbackIndexRoute: typeof ApiConnectStripeOauthCallbackIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1256,6 +1337,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSettingsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/pricing': {
+      id: '/admin/pricing'
+      path: '/pricing'
+      fullPath: '/admin/pricing'
+      preLoaderRoute: typeof AdminPricingRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/comments': {
       id: '/admin/comments'
       path: '/comments'
@@ -1438,6 +1526,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiLoginGoogleIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/connect/stripe/': {
+      id: '/api/connect/stripe/'
+      path: '/api/connect/stripe'
+      fullPath: '/api/connect/stripe'
+      preLoaderRoute: typeof ApiConnectStripeIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/launch-kits/create/': {
       id: '/admin/launch-kits/create/'
       path: '/launch-kits/create'
@@ -1478,6 +1573,34 @@ declare module '@tanstack/react-router' {
       path: '/api/login/google/callback'
       fullPath: '/api/login/google/callback'
       preLoaderRoute: typeof ApiLoginGoogleCallbackIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/connect/stripe/refresh/': {
+      id: '/api/connect/stripe/refresh/'
+      path: '/api/connect/stripe/refresh'
+      fullPath: '/api/connect/stripe/refresh'
+      preLoaderRoute: typeof ApiConnectStripeRefreshIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/connect/stripe/oauth/': {
+      id: '/api/connect/stripe/oauth/'
+      path: '/api/connect/stripe/oauth'
+      fullPath: '/api/connect/stripe/oauth'
+      preLoaderRoute: typeof ApiConnectStripeOauthIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/connect/stripe/callback/': {
+      id: '/api/connect/stripe/callback/'
+      path: '/api/connect/stripe/callback'
+      fullPath: '/api/connect/stripe/callback'
+      preLoaderRoute: typeof ApiConnectStripeCallbackIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/connect/stripe/oauth/callback/': {
+      id: '/api/connect/stripe/oauth/callback/'
+      path: '/api/connect/stripe/oauth/callback'
+      fullPath: '/api/connect/stripe/oauth/callback'
+      preLoaderRoute: typeof ApiConnectStripeOauthCallbackIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -1529,6 +1652,7 @@ interface AdminRouteRouteChildren {
   AdminAffiliatesRoute: typeof AdminAffiliatesRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminCommentsRoute: typeof AdminCommentsRoute
+  AdminPricingRoute: typeof AdminPricingRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminUtmAnalyticsRoute: typeof AdminUtmAnalyticsRoute
@@ -1551,6 +1675,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminAffiliatesRoute: AdminAffiliatesRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminCommentsRoute: AdminCommentsRoute,
+  AdminPricingRoute: AdminPricingRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminUtmAnalyticsRoute: AdminUtmAnalyticsRoute,
@@ -1626,8 +1751,14 @@ const rootRouteChildren: RootRouteChildren = {
   LearnSlugLayoutRoute: LearnSlugLayoutRouteWithChildren,
   LearnSlugEditRoute: LearnSlugEditRoute,
   ApiSegmentsSegmentIdVideoRoute: ApiSegmentsSegmentIdVideoRoute,
+  ApiConnectStripeIndexRoute: ApiConnectStripeIndexRoute,
   ApiLoginGoogleIndexRoute: ApiLoginGoogleIndexRoute,
+  ApiConnectStripeCallbackIndexRoute: ApiConnectStripeCallbackIndexRoute,
+  ApiConnectStripeOauthIndexRoute: ApiConnectStripeOauthIndexRoute,
+  ApiConnectStripeRefreshIndexRoute: ApiConnectStripeRefreshIndexRoute,
   ApiLoginGoogleCallbackIndexRoute: ApiLoginGoogleCallbackIndexRoute,
+  ApiConnectStripeOauthCallbackIndexRoute:
+    ApiConnectStripeOauthCallbackIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -28,7 +28,7 @@ import {
   completePendingPayout,
   failPendingPayout,
 } from "~/data-access/affiliates";
-import { getAffiliateCommissionRate } from "~/data-access/app-settings";
+import { getAffiliateCommissionRate, getAffiliateMinimumPayout } from "~/data-access/app-settings";
 import { ApplicationError } from "./errors";
 import { AFFILIATE_CONFIG } from "~/config";
 import { stripe } from "~/lib/stripe";
@@ -213,11 +213,23 @@ export async function processAffiliateReferralUseCase({
   purchaserId,
   stripeSessionId,
   amount,
+  frozenCommissionRate,
+  frozenDiscountRate,
+  frozenOriginalCommissionRate,
+  isAutoTransfer = false,
 }: {
   affiliateCode: string;
   purchaserId: number;
   stripeSessionId: string;
   amount: number;
+  /** Commission rate frozen at checkout time (effective rate = originalRate - discountRate). If not provided, uses affiliate's current rate. */
+  frozenCommissionRate?: number;
+  /** Discount rate frozen at checkout time. */
+  frozenDiscountRate?: number;
+  /** Original commission rate frozen at checkout time. */
+  frozenOriginalCommissionRate?: number;
+  /** If true, transfer_data was used in checkout - referral is marked as paid immediately (Stripe handles transfer) */
+  isAutoTransfer?: boolean;
 }) {
   // Validate amount is within safe range to prevent integer overflow in commission calculation
   if (amount < 0) {
@@ -274,21 +286,46 @@ export async function processAffiliateReferralUseCase({
       return null;
     }
 
-    // Calculate commission (amount and rate are guaranteed to be within safe bounds due to validation above)
-    const commission = Math.floor((amount * affiliate.commissionRate) / 100);
+    // Calculate commission using frozen rate (from checkout) or affiliate's current rate
+    // frozenCommissionRate is the commission rate stored at checkout time (after discount split)
+    const effectiveCommissionRate = frozenCommissionRate ?? affiliate.commissionRate;
+    const commission = Math.floor((amount * effectiveCommissionRate) / 100);
 
-    // Create referral record
+    // Create referral record with frozen rates for audit trail
+    // If isAutoTransfer (transfer_data used), mark as paid immediately - Stripe handles the transfer
     const referral = await createAffiliateReferral({
       affiliateId: affiliate.id,
       purchaserId,
       stripeSessionId,
       amount,
       commission,
-      isPaid: false,
+      // Store frozen rates at checkout time for audit trail
+      commissionRate: effectiveCommissionRate,
+      discountRate: frozenDiscountRate ?? affiliate.discountRate,
+      originalCommissionRate: frozenOriginalCommissionRate ?? affiliate.commissionRate,
+      isPaid: isAutoTransfer, // Paid immediately if Stripe handles transfer
     });
 
     // Update affiliate balances
-    await updateAffiliateBalances(affiliate.id, commission, commission);
+    // If auto-transfer: add to totalEarnings and paidAmount (not unpaidBalance)
+    // If manual: add to totalEarnings and unpaidBalance
+    if (isAutoTransfer) {
+      // For auto-transfer, we add to totalEarnings and paidAmount (balance stays same)
+      await updateAffiliateBalances(affiliate.id, commission, 0);
+      // Also increment paidAmount since Stripe will transfer it
+      const { affiliates } = await import("~/db/schema");
+      const { eq, sql } = await import("drizzle-orm");
+      const { database } = await import("~/db");
+      await database.update(affiliates)
+        .set({
+          paidAmount: sql`${affiliates.paidAmount} + ${commission}`,
+          updatedAt: new Date()
+        })
+        .where(eq(affiliates.id, affiliate.id));
+    } else {
+      // For manual payout, add to both totalEarnings and unpaidBalance
+      await updateAffiliateBalances(affiliate.id, commission, commission);
+    }
 
     return referral;
   });
@@ -309,10 +346,11 @@ export async function recordAffiliatePayoutUseCase({
   notes?: string;
   paidBy: number;
 }) {
-  // Validate minimum payout
-  if (amount < AFFILIATE_CONFIG.MINIMUM_PAYOUT) {
+  // Validate minimum payout (configurable via admin settings)
+  const minimumPayout = await getAffiliateMinimumPayout();
+  if (amount < minimumPayout) {
     throw new ApplicationError(
-      `Minimum payout amount is $${AFFILIATE_CONFIG.MINIMUM_PAYOUT / 100}`,
+      `Minimum payout amount is $${minimumPayout / 100}`,
       "MINIMUM_PAYOUT_NOT_MET"
     );
   }
@@ -366,11 +404,12 @@ export async function processAutomaticPayoutsUseCase({
     return { success: false, error: "Stripe payouts not enabled for this affiliate" };
   }
 
-  // Validate minimum balance
-  if (affiliate.unpaidBalance < AFFILIATE_CONFIG.MINIMUM_PAYOUT) {
+  // Validate there's a balance to pay
+  // Stripe Connect affiliates: No minimum threshold - pay any positive balance
+  if (affiliate.unpaidBalance <= 0) {
     return {
       success: false,
-      error: `Balance ($${affiliate.unpaidBalance / 100}) below minimum payout ($${AFFILIATE_CONFIG.MINIMUM_PAYOUT / 100})`,
+      error: "No unpaid balance to process",
     };
   }
 
@@ -557,9 +596,8 @@ export async function processAllAutomaticPayoutsUseCase({
     error?: string;
   }>;
 }> {
-  const eligibleAffiliates = await getEligibleAffiliatesForAutoPayout(
-    AFFILIATE_CONFIG.MINIMUM_PAYOUT
-  );
+  // Stripe Connect affiliates have no minimum threshold - pay any positive balance
+  const eligibleAffiliates = await getEligibleAffiliatesForAutoPayout(1);
 
   const results: Array<{
     affiliateId: number;

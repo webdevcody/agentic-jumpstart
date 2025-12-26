@@ -5,7 +5,7 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button, buttonVariants } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import {
@@ -24,6 +24,7 @@ import {
   checkIfUserIsAffiliateFn,
   refreshStripeAccountStatusFn,
   disconnectStripeAccountFn,
+  updateAffiliateDiscountRateFn,
 } from "~/fn/affiliates";
 import { authenticatedMiddleware } from "~/lib/auth";
 import {
@@ -49,6 +50,7 @@ import {
   Link as LinkIcon,
   Zap,
   Unlink,
+  Gift,
 } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { env } from "~/utils/env";
@@ -87,6 +89,7 @@ import { publicEnv } from "~/utils/env-public";
 import { assertAuthenticatedFn } from "~/fn/auth";
 import { motion } from "framer-motion";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
+import { Slider } from "~/components/ui/slider";
 
 const paymentFormSchema = z.object({
   paymentMethod: z.enum(["link", "stripe"]),
@@ -204,9 +207,15 @@ function AffiliateDashboard() {
   const [copied, setCopied] = useState(false);
   const [editPaymentOpen, setEditPaymentOpen] = useState(false);
   const [disconnectDialogOpen, setDisconnectDialogOpen] = useState(false);
+  const [localDiscountRate, setLocalDiscountRate] = useState(loaderData.dashboard.affiliate.discountRate);
 
   // Use the dashboard data from loader
   const dashboard = loaderData.dashboard;
+
+  // Sync local discount rate with server data when it changes
+  useEffect(() => {
+    setLocalDiscountRate(dashboard.affiliate.discountRate);
+  }, [dashboard.affiliate.discountRate]);
 
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
@@ -261,6 +270,21 @@ function AffiliateDashboard() {
     onError: (error) => {
       toast.error("Disconnect Failed", {
         description: error.message || "Failed to disconnect Stripe account.",
+      });
+    },
+  });
+
+  const updateDiscountRateMutation = useMutation({
+    mutationFn: updateAffiliateDiscountRateFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["affiliate", "dashboard"] });
+      toast.success("Discount Split Updated", {
+        description: "Your commission split has been updated.",
+      });
+    },
+    onError: (error) => {
+      toast.error("Update Failed", {
+        description: error.message || "Failed to update discount split.",
       });
     },
   });
@@ -380,7 +404,7 @@ function AffiliateDashboard() {
                 </div>
                 <div className="flex items-center gap-1">
                   <DollarSign className="h-4 w-4" />
-                  <span>{dashboard.affiliate.commissionRate}% commission</span>
+                  <span>{dashboard.affiliate.commissionRate - localDiscountRate}% commission</span>
                 </div>
               </div>
             </CardContent>
@@ -462,27 +486,39 @@ function AffiliateDashboard() {
                 {/* Account Status Display */}
                 {dashboard.affiliate.stripeAccountStatus === "not_started" && (
                   <div className="p-4 rounded-lg border border-dashed border-theme-500/50 bg-theme-500/5">
-                    <div className="flex items-center gap-3 mb-3">
+                    <div className="flex items-center gap-3 mb-4">
                       <div className="w-10 h-10 rounded-full bg-theme-500/10 flex items-center justify-center">
                         <LinkIcon className="h-5 w-5 text-theme-500" />
                       </div>
                       <div>
                         <p className="font-medium">Connect Your Stripe Account</p>
                         <p className="text-sm text-muted-foreground">
-                          Set up Stripe Connect to receive automatic payouts when you reach $50
+                          Set up Stripe to receive automatic payouts on every sale
                         </p>
                       </div>
                     </div>
-                    <a
-                      href="/api/connect/stripe"
-                      className={cn(
-                        "inline-flex items-center justify-center gap-2 w-full",
-                        "bg-theme-500 hover:bg-theme-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                      )}
-                    >
-                      <Zap className="h-4 w-4" />
-                      Connect Stripe Account
-                    </a>
+                    <div className="space-y-3">
+                      <a
+                        href="/api/connect/stripe"
+                        className={cn(
+                          "inline-flex items-center justify-center gap-2 w-full",
+                          "bg-theme-500 hover:bg-theme-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
+                        )}
+                      >
+                        <Zap className="h-4 w-4" />
+                        Create New Stripe Account
+                      </a>
+                      <a
+                        href="/api/connect/stripe/oauth"
+                        className={cn(
+                          "inline-flex items-center justify-center gap-2 w-full",
+                          "border border-theme-500/50 hover:bg-theme-500/10 text-theme-600 dark:text-theme-400 font-medium py-2.5 px-4 rounded-lg transition-colors"
+                        )}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Connect Existing Stripe Account
+                      </a>
+                    </div>
                   </div>
                 )}
 
@@ -623,6 +659,87 @@ function AffiliateDashboard() {
             </Card>
           </motion.div>
         )}
+
+        {/* Share the Benefit Card */}
+        <motion.div variants={itemVariants} className="mb-8">
+          <Card className="bg-card/80 dark:bg-card/60 backdrop-blur-sm border border-theme-200/60 dark:border-theme-500/30 shadow-elevation-2 hover:shadow-glow-cyan hover:border-theme-400/80 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-theme-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+            <CardHeader className="relative z-10">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Gift className="h-5 w-5 text-green-500" />
+                    Share the Benefit
+                  </CardTitle>
+                  <CardDescription>
+                    Offer your audience a discount and boost your conversions. The more you share, the more attractive your offer becomes.
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="relative z-10 space-y-6">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-green-600 dark:text-green-400 font-medium flex items-center gap-1.5">
+                    <Gift className="h-4 w-4" />
+                    Customer Discount
+                  </span>
+                  <span className="font-bold text-green-600 dark:text-green-400 text-lg">
+                    {localDiscountRate}%
+                  </span>
+                </div>
+                <Slider
+                  value={[localDiscountRate]}
+                  max={dashboard.affiliate.commissionRate}
+                  min={0}
+                  step={1}
+                  onValueChange={(value) => {
+                    setLocalDiscountRate(value[0]);
+                  }}
+                  onValueCommit={(value) => {
+                    updateDiscountRateMutation.mutate({ data: { discountRate: value[0] } });
+                  }}
+                  disabled={updateDiscountRateMutation.isPending}
+                  className="w-full"
+                />
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-theme-600 dark:text-theme-400 font-medium flex items-center gap-1.5">
+                    <DollarSign className="h-4 w-4" />
+                    Your Earnings
+                  </span>
+                  <span className="font-bold text-theme-600 dark:text-theme-400 text-lg">
+                    {dashboard.affiliate.commissionRate - localDiscountRate}%
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/50">
+                <div className="text-center p-4 rounded-xl bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/30 dark:to-green-800/20 border border-green-200/60 dark:border-green-700/40">
+                  <Gift className="h-5 w-5 text-green-500 mx-auto mb-2" />
+                  <p className="text-xs text-muted-foreground mb-1">Customer saves</p>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    ${((199 * localDiscountRate) / 100).toFixed(0)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">on $199 course</p>
+                </div>
+                <div className="text-center p-4 rounded-xl bg-gradient-to-br from-theme-50 to-theme-100/50 dark:from-theme-900/30 dark:to-theme-800/20 border border-theme-200/60 dark:border-theme-700/40">
+                  <DollarSign className="h-5 w-5 text-theme-500 mx-auto mb-2" />
+                  <p className="text-xs text-muted-foreground mb-1">You earn</p>
+                  <p className="text-2xl font-bold text-theme-600 dark:text-theme-400">
+                    ${((199 * (dashboard.affiliate.commissionRate - localDiscountRate)) / 100).toFixed(0)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">per sale</p>
+                </div>
+              </div>
+
+              {localDiscountRate > 0 && (
+                <p className="text-xs text-center text-muted-foreground bg-muted/50 rounded-lg py-2 px-3">
+                  Customers using your link will see a {localDiscountRate}% discount applied at checkout
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Stats Grid */}
         <motion.div
@@ -1077,13 +1194,31 @@ function AffiliateDashboard() {
                           </div>
                         )}
                       </div>
-                      <Badge
-                        variant="secondary"
-                        className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 px-4 py-2"
-                      >
-                        <Check className="h-4 w-4 mr-2" />
-                        Paid
-                      </Badge>
+                      {payout.status === "completed" ? (
+                        <Badge
+                          variant="secondary"
+                          className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 px-4 py-2"
+                        >
+                          <Check className="h-4 w-4 mr-2" />
+                          Paid
+                        </Badge>
+                      ) : payout.status === "pending" ? (
+                        <Badge
+                          variant="secondary"
+                          className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 px-4 py-2"
+                        >
+                          <Clock className="h-4 w-4 mr-2" />
+                          Pending
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="secondary"
+                          className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 px-4 py-2"
+                        >
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Failed
+                        </Badge>
+                      )}
                     </div>
                   ))}
                 </div>

@@ -3,7 +3,6 @@ import { stripe } from "~/lib/stripe";
 import { updateUserToPremiumUseCase } from "~/use-cases/users";
 import {
   processAffiliateReferralUseCase,
-  processAutomaticPayoutsUseCase,
   syncStripeAccountStatusUseCase,
 } from "~/use-cases/affiliates";
 import {
@@ -11,19 +10,11 @@ import {
   getPayoutByStripeTransferId,
   getAffiliateByStripeAccountIdWithUserEmail,
   updateAffiliatePayoutError,
-  updateLastPayoutAttempt,
 } from "~/data-access/affiliates";
-import { env } from "~/utils/env";
 import { trackAnalyticsEvent } from "~/data-access/analytics";
-import { AFFILIATE_CONFIG } from "~/config";
 import { sendAffiliatePayoutFailedEmail } from "~/utils/email";
 import { logger } from "~/utils/logger";
-
-// System user ID for automatic payouts (configured via environment variable)
-const SYSTEM_USER_ID = env.SYSTEM_USER_ID;
-
-// Cooldown period for automatic payouts to prevent duplicate processing from webhook replays (60 seconds)
-const PAYOUT_COOLDOWN_MS = 60000;
+import { env } from "~/utils/env";
 
 // Map Stripe error codes/messages to user-friendly messages
 function getUserFriendlyPayoutError(stripeError: string | undefined): string {
@@ -112,11 +103,31 @@ export const Route = createFileRoute("/api/stripe/webhook")({
               // Process affiliate referral if code exists
               if (affiliateCode && session.amount_total) {
                 try {
+                  // Get frozen rates from checkout metadata for audit trail
+                  // commissionRate = effective rate (originalRate - discountRate)
+                  const frozenCommissionRate = session.metadata?.commissionRate
+                    ? parseInt(session.metadata.commissionRate, 10)
+                    : undefined;
+                  const frozenDiscountRate = session.metadata?.discountRate
+                    ? parseInt(session.metadata.discountRate, 10)
+                    : undefined;
+                  const frozenOriginalCommissionRate = session.metadata?.originalCommissionRate
+                    ? parseInt(session.metadata.originalCommissionRate, 10)
+                    : undefined;
+
+                  // Check if affiliate has Stripe Connect enabled (transfer_data was used)
+                  const affiliate = await getAffiliateByCode(affiliateCode);
+                  const isAutoTransfer = !!(affiliate?.stripeConnectAccountId && affiliate?.stripePayoutsEnabled);
+
                   const referral = await processAffiliateReferralUseCase({
                     affiliateCode,
                     purchaserId: parseInt(userId),
                     stripeSessionId: session.id,
                     amount: session.amount_total,
+                    frozenCommissionRate,
+                    frozenDiscountRate,
+                    frozenOriginalCommissionRate,
+                    isAutoTransfer, // If true, Stripe handles transfer via transfer_data
                   });
 
                   if (referral) {
@@ -125,67 +136,8 @@ export const Route = createFileRoute("/api/stripe/webhook")({
                       affiliateCode,
                       sessionId: session.id,
                       commission: referral.commission / 100,
+                      isAutoTransfer,
                     });
-
-                    // Trigger automatic payout if affiliate is eligible
-                    // Check if balance >= minimum and Stripe Connect is enabled
-                    try {
-                      const affiliate = await getAffiliateByCode(affiliateCode);
-                      if (
-                        affiliate &&
-                        affiliate.stripePayoutsEnabled &&
-                        affiliate.unpaidBalance >= AFFILIATE_CONFIG.MINIMUM_PAYOUT
-                      ) {
-                        // Check for recent payout attempt (cooldown protection against webhook replays)
-                        let shouldSkipPayout = false;
-                        if (affiliate.lastPayoutAttemptAt) {
-                          const timeSinceLastAttempt = Date.now() - affiliate.lastPayoutAttemptAt.getTime();
-                          if (timeSinceLastAttempt < PAYOUT_COOLDOWN_MS) {
-                            logger.info("Skipping payout: cooldown active", {
-                              fn: "stripe-webhook",
-                              affiliateId: affiliate.id,
-                              timeSinceLastAttempt,
-                            });
-                            shouldSkipPayout = true;
-                          }
-                        }
-
-                        if (!shouldSkipPayout) {
-                          // Update timestamp before attempting payout
-                          await updateLastPayoutAttempt(affiliate.id);
-
-                          logger.info("Triggering automatic payout", {
-                            fn: "stripe-webhook",
-                            affiliateId: affiliate.id,
-                            balance: affiliate.unpaidBalance / 100,
-                          });
-                          const payoutResult = await processAutomaticPayoutsUseCase({
-                            affiliateId: affiliate.id,
-                            systemUserId: SYSTEM_USER_ID,
-                          });
-                          if (payoutResult.success) {
-                            logger.info("Automatic payout successful", {
-                              fn: "stripe-webhook",
-                              affiliateId: affiliate.id,
-                              amount: (payoutResult.amount ?? 0) / 100,
-                              transferId: payoutResult.transferId,
-                            });
-                          } else {
-                            logger.warn("Automatic payout skipped", {
-                              fn: "stripe-webhook",
-                              affiliateId: affiliate.id,
-                              error: payoutResult.error,
-                            });
-                          }
-                        }
-                      }
-                    } catch (payoutError) {
-                      logger.error("Failed to process automatic payout for affiliate after referral", {
-                        fn: "stripe-webhook",
-                        error: payoutError instanceof Error ? payoutError.message : String(payoutError),
-                      });
-                      // Don't fail webhook for payout errors
-                    }
                   } else {
                     logger.warn("Affiliate referral not processed", {
                       fn: "stripe-webhook",

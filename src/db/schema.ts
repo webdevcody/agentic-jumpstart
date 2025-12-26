@@ -123,7 +123,7 @@ export const segments = tableCreator(
     icon: text("icon"), // Lucide icon name, e.g., "PlayCircle", "Code", "FileText"
     isPremium: boolean("isPremium").notNull().default(false),
     isComingSoon: boolean("isComingSoon").notNull().default(false),
-    moduleId: serial("moduleId")
+    moduleId: integer("moduleId")
       .notNull()
       .references(() => modules.id, { onDelete: "cascade" }),
     videoKey: text("videoKey"),
@@ -259,6 +259,9 @@ export const affiliates = tableCreator(
     paymentMethod: text("paymentMethod").notNull().default("link"), // 'link' or 'stripe'
     paymentLink: text("paymentLink"),
     commissionRate: integer("commissionRate").notNull().default(30),
+    // Discount rate: percentage of commission given to customer as discount
+    // E.g., if commissionRate=30 and discountRate=15, customer gets 15% off, affiliate earns 15%
+    discountRate: integer("discountRate").notNull().default(0),
     totalEarnings: integer("totalEarnings").notNull().default(0),
     paidAmount: integer("paidAmount").notNull().default(0),
     unpaidBalance: integer("unpaidBalance").notNull().default(0),
@@ -304,6 +307,10 @@ export const affiliateReferrals = tableCreator(
     stripeSessionId: text("stripeSessionId").notNull(),
     amount: integer("amount").notNull(),
     commission: integer("commission").notNull(),
+    // Frozen rates at checkout time for audit trail
+    commissionRate: integer("commissionRate"), // The effective rate used (originalRate - discountRate)
+    discountRate: integer("discountRate"), // Customer discount given by affiliate
+    originalCommissionRate: integer("originalCommissionRate"), // Platform's base commission rate
     isPaid: boolean("isPaid").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
