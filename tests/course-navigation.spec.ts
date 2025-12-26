@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { clearSession, createAndLoginAsNewRegularUser } from "./helpers/auth";
 import { setEarlyAccessMode } from "./helpers/early-access";
+import { clickWithRetry } from "./helpers/click-retry";
 import { TEST_CONFIG } from "./setup/config";
 
 test.describe.configure({ mode: "serial" });
@@ -48,8 +49,11 @@ test.describe("Course Navigation", () => {
     await expect(segmentItem.locator(".lucide-circle-play")).toBeVisible();
 
     await nextSegment.click();
-    // Wait for navigation to complete
-    await page.waitForURL(`**/learn/${TEST_CONFIG.SEGMENTS.SETTING_UP_ENVIRONMENT.slug}`);
+    // Wait for title to change (more reliable than URL for React SPA)
+    await expect(page.locator("h2")).toHaveText(
+      TEST_CONFIG.SEGMENTS.SETTING_UP_ENVIRONMENT.title,
+      { timeout: TEST_CONFIG.TIMEOUTS.ELEMENT_VISIBLE }
+    );
     await expect(
       page
         .locator(TEST_CONFIG.CSS_CLASSES.SEGMENT_ITEM)
@@ -70,10 +74,18 @@ test.describe("Course Navigation", () => {
     const backButton = page.getByRole("button", {
       name: TEST_CONFIG.UI_TEXT.PREVIOUS_LESSON_BUTTON,
     });
-    await backButton.click();
-    await expect(page.locator("h2")).toHaveText(
-      TEST_CONFIG.SEGMENTS.WELCOME_TO_COURSE.title
-    );
+    // Wait for button to be enabled (indicates modules are loaded and previousSegment exists)
+    await expect(backButton).toBeEnabled({ timeout: TEST_CONFIG.TIMEOUTS.ELEMENT_VISIBLE });
+
+    // Click with retry for headless mode reliability
+    await clickWithRetry(backButton, {
+      type: "text",
+      locator: page.locator("h2"),
+      text: TEST_CONFIG.SEGMENTS.WELCOME_TO_COURSE.title,
+    });
+
+    // Verify URL updated as well
+    await expect(page).toHaveURL(`/learn/${TEST_CONFIG.SEGMENTS.WELCOME_TO_COURSE.slug}`);
 
     // verify a user can click the next button to go to the next segment
     // Progress format is now "X/Y" instead of "X of Y completed"
@@ -134,12 +146,17 @@ test.describe("Course Navigation", () => {
     const nextButton = page.getByRole("button", {
       name: TEST_CONFIG.UI_TEXT.NEXT_VIDEO_BUTTON,
     });
-    await nextButton.click();
+    // Wait for button to be enabled (indicates React queries are complete)
+    await expect(nextButton).toBeEnabled({ timeout: TEST_CONFIG.TIMEOUTS.ELEMENT_VISIBLE });
 
-    // Verify we navigated to the next segment (Advanced Patterns - premium)
-    await expect(page.locator("h2")).toHaveText(
-      TEST_CONFIG.SEGMENTS.ADVANCED_PATTERNS.title
-    );
+    // Click with retry for headless mode reliability
+    await clickWithRetry(nextButton, {
+      type: "text",
+      locator: page.locator("h2"),
+      text: TEST_CONFIG.SEGMENTS.ADVANCED_PATTERNS.title,
+    });
+    // Verify URL updated as well
+    await expect(page).toHaveURL(`/learn/${TEST_CONFIG.SEGMENTS.ADVANCED_PATTERNS.slug}`);
 
     // Verify the progress for Advanced Topics module is still 0/2
     // The premium video should NOT have been marked as watched

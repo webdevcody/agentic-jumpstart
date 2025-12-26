@@ -1,4 +1,11 @@
 export const TEST_CONFIG = {
+  // Timeout constants for test reliability
+  TIMEOUTS: {
+    ELEMENT_VISIBLE: 10000,    // Wait for elements to appear
+    CLICK_RETRY: 3000,         // Short timeout for retry attempts
+    FINAL_ASSERTION: 5000,     // Final assertion after retries
+    MAX_RETRY_ATTEMPTS: 3,     // Number of click retry attempts
+  },
   MODULES: {
     GETTING_STARTED: "Getting Started",
     ADVANCED_TOPICS: "Advanced Topics"

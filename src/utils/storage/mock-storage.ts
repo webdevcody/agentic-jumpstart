@@ -75,9 +75,10 @@ export class MockStorage implements IStorage {
     return url;
   }
 
-  async getPresignedUploadUrl(key: string, contentType: string = "video/mp4"): Promise<string> {
-    console.log(`[MockStorage] Returning mock upload URL for: ${key}`);
-    return `http://localhost:4000/api/mock-upload?key=${encodeURIComponent(key)}`;
+  async getPresignedUploadUrl(_key: string, _contentType: string = "video/mp4"): Promise<string> {
+    throw new Error(
+      "[MockStorage] Upload not supported in mock mode. Configure R2 credentials or use seed data."
+    );
   }
 
   async getBuffer(key: string): Promise<Buffer> {
