@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Sheet,
@@ -66,6 +66,8 @@ const formatShortDate = (date: Date | string | null) => {
     .replace(" ", " '");
 };
 
+const ACTIVITY_PAGE_SIZE = 10;
+
 export function AffiliateDetailsSheet({
   affiliate,
   open,
@@ -75,19 +77,103 @@ export function AffiliateDetailsSheet({
   const [editingRate, setEditingRate] = useState(false);
   const [newCommissionRate, setNewCommissionRate] = useState<string>("");
 
+  // Pagination state for activity timeline
+  const [referralsOffset, setReferralsOffset] = useState(0);
+  const [payoutsOffset, setPayoutsOffset] = useState(0);
+  const [allReferrals, setAllReferrals] = useState<Array<{
+    id: number;
+    purchaserName: string | null;
+    commission: number;
+    isPaid: boolean;
+    createdAt: Date;
+  }>>([]);
+  const [allPayouts, setAllPayouts] = useState<Array<{
+    id: number;
+    amount: number;
+    paymentMethod: string;
+    status: string;
+    paidAt: Date;
+  }>>([]);
+  const [hasMoreReferrals, setHasMoreReferrals] = useState(false);
+  const [hasMorePayouts, setHasMorePayouts] = useState(false);
+
+  // Reset state when affiliate changes or sheet closes
+  const affiliateId = affiliate?.id;
+
+  useEffect(() => {
+    if (!open || !affiliateId) {
+      setReferralsOffset(0);
+      setPayoutsOffset(0);
+      setAllReferrals([]);
+      setAllPayouts([]);
+      setHasMoreReferrals(false);
+      setHasMorePayouts(false);
+    }
+  }, [open, affiliateId]);
+
   // Fetch payout history when sheet is open
-  const { data: payouts } = useQuery({
-    queryKey: ["affiliatePayouts", affiliate?.id],
-    queryFn: () => adminGetAffiliatePayoutsFn({ data: { affiliateId: affiliate!.id } }),
-    enabled: open && !!affiliate?.id,
+  const { data: payoutsData, isFetching: isFetchingPayouts } = useQuery({
+    queryKey: ["affiliatePayouts", affiliateId, payoutsOffset],
+    queryFn: () => adminGetAffiliatePayoutsFn({
+      data: { affiliateId: affiliateId!, limit: ACTIVITY_PAGE_SIZE, offset: payoutsOffset }
+    }),
+    enabled: open && !!affiliateId,
   });
 
   // Fetch referral/conversion history when sheet is open
-  const { data: referrals } = useQuery({
-    queryKey: ["affiliateReferrals", affiliate?.id],
-    queryFn: () => adminGetAffiliateReferralsFn({ data: { affiliateId: affiliate!.id } }),
-    enabled: open && !!affiliate?.id,
+  const { data: referralsData, isFetching: isFetchingReferrals } = useQuery({
+    queryKey: ["affiliateReferrals", affiliateId, referralsOffset],
+    queryFn: () => adminGetAffiliateReferralsFn({
+      data: { affiliateId: affiliateId!, limit: ACTIVITY_PAGE_SIZE, offset: referralsOffset }
+    }),
+    enabled: open && !!affiliateId,
   });
+
+  // Update accumulated referrals when new data arrives
+  useEffect(() => {
+    if (referralsData?.items) {
+      const newItems = referralsData.items;
+      if (referralsOffset === 0) {
+        setAllReferrals(newItems as typeof allReferrals);
+      } else {
+        setAllReferrals(prev => {
+          const existingIds = new Set(prev.map(r => r.id));
+          const uniqueNew = newItems.filter((r: { id: number }) => !existingIds.has(r.id));
+          return [...prev, ...(uniqueNew as typeof allReferrals)];
+        });
+      }
+      setHasMoreReferrals(referralsData.hasMore);
+    }
+  }, [referralsData, referralsOffset]);
+
+  // Update accumulated payouts when new data arrives
+  useEffect(() => {
+    if (payoutsData?.items) {
+      const newItems = payoutsData.items;
+      if (payoutsOffset === 0) {
+        setAllPayouts(newItems as typeof allPayouts);
+      } else {
+        setAllPayouts(prev => {
+          const existingIds = new Set(prev.map(p => p.id));
+          const uniqueNew = newItems.filter((p: { id: number }) => !existingIds.has(p.id));
+          return [...prev, ...(uniqueNew as typeof allPayouts)];
+        });
+      }
+      setHasMorePayouts(payoutsData.hasMore);
+    }
+  }, [payoutsData, payoutsOffset]);
+
+  const loadMoreActivity = () => {
+    if (hasMoreReferrals) {
+      setReferralsOffset(prev => prev + ACTIVITY_PAGE_SIZE);
+    }
+    if (hasMorePayouts) {
+      setPayoutsOffset(prev => prev + ACTIVITY_PAGE_SIZE);
+    }
+  };
+
+  const hasMoreActivity = hasMoreReferrals || hasMorePayouts;
+  const isLoadingMore = isFetchingReferrals || isFetchingPayouts;
 
   const toggleStatusMutation = useMutation({
     mutationFn: adminToggleAffiliateStatusFn,
@@ -356,8 +442,8 @@ export function AffiliateDetailsSheet({
             {/* Timeline items */}
             <div className="space-y-4">
               {/* Real referral/conversion history */}
-              {referrals?.map((referral) => (
-                <div key={referral.id} className="flex items-start gap-3 relative">
+              {allReferrals.map((referral) => (
+                <div key={`ref-${referral.id}`} className="flex items-start gap-3 relative">
                   <div className="h-3.5 w-3.5 rounded-full bg-green-500 border-2 border-background z-10 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-foreground">
@@ -374,8 +460,8 @@ export function AffiliateDetailsSheet({
               ))}
 
               {/* Real payout history */}
-              {payouts?.map((payout) => (
-                <div key={payout.id} className="flex items-start gap-3 relative">
+              {allPayouts.map((payout) => (
+                <div key={`pay-${payout.id}`} className="flex items-start gap-3 relative">
                   <div className={cn(
                     "h-3.5 w-3.5 rounded-full border-2 border-background z-10 mt-0.5",
                     payout.status === "completed" ? "bg-blue-500" :
@@ -413,6 +499,29 @@ export function AffiliateDetailsSheet({
                   <p className="text-xs text-muted-foreground">{formatDate(affiliate.createdAt)}</p>
                 </div>
               </div>
+
+              {/* Load older button */}
+              {hasMoreActivity && (
+                <div className="flex items-center gap-3 relative pt-2">
+                  <div className="h-3.5 w-3.5" /> {/* Spacer for alignment */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={loadMoreActivity}
+                    disabled={isLoadingMore}
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    {isLoadingMore ? (
+                      <>
+                        <span className="h-3 w-3 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        Loading...
+                      </>
+                    ) : (
+                      "Load older activity"
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
