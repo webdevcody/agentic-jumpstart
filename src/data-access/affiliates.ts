@@ -76,7 +76,12 @@ export async function createAffiliateReferral(data: AffiliateReferralCreate) {
   return referral;
 }
 
-export async function getAffiliateReferrals(affiliateId: number) {
+export async function getAffiliateReferrals(
+  affiliateId: number,
+  options?: { limit?: number; offset?: number }
+) {
+  const { limit = 10, offset = 0 } = options || {};
+
   const referrals = await database
     .select({
       id: affiliateReferrals.id,
@@ -93,8 +98,15 @@ export async function getAffiliateReferrals(affiliateId: number) {
     .leftJoin(users, eq(affiliateReferrals.purchaserId, users.id))
     .leftJoin(profiles, eq(users.id, profiles.userId))
     .where(eq(affiliateReferrals.affiliateId, affiliateId))
-    .orderBy(desc(affiliateReferrals.createdAt));
-  return referrals;
+    .orderBy(desc(affiliateReferrals.createdAt))
+    .limit(limit + 1) // Fetch one extra to check if there's more
+    .offset(offset);
+
+  const hasMore = referrals.length > limit;
+  return {
+    items: hasMore ? referrals.slice(0, limit) : referrals,
+    hasMore,
+  };
 }
 
 export async function getAffiliateStats(affiliateId: number) {
@@ -201,7 +213,12 @@ export async function createAffiliatePayout(
   });
 }
 
-export async function getAffiliatePayouts(affiliateId: number) {
+export async function getAffiliatePayouts(
+  affiliateId: number,
+  options?: { limit?: number; offset?: number }
+) {
+  const { limit = 10, offset = 0 } = options || {};
+
   const payouts = await database
     .select({
       id: affiliatePayouts.id,
@@ -211,6 +228,7 @@ export async function getAffiliatePayouts(affiliateId: number) {
       stripeTransferId: affiliatePayouts.stripeTransferId,
       notes: affiliatePayouts.notes,
       paidAt: affiliatePayouts.paidAt,
+      status: affiliatePayouts.status,
       // Don't expose admin email - only show display name for privacy
       paidByName: profiles.displayName,
     })
@@ -218,8 +236,15 @@ export async function getAffiliatePayouts(affiliateId: number) {
     .leftJoin(users, eq(affiliatePayouts.paidBy, users.id))
     .leftJoin(profiles, eq(users.id, profiles.userId))
     .where(eq(affiliatePayouts.affiliateId, affiliateId))
-    .orderBy(desc(affiliatePayouts.paidAt));
-  return payouts;
+    .orderBy(desc(affiliatePayouts.paidAt))
+    .limit(limit + 1)
+    .offset(offset);
+
+  const hasMore = payouts.length > limit;
+  return {
+    items: hasMore ? payouts.slice(0, limit) : payouts,
+    hasMore,
+  };
 }
 
 export async function getAllAffiliatesWithStats() {
@@ -231,6 +256,7 @@ export async function getAllAffiliatesWithStats() {
       userName: profiles.displayName,
       userRealName: profiles.realName,
       useDisplayName: profiles.useDisplayName,
+      userImage: profiles.image,
       affiliateCode: affiliates.affiliateCode,
       paymentLink: affiliates.paymentLink,
       paymentMethod: affiliates.paymentMethod,
@@ -769,6 +795,27 @@ export async function updateAffiliateCommissionRate(
     .update(affiliates)
     .set({
       commissionRate,
+      updatedAt: new Date(),
+    })
+    .where(eq(affiliates.id, affiliateId))
+    .returning();
+  return updated;
+}
+
+/**
+ * Update an affiliate's discount rate (the portion of commission given to customers).
+ * Used by affiliates to control how much of their commission goes to customer discount vs their earnings.
+ * @param affiliateId - The affiliate's ID
+ * @param discountRate - The discount percentage (must be <= commissionRate)
+ */
+export async function updateAffiliateDiscountRate(
+  affiliateId: number,
+  discountRate: number
+) {
+  const [updated] = await database
+    .update(affiliates)
+    .set({
+      discountRate,
       updatedAt: new Date(),
     })
     .where(eq(affiliates.id, affiliateId))

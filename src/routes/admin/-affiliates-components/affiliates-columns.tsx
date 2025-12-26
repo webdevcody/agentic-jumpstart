@@ -18,6 +18,7 @@ export type AffiliateRow = {
   userId: number;
   userEmail: string | null;
   userName: string | null;
+  userImage: string | null;
   affiliateCode: string;
   paymentLink: string | null;
   paymentMethod: string;
@@ -73,9 +74,17 @@ export function getAffiliateColumns(
           <div className="flex items-center gap-3 min-w-0 py-1">
             {/* Avatar with status indicator */}
             <div className="relative shrink-0">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted/80 text-muted-foreground border border-border/50">
-                <span className="text-sm font-semibold">{initial}</span>
-              </div>
+              {affiliate.userImage ? (
+                <img
+                  src={affiliate.userImage}
+                  alt={displayName}
+                  className="h-10 w-10 rounded-lg object-cover border border-border/50"
+                />
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted/80 text-muted-foreground border border-border/50">
+                  <span className="text-sm font-semibold">{initial}</span>
+                </div>
+              )}
               <div
                 className={cn(
                   "absolute -bottom-0.5 -left-0.5 h-2.5 w-2.5 rounded-full border-2 border-background",

@@ -19,7 +19,7 @@ import {
   refreshStripeAccountStatusForUserUseCase,
   disconnectStripeAccountUseCase,
 } from "~/use-cases/affiliates";
-import { getAffiliateByUserId } from "~/data-access/affiliates";
+import { getAffiliateByUserId, updateAffiliateDiscountRate, getAffiliatePayouts, getAffiliateReferrals } from "~/data-access/affiliates";
 
 const affiliatesFeatureMiddleware = createFeatureFlagMiddleware("AFFILIATES_FEATURE");
 
@@ -106,6 +106,30 @@ export const updateAffiliatePaymentLinkFn = createServerFn()
       paymentMethod: data.paymentMethod,
       paymentLink: data.paymentLink,
     });
+    return updated;
+  });
+
+const updateDiscountRateSchema = z.object({
+  discountRate: z.number().min(0).max(100),
+});
+
+/**
+ * Update affiliate's discount rate (how much of their commission goes to customer discount).
+ * Affiliates can call this to adjust their commission split.
+ */
+export const updateAffiliateDiscountRateFn = createServerFn()
+  .middleware([authenticatedMiddleware, affiliatesFeatureMiddleware])
+  .inputValidator(updateDiscountRateSchema)
+  .handler(async ({ data, context }) => {
+    const affiliate = await getAffiliateByUserId(context.userId);
+    if (!affiliate) {
+      throw new Error("Affiliate account not found");
+    }
+    // Ensure discount rate doesn't exceed commission rate
+    if (data.discountRate > affiliate.commissionRate) {
+      throw new Error(`Discount rate cannot exceed your commission rate of ${affiliate.commissionRate}%`);
+    }
+    const updated = await updateAffiliateDiscountRate(affiliate.id, data.discountRate);
     return updated;
   });
 
@@ -228,4 +252,40 @@ export const disconnectStripeAccountFn = createServerFn({ method: "POST" })
       message: "Stripe Connect account disconnected successfully",
       affiliate,
     };
+  });
+
+// Admin function to get affiliate payout history
+const getAffiliatePayoutsSchema = z.object({
+  affiliateId: z.number(),
+  limit: z.number().optional().default(10),
+  offset: z.number().optional().default(0),
+});
+
+export const adminGetAffiliatePayoutsFn = createServerFn()
+  .middleware([adminMiddleware])
+  .inputValidator(getAffiliatePayoutsSchema)
+  .handler(async ({ data }) => {
+    const result = await getAffiliatePayouts(data.affiliateId, {
+      limit: data.limit,
+      offset: data.offset,
+    });
+    return result;
+  });
+
+// Admin function to get affiliate referral/conversion history
+const getAffiliateReferralsSchema = z.object({
+  affiliateId: z.number(),
+  limit: z.number().optional().default(10),
+  offset: z.number().optional().default(0),
+});
+
+export const adminGetAffiliateReferralsFn = createServerFn()
+  .middleware([adminMiddleware])
+  .inputValidator(getAffiliateReferralsSchema)
+  .handler(async ({ data }) => {
+    const result = await getAffiliateReferrals(data.affiliateId, {
+      limit: data.limit,
+      offset: data.offset,
+    });
+    return result;
   });

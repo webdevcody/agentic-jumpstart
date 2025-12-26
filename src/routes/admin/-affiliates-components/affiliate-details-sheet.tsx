@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Sheet,
   SheetContent,
@@ -18,26 +18,19 @@ import {
   DollarSign,
   CheckCircle,
   Percent,
-  Loader2,
   Copy,
   Activity,
   ArrowUpRight,
   User,
-  Minus,
-  Plus,
-  Save,
 } from "lucide-react";
-import {
-  ButtonGroup,
-  InputGroup,
-  InputGroupInput,
-  InputGroupAddon,
-} from "~/components/ui/button-group";
+import { NumberInputWithControls } from "~/components/blocks/number-input-with-controls";
 import { cn } from "~/lib/utils";
 import type { AffiliateRow } from "./affiliates-columns";
 import {
   adminToggleAffiliateStatusFn,
   adminUpdateAffiliateCommissionRateFn,
+  adminGetAffiliatePayoutsFn,
+  adminGetAffiliateReferralsFn,
 } from "~/fn/affiliates";
 
 interface AffiliateDetailsSheetProps {
@@ -81,6 +74,20 @@ export function AffiliateDetailsSheet({
   const queryClient = useQueryClient();
   const [editingRate, setEditingRate] = useState(false);
   const [newCommissionRate, setNewCommissionRate] = useState<string>("");
+
+  // Fetch payout history when sheet is open
+  const { data: payouts } = useQuery({
+    queryKey: ["affiliatePayouts", affiliate?.id],
+    queryFn: () => adminGetAffiliatePayoutsFn({ data: { affiliateId: affiliate!.id } }),
+    enabled: open && !!affiliate?.id,
+  });
+
+  // Fetch referral/conversion history when sheet is open
+  const { data: referrals } = useQuery({
+    queryKey: ["affiliateReferrals", affiliate?.id],
+    queryFn: () => adminGetAffiliateReferralsFn({ data: { affiliateId: affiliate!.id } }),
+    enabled: open && !!affiliate?.id,
+  });
 
   const toggleStatusMutation = useMutation({
     mutationFn: adminToggleAffiliateStatusFn,
@@ -154,9 +161,17 @@ export function AffiliateDetailsSheet({
           <div className="flex items-center gap-4">
             {/* Avatar */}
             <div className="relative">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-muted/80 text-muted-foreground border border-border/50">
-                <User className="h-7 w-7" />
-              </div>
+              {affiliate.userImage ? (
+                <img
+                  src={affiliate.userImage}
+                  alt={displayName}
+                  className="h-14 w-14 shrink-0 rounded-full object-cover border border-border/50"
+                />
+              ) : (
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-muted/80 text-muted-foreground border border-border/50">
+                  <User className="h-7 w-7" />
+                </div>
+              )}
               <div
                 className={cn(
                   "absolute -bottom-0.5 -left-0.5 h-3.5 w-3.5 rounded-full border-2 border-background",
@@ -241,68 +256,21 @@ export function AffiliateDetailsSheet({
                 <Percent className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Commission Rate</span>
               </div>
-              <ButtonGroup>
-                <InputGroup className="w-24 h-8">
-                  <InputGroupInput
-                    type="text"
-                    inputMode="numeric"
-                    value={editingRate ? newCommissionRate : affiliate.commissionRate.toString()}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === "" || /^\d+$/.test(val)) {
-                        let numVal = val === "" ? 0 : parseInt(val, 10);
-                        if (numVal > 100) numVal = 100;
-                        if (numVal < 0) numVal = 0;
-                        setNewCommissionRate(numVal.toString());
-                        if (!editingRate) setEditingRate(true);
-                      }
-                    }}
-                    className="text-center text-sm h-8"
-                  />
-                  <InputGroupAddon align="inline-end">%</InputGroupAddon>
-                </InputGroup>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={handleSaveCommissionRate}
-                  disabled={!editingRate || newCommissionRate === affiliate.commissionRate.toString() || updateCommissionRateMutation.isPending}
-                >
-                  {updateCommissionRateMutation.isPending ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Save className="h-3.5 w-3.5" />
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => {
-                    const current = editingRate ? parseInt(newCommissionRate) : affiliate.commissionRate;
-                    const newVal = Math.max(0, current - 1);
-                    setNewCommissionRate(newVal.toString());
-                    if (!editingRate) setEditingRate(true);
-                  }}
-                  disabled={updateCommissionRateMutation.isPending}
-                >
-                  <Minus className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => {
-                    const current = editingRate ? parseInt(newCommissionRate) : affiliate.commissionRate;
-                    const newVal = Math.min(100, current + 1);
-                    setNewCommissionRate(newVal.toString());
-                    if (!editingRate) setEditingRate(true);
-                  }}
-                  disabled={updateCommissionRateMutation.isPending}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                </Button>
-              </ButtonGroup>
+              <NumberInputWithControls
+                value={editingRate ? newCommissionRate : affiliate.commissionRate.toString()}
+                onChange={(val) => {
+                  setNewCommissionRate(val);
+                  if (!editingRate) setEditingRate(true);
+                }}
+                onSave={handleSaveCommissionRate}
+                suffix="%"
+                step={1}
+                min={0}
+                max={100}
+                isPending={updateCommissionRateMutation.isPending}
+                hasChanges={editingRate && newCommissionRate !== affiliate.commissionRate.toString()}
+                inputWidth="w-20"
+              />
             </div>
 
             {/* Partner Status */}
@@ -387,25 +355,44 @@ export function AffiliateDetailsSheet({
 
             {/* Timeline items */}
             <div className="space-y-4">
-              {affiliate.lastReferralDate && (
-                <div className="flex items-start gap-3 relative">
+              {/* Real referral/conversion history */}
+              {referrals?.map((referral) => (
+                <div key={referral.id} className="flex items-start gap-3 relative">
                   <div className="h-3.5 w-3.5 rounded-full bg-green-500 border-2 border-background z-10 mt-0.5" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground">New referral converted</p>
-                    <p className="text-xs text-muted-foreground">{formatDate(affiliate.lastReferralDate)}</p>
+                    <p className="text-sm text-foreground">
+                      Referral converted
+                      {referral.purchaserName && <span className="text-muted-foreground"> • {referral.purchaserName}</span>}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatCurrency(referral.commission)} commission
+                      {referral.isPaid && " • Paid"}
+                      {referral.createdAt && ` • ${formatDate(referral.createdAt)}`}
+                    </p>
                   </div>
                 </div>
-              )}
+              ))}
 
-              {affiliate.paidAmount > 0 && (
-                <div className="flex items-start gap-3 relative">
-                  <div className="h-3.5 w-3.5 rounded-full bg-blue-500 border-2 border-background z-10 mt-0.5" />
+              {/* Real payout history */}
+              {payouts?.map((payout) => (
+                <div key={payout.id} className="flex items-start gap-3 relative">
+                  <div className={cn(
+                    "h-3.5 w-3.5 rounded-full border-2 border-background z-10 mt-0.5",
+                    payout.status === "completed" ? "bg-blue-500" :
+                    payout.status === "pending" ? "bg-orange-500" : "bg-red-500"
+                  )} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground">Payout processed</p>
-                    <p className="text-xs text-muted-foreground">{formatCurrency(affiliate.paidAmount)} total paid</p>
+                    <p className="text-sm text-foreground">
+                      {payout.status === "completed" ? "Payout completed" :
+                       payout.status === "pending" ? "Payout pending" : "Payout failed"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatCurrency(payout.amount)} via {payout.paymentMethod}
+                      {payout.paidAt && ` • ${formatDate(payout.paidAt)}`}
+                    </p>
                   </div>
                 </div>
-              )}
+              ))}
 
               {isStripe && affiliate.stripeConnectAccountId && (
                 <div className="flex items-start gap-3 relative">
