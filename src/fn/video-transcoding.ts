@@ -169,7 +169,7 @@ export const getAvailableQualitiesFn = createServerFn({ method: "GET" })
     // Generate presigned URLs for all available qualities
     const urls: Record<string, string> = {};
     for (const quality of qualities) {
-      if (type === "r2") {
+      if (type === "r2" || type === "mock") {
         urls[quality.quality] = await storage.getPresignedUrl(quality.key);
       } else {
         // For non-R2 storage, return the API route
@@ -198,8 +198,8 @@ export const getThumbnailUrlFn = createServerFn({ method: "GET" })
     const { segmentId } = data;
     const { storage, type } = getStorage();
 
-    // Only support R2 storage for thumbnails
-    if (type !== "r2") {
+    // Only support R2/mock storage for thumbnails
+    if (type !== "r2" && type !== "mock") {
       return { thumbnailUrl: null };
     }
 

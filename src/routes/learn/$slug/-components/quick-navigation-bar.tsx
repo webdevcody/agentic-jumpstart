@@ -190,6 +190,7 @@ interface ModulePillButtonProps {
   total: number;
   progressPercent: number;
   targetSegmentSlug?: string;
+  targetSegmentId?: number;
 }
 
 function ModulePillButton({
@@ -199,8 +200,11 @@ function ModulePillButton({
   total,
   progressPercent,
   targetSegmentSlug,
+  targetSegmentId,
 }: ModulePillButtonProps) {
-  if (!targetSegmentSlug) {
+  const { setCurrentSegmentId } = useSegment();
+
+  if (!targetSegmentSlug || !targetSegmentId) {
     return (
       <button
         disabled
@@ -227,6 +231,10 @@ function ModulePillButton({
     <Link
       to="/learn/$slug"
       params={{ slug: targetSegmentSlug }}
+      onClick={() => {
+        // Update segment context before navigation to prevent redirect loop
+        setCurrentSegmentId(targetSegmentId);
+      }}
       className={cn(
         "relative px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all overflow-hidden whitespace-nowrap shrink-0 block",
         isActive
@@ -459,12 +467,14 @@ export function QuickNavigationBar({
             const segments = module.segments || [];
 
             let targetSegmentSlug: string | undefined;
+            let targetSegmentId: number | undefined;
             if (segments.length > 0) {
               const incompleteSegment = segments.find(
                 (s) => !isSegmentCompleted(s.id) && canAccessSegment(s)
               );
               const targetSegment = incompleteSegment || segments[0];
               targetSegmentSlug = targetSegment.slug;
+              targetSegmentId = targetSegment.id;
             }
 
             return (
@@ -476,6 +486,7 @@ export function QuickNavigationBar({
                 total={total}
                 progressPercent={progressPercent}
                 targetSegmentSlug={targetSegmentSlug}
+                targetSegmentId={targetSegmentId}
               />
             );
           })}

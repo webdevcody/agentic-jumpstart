@@ -77,15 +77,11 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: `npm run build && PORT=3001 DATABASE_URL=$DATABASE_URL_TEST vite dev`,
+    // CI builds and starts server separately, so just start:test here
+    // reuseExistingServer: true will detect the already-running CI server
+    command: `npm run start:test`,
     url: "http://localhost:3001",
     reuseExistingServer: true,
     timeout: 120 * 1000,
-    env: {
-      IS_TEST: "true",
-      DATABASE_URL:
-        process.env.DATABASE_URL_TEST ||
-        "postgresql://postgres:example@localhost:5433/postgres",
-    },
   },
 });
