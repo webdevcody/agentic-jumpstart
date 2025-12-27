@@ -54,7 +54,9 @@ export const TEST_CONFIG = {
   },
   CSS_CLASSES: {
     SEGMENT_ITEM: ".segment-item",
-    BORDER_THEME_200: /border-theme-200/,
-    BORDER_TRANSPARENT: /border-transparent/
+    // Active segment uses segment-active class (defined in app.css)
+    SEGMENT_ACTIVE: /segment-active/,
+    // Inactive segments don't have segment-active class
+    SEGMENT_INACTIVE: /^(?!.*segment-active)/
   }
 };
