@@ -47,7 +47,7 @@ const registerAffiliateSchema = z.object({
   path: ["paymentLink"],
 });
 
-export const registerAffiliateFn = createServerFn()
+export const registerAffiliateFn = createServerFn({ method: "POST" })
   .middleware([authenticatedMiddleware, affiliatesFeatureMiddleware])
   .inputValidator(registerAffiliateSchema)
   .handler(async ({ data, context }) => {
@@ -56,36 +56,44 @@ export const registerAffiliateFn = createServerFn()
       paymentMethod: data.paymentMethod,
       paymentLink: data.paymentLink,
     });
-    return affiliate;
+    return { success: true, data: affiliate };
   });
 
-export const getAffiliateDashboardFn = createServerFn()
+export const getAffiliateDashboardFn = createServerFn({ method: "GET" })
   .middleware([authenticatedMiddleware, affiliatesFeatureMiddleware])
+  .inputValidator(z.void())
   .handler(async ({ context }) => {
     const analytics = await getAffiliateAnalyticsUseCase(context.userId);
-    return analytics;
+    return { success: true, data: analytics };
   });
 
-export const checkIfUserIsAffiliateFn = createServerFn()
+export const checkIfUserIsAffiliateFn = createServerFn({ method: "GET" })
   .middleware([unauthenticatedMiddleware, affiliatesFeatureMiddleware])
+  .inputValidator(z.void())
   .handler(async ({ context }) => {
     if (!context.userId) {
       return {
-        isAffiliate: false,
-        isOnboardingComplete: false,
-        paymentMethod: null,
-        stripeAccountStatus: null,
-        hasStripeAccount: false,
+        success: true,
+        data: {
+          isAffiliate: false,
+          isOnboardingComplete: false,
+          paymentMethod: null,
+          stripeAccountStatus: null,
+          hasStripeAccount: false,
+        },
       };
     }
     const affiliate = await getAffiliateByUserId(context.userId);
     if (!affiliate) {
       return {
-        isAffiliate: false,
-        isOnboardingComplete: false,
-        paymentMethod: null,
-        stripeAccountStatus: null,
-        hasStripeAccount: false,
+        success: true,
+        data: {
+          isAffiliate: false,
+          isOnboardingComplete: false,
+          paymentMethod: null,
+          stripeAccountStatus: null,
+          hasStripeAccount: false,
+        },
       };
     }
 
@@ -97,11 +105,14 @@ export const checkIfUserIsAffiliateFn = createServerFn()
       (affiliate.paymentMethod === "stripe" && affiliate.stripeAccountStatus === "active");
 
     return {
-      isAffiliate: true,
-      isOnboardingComplete,
-      paymentMethod: affiliate.paymentMethod,
-      stripeAccountStatus: affiliate.stripeAccountStatus,
-      hasStripeAccount: !!affiliate.stripeConnectAccountId,
+      success: true,
+      data: {
+        isAffiliate: true,
+        isOnboardingComplete,
+        paymentMethod: affiliate.paymentMethod,
+        stripeAccountStatus: affiliate.stripeAccountStatus,
+        hasStripeAccount: !!affiliate.stripeConnectAccountId,
+      },
     };
   });
 
@@ -126,7 +137,7 @@ const updatePaymentMethodSchema = z.object({
   path: ["paymentLink"],
 });
 
-export const updateAffiliatePaymentLinkFn = createServerFn()
+export const updateAffiliatePaymentLinkFn = createServerFn({ method: "POST" })
   .middleware([authenticatedMiddleware, affiliatesFeatureMiddleware])
   .inputValidator(updatePaymentMethodSchema)
   .handler(async ({ data, context }) => {
@@ -135,7 +146,7 @@ export const updateAffiliatePaymentLinkFn = createServerFn()
       paymentMethod: data.paymentMethod,
       paymentLink: data.paymentLink,
     });
-    return updated;
+    return { success: true, data: updated };
   });
 
 const updateDiscountRateSchema = z.object({
@@ -146,7 +157,7 @@ const updateDiscountRateSchema = z.object({
  * Update affiliate's discount rate (how much of their commission goes to customer discount).
  * Affiliates can call this to adjust their commission split.
  */
-export const updateAffiliateDiscountRateFn = createServerFn()
+export const updateAffiliateDiscountRateFn = createServerFn({ method: "POST" })
   .middleware([authenticatedMiddleware, affiliatesFeatureMiddleware])
   .inputValidator(updateDiscountRateSchema)
   .handler(async ({ data, context }) => {
@@ -159,14 +170,15 @@ export const updateAffiliateDiscountRateFn = createServerFn()
       throw new Error(`Discount rate cannot exceed your commission rate of ${affiliate.commissionRate}%`);
     }
     const updated = await updateAffiliateDiscountRate(affiliate.id, data.discountRate);
-    return updated;
+    return { success: true, data: updated };
   });
 
-export const adminGetAllAffiliatesFn = createServerFn()
+export const adminGetAllAffiliatesFn = createServerFn({ method: "GET" })
   .middleware([adminMiddleware])
+  .inputValidator(z.void())
   .handler(async () => {
     const affiliates = await adminGetAllAffiliatesUseCase();
-    return affiliates;
+    return { success: true, data: affiliates };
   });
 
 const toggleAffiliateStatusSchema = z.object({
@@ -174,7 +186,7 @@ const toggleAffiliateStatusSchema = z.object({
   isActive: z.boolean(),
 });
 
-export const adminToggleAffiliateStatusFn = createServerFn()
+export const adminToggleAffiliateStatusFn = createServerFn({ method: "POST" })
   .middleware([adminMiddleware])
   .inputValidator(toggleAffiliateStatusSchema)
   .handler(async ({ data }) => {
@@ -182,7 +194,7 @@ export const adminToggleAffiliateStatusFn = createServerFn()
       affiliateId: data.affiliateId,
       isActive: data.isActive,
     });
-    return updated;
+    return { success: true, data: updated };
   });
 
 const updateAffiliateCommissionRateSchema = z.object({
@@ -190,7 +202,7 @@ const updateAffiliateCommissionRateSchema = z.object({
   commissionRate: z.number().min(0).max(100),
 });
 
-export const adminUpdateAffiliateCommissionRateFn = createServerFn()
+export const adminUpdateAffiliateCommissionRateFn = createServerFn({ method: "POST" })
   .middleware([adminMiddleware])
   .inputValidator(updateAffiliateCommissionRateSchema)
   .handler(async ({ data }) => {
@@ -198,7 +210,7 @@ export const adminUpdateAffiliateCommissionRateFn = createServerFn()
       affiliateId: data.affiliateId,
       commissionRate: data.commissionRate,
     });
-    return updated;
+    return { success: true, data: updated };
   });
 
 const recordPayoutSchema = z.object({
@@ -209,7 +221,7 @@ const recordPayoutSchema = z.object({
   notes: z.string().optional(),
 });
 
-export const adminRecordPayoutFn = createServerFn()
+export const adminRecordPayoutFn = createServerFn({ method: "POST" })
   .middleware([adminMiddleware])
   .inputValidator(recordPayoutSchema)
   .handler(async ({ data, context }) => {
@@ -221,24 +233,25 @@ export const adminRecordPayoutFn = createServerFn()
       notes: data.notes,
       paidBy: context.userId,
     });
-    return payout;
+    return { success: true, data: payout };
   });
 
 const validateAffiliateCodeSchema = z.object({
   code: z.string().min(1).max(20).regex(/^[A-Z0-9]+$/i, "Code must contain only letters and numbers"),
 });
 
-export const validateAffiliateCodeFn = createServerFn()
+export const validateAffiliateCodeFn = createServerFn({ method: "GET" })
   .middleware([unauthenticatedMiddleware])
   .inputValidator(validateAffiliateCodeSchema)
   .handler(async ({ data }) => {
     const affiliate = await validateAffiliateCodeUseCase(data.code);
-    return { valid: !!affiliate };
+    return { success: true, data: { valid: !!affiliate } };
   });
 
 // Admin function to trigger automatic payouts for all eligible affiliates
-export const adminProcessAutomaticPayoutsFn = createServerFn()
+export const adminProcessAutomaticPayoutsFn = createServerFn({ method: "POST" })
   .middleware([adminMiddleware])
+  .inputValidator(z.void())
   .handler(async ({ context }) => {
     const result = await processAllAutomaticPayoutsUseCase({
       systemUserId: context.userId,
@@ -246,17 +259,20 @@ export const adminProcessAutomaticPayoutsFn = createServerFn()
 
     return {
       success: true,
-      message: `Processed ${result.processed} affiliates: ${result.successful} successful, ${result.failed} failed`,
-      processed: result.processed,
-      successful: result.successful,
-      failed: result.failed,
-      results: result.results,
+      data: {
+        message: `Processed ${result.processed} affiliates: ${result.successful} successful, ${result.failed} failed`,
+        processed: result.processed,
+        successful: result.successful,
+        failed: result.failed,
+        results: result.results,
+      },
     };
   });
 
 // User function to manually refresh their Stripe Connect account status
-export const refreshStripeAccountStatusFn = createServerFn()
-  .middleware([authenticatedMiddleware])
+export const refreshStripeAccountStatusFn = createServerFn({ method: "POST" })
+  .middleware([authenticatedMiddleware, affiliatesFeatureMiddleware])
+  .inputValidator(z.void())
   .handler(async ({ context }) => {
     const result = await refreshStripeAccountStatusForUserUseCase(context.userId);
 
@@ -266,20 +282,25 @@ export const refreshStripeAccountStatusFn = createServerFn()
 
     return {
       success: true,
-      message: "Stripe account status refreshed successfully",
+      data: {
+        message: "Stripe account status refreshed successfully",
+      },
     };
   });
 
 // User function to disconnect their Stripe Connect account
 export const disconnectStripeAccountFn = createServerFn({ method: "POST" })
-  .middleware([authenticatedMiddleware])
+  .middleware([authenticatedMiddleware, affiliatesFeatureMiddleware])
+  .inputValidator(z.void())
   .handler(async ({ context }) => {
     const affiliate = await disconnectStripeAccountUseCase(context.userId);
 
     return {
       success: true,
-      message: "Stripe Connect account disconnected successfully",
-      affiliate,
+      data: {
+        message: "Stripe Connect account disconnected successfully",
+        affiliate,
+      },
     };
   });
 
@@ -290,7 +311,7 @@ const getAffiliatePayoutsSchema = z.object({
   offset: z.number().optional().default(0),
 });
 
-export const adminGetAffiliatePayoutsFn = createServerFn()
+export const adminGetAffiliatePayoutsFn = createServerFn({ method: "GET" })
   .middleware([adminMiddleware])
   .inputValidator(getAffiliatePayoutsSchema)
   .handler(async ({ data }) => {
@@ -298,7 +319,7 @@ export const adminGetAffiliatePayoutsFn = createServerFn()
       limit: data.limit,
       offset: data.offset,
     });
-    return result;
+    return { success: true, data: result };
   });
 
 // Admin function to get affiliate referral/conversion history
@@ -308,7 +329,7 @@ const getAffiliateReferralsSchema = z.object({
   offset: z.number().optional().default(0),
 });
 
-export const adminGetAffiliateReferralsFn = createServerFn()
+export const adminGetAffiliateReferralsFn = createServerFn({ method: "GET" })
   .middleware([adminMiddleware])
   .inputValidator(getAffiliateReferralsSchema)
   .handler(async ({ data }) => {
@@ -316,5 +337,5 @@ export const adminGetAffiliateReferralsFn = createServerFn()
       limit: data.limit,
       offset: data.offset,
     });
-    return result;
+    return { success: true, data: result };
   });

@@ -193,6 +193,7 @@ export const getAffiliateCommissionRateFn = createServerFn({ method: "GET" })
  */
 export const getPublicAffiliateCommissionRateFn = createServerFn({ method: "GET" })
   .middleware([unauthenticatedMiddleware])
+  .inputValidator(z.void())
   .handler(async () => {
     return getAffiliateCommissionRateUseCase();
   });
@@ -223,6 +224,7 @@ export const getAffiliateMinimumPayoutFn = createServerFn({ method: "GET" })
  */
 export const getPublicAffiliateMinimumPayoutFn = createServerFn({ method: "GET" })
   .middleware([unauthenticatedMiddleware])
+  .inputValidator(z.void())
   .handler(async () => {
     return getAffiliateMinimumPayoutUseCase();
   });

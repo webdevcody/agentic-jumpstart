@@ -3,10 +3,7 @@ import {
   createAffiliate,
   getAffiliateByUserId,
   getAffiliateByCode,
-  createAffiliateReferral,
-  updateAffiliateBalances,
   createAffiliatePayout,
-  getAffiliateByStripeSession,
   updateAffiliateProfile,
   getAffiliateStats,
   getAffiliateReferrals,
@@ -27,6 +24,12 @@ import {
   createPendingPayout,
   completePendingPayout,
   failPendingPayout,
+  // Transaction-aware functions for processAffiliateReferralUseCase
+  getAffiliateByCodeTx,
+  getAffiliateByStripeSessionTx,
+  createAffiliateReferralTx,
+  updateAffiliateBalancesTx,
+  incrementAffiliatePaidAmountTx,
 } from "~/data-access/affiliates";
 import { getAffiliateCommissionRate, getAffiliateMinimumPayout } from "~/data-access/app-settings";
 import { ApplicationError } from "./errors";
@@ -35,6 +38,40 @@ import { stripe } from "~/lib/stripe";
 import { determineStripeAccountStatus } from "~/utils/stripe-status";
 import { sendAffiliatePayoutSuccessEmail } from "~/utils/email";
 import { logger } from "~/utils/logger";
+
+/**
+ * Validates a payment link URL.
+ * Ensures the URL is valid and uses https:// scheme for security.
+ * @param paymentLink - The payment link to validate
+ * @throws ApplicationError if the payment link is invalid
+ */
+function validatePaymentLink(paymentLink: string | undefined): void {
+  if (!paymentLink || paymentLink.length < 10) {
+    throw new ApplicationError(
+      "Please provide a valid payment link",
+      "INVALID_PAYMENT_LINK"
+    );
+  }
+
+  // Validate it's a URL with https:// scheme
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(paymentLink);
+  } catch {
+    throw new ApplicationError(
+      "Payment link must be a valid URL",
+      "INVALID_PAYMENT_LINK"
+    );
+  }
+
+  // Require https:// for security
+  if (parsedUrl.protocol !== "https:") {
+    throw new ApplicationError(
+      "Payment link must use https:// for security",
+      "INVALID_PAYMENT_LINK"
+    );
+  }
+}
 
 export async function registerAffiliateUseCase({
   userId,
@@ -56,22 +93,7 @@ export async function registerAffiliateUseCase({
 
   // Validate payment link if using link method
   if (paymentMethod === "link") {
-    if (!paymentLink || paymentLink.length < 10) {
-      throw new ApplicationError(
-        "Please provide a valid payment link",
-        "INVALID_PAYMENT_LINK"
-      );
-    }
-
-    // Validate it's a URL
-    try {
-      new URL(paymentLink);
-    } catch {
-      throw new ApplicationError(
-        "Payment link must be a valid URL",
-        "INVALID_PAYMENT_LINK"
-      );
-    }
+    validatePaymentLink(paymentLink);
   }
 
   // Generate unique affiliate code
@@ -126,21 +148,7 @@ export async function updateAffiliatePaymentLinkUseCase({
 
   // Validate payment link if using link method
   if (paymentMethod === "link") {
-    if (!paymentLink || paymentLink.length < 10) {
-      throw new ApplicationError(
-        "Please provide a valid payment link",
-        "INVALID_PAYMENT_LINK"
-      );
-    }
-
-    try {
-      new URL(paymentLink);
-    } catch {
-      throw new ApplicationError(
-        "Payment link must be a valid URL",
-        "INVALID_PAYMENT_LINK"
-      );
-    }
+    validatePaymentLink(paymentLink);
   }
 
   // Update payment method and link in database
@@ -157,6 +165,15 @@ export async function adminToggleAffiliateStatusUseCase({
   affiliateId: number;
   isActive: boolean;
 }) {
+  // Verify affiliate exists before updating
+  const affiliate = await getAffiliateById(affiliateId);
+  if (!affiliate) {
+    throw new ApplicationError(
+      "Affiliate not found",
+      "AFFILIATE_NOT_FOUND"
+    );
+  }
+
   return updateAffiliateProfile(affiliateId, { isActive });
 }
 
@@ -167,6 +184,15 @@ export async function adminUpdateAffiliateCommissionRateUseCase({
   affiliateId: number;
   commissionRate: number;
 }) {
+  // Verify affiliate exists before updating
+  const affiliate = await getAffiliateById(affiliateId);
+  if (!affiliate) {
+    throw new ApplicationError(
+      "Affiliate not found",
+      "AFFILIATE_NOT_FOUND"
+    );
+  }
+
   if (commissionRate < 0 || commissionRate > 100) {
     throw new ApplicationError(
       "Commission rate must be between 0 and 100",
@@ -174,7 +200,6 @@ export async function adminUpdateAffiliateCommissionRateUseCase({
     );
   }
 
-  const { updateAffiliateCommissionRate } = await import("~/data-access/affiliates");
   return updateAffiliateCommissionRate(affiliateId, commissionRate);
 }
 
@@ -255,8 +280,8 @@ export async function processAffiliateReferralUseCase({
   const { database } = await import("~/db");
 
   return await database.transaction(async (tx) => {
-    // Get affiliate by code (using the imported function which uses the main database)
-    const affiliate = await getAffiliateByCode(affiliateCode);
+    // Get affiliate by code using transaction-aware function
+    const affiliate = await getAffiliateByCodeTx(tx, affiliateCode);
     if (!affiliate) {
       logger.warn("Invalid affiliate code for purchase", {
         fn: "processAffiliateReferralUseCase",
@@ -276,8 +301,9 @@ export async function processAffiliateReferralUseCase({
       return null;
     }
 
-    // Check if this session was already processed (database unique constraint also helps with race conditions)
-    const existingReferral = await getAffiliateByStripeSession(stripeSessionId);
+    // Check if this session was already processed using transaction-aware function
+    // (database unique constraint also helps with race conditions)
+    const existingReferral = await getAffiliateByStripeSessionTx(tx, stripeSessionId);
     if (existingReferral) {
       logger.warn("Duplicate Stripe session already processed", {
         fn: "processAffiliateReferralUseCase",
@@ -291,9 +317,9 @@ export async function processAffiliateReferralUseCase({
     const effectiveCommissionRate = frozenCommissionRate ?? affiliate.commissionRate;
     const commission = Math.floor((amount * effectiveCommissionRate) / 100);
 
-    // Create referral record with frozen rates for audit trail
+    // Create referral record with frozen rates for audit trail using transaction
     // If isAutoTransfer (transfer_data used), mark as paid immediately - Stripe handles the transfer
-    const referral = await createAffiliateReferral({
+    const referral = await createAffiliateReferralTx(tx, {
       affiliateId: affiliate.id,
       purchaserId,
       stripeSessionId,
@@ -306,25 +332,17 @@ export async function processAffiliateReferralUseCase({
       isPaid: isAutoTransfer, // Paid immediately if Stripe handles transfer
     });
 
-    // Update affiliate balances
+    // Update affiliate balances using transaction-aware functions
     // If auto-transfer: add to totalEarnings and paidAmount (not unpaidBalance)
     // If manual: add to totalEarnings and unpaidBalance
     if (isAutoTransfer) {
-      // For auto-transfer, we add to totalEarnings and paidAmount (balance stays same)
-      await updateAffiliateBalances(affiliate.id, commission, 0);
-      // Also increment paidAmount since Stripe will transfer it
-      const { affiliates } = await import("~/db/schema");
-      const { eq, sql } = await import("drizzle-orm");
-      const { database } = await import("~/db");
-      await database.update(affiliates)
-        .set({
-          paidAmount: sql`${affiliates.paidAmount} + ${commission}`,
-          updatedAt: new Date()
-        })
-        .where(eq(affiliates.id, affiliate.id));
+      // For auto-transfer, we add to totalEarnings (unpaid stays same)
+      await updateAffiliateBalancesTx(tx, affiliate.id, commission, 0);
+      // Also increment paidAmount since Stripe will transfer it (using data-access layer)
+      await incrementAffiliatePaidAmountTx(tx, affiliate.id, commission);
     } else {
       // For manual payout, add to both totalEarnings and unpaidBalance
-      await updateAffiliateBalances(affiliate.id, commission, commission);
+      await updateAffiliateBalancesTx(tx, affiliate.id, commission, commission);
     }
 
     return referral;
@@ -346,6 +364,18 @@ export async function recordAffiliatePayoutUseCase({
   notes?: string;
   paidBy: number;
 }) {
+  // Validate affiliate exists and is active
+  const affiliate = await getAffiliateById(affiliateId);
+  if (!affiliate) {
+    throw new ApplicationError("Affiliate not found", "AFFILIATE_NOT_FOUND");
+  }
+  if (!affiliate.isActive) {
+    throw new ApplicationError(
+      "Affiliate account is not active",
+      "AFFILIATE_INACTIVE"
+    );
+  }
+
   // Validate minimum payout (configurable via admin settings)
   const minimumPayout = await getAffiliateMinimumPayout();
   if (amount < minimumPayout) {
@@ -447,9 +477,9 @@ export async function processAutomaticPayoutsUseCase({
 
   // Phase 2: Create Stripe Transfer to connected account
   try {
-    // Create idempotency key to prevent duplicate payouts within same time window (1-minute buckets)
-    // Include the pending payout ID for additional uniqueness
-    const idempotencyKey = `payout-${affiliate.id}-${pendingPayout.id}-${payoutAmount}-${Math.floor(Date.now() / 60000)}`;
+    // Use pending payout ID as idempotency key - guarantees uniqueness and prevents duplicates
+    // The pending payout ID is auto-incremented in the database, so it's always unique
+    const idempotencyKey = `payout-${pendingPayout.id}`;
 
     const transfer = await stripe.transfers.create(
       {
