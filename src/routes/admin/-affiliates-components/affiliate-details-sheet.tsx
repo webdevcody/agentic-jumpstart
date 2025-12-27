@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { NumberInputWithControls } from "~/components/blocks/number-input-with-controls";
 import { cn } from "~/lib/utils";
+import { sanitizeImageUrl } from "~/utils/url-sanitizer";
 import type { AffiliateRow } from "./affiliates-columns";
 import {
   adminToggleAffiliateStatusFn,
@@ -76,7 +77,7 @@ export function AffiliateDetailsSheet({
   const [newCommissionRate, setNewCommissionRate] = useState<string>("");
 
   // Fetch payout history when sheet is open
-  const { data: payoutsData } = useQuery({
+  const { data: payoutsResponse, isLoading: isLoadingPayouts, error: payoutsError } = useQuery({
     queryKey: ["affiliatePayouts", affiliate?.id],
     queryFn: () => adminGetAffiliatePayoutsFn({
       data: { affiliateId: affiliate!.id }
@@ -85,7 +86,7 @@ export function AffiliateDetailsSheet({
   });
 
   // Fetch referral/conversion history when sheet is open
-  const { data: referralsData } = useQuery({
+  const { data: referralsResponse, isLoading: isLoadingReferrals, error: referralsError } = useQuery({
     queryKey: ["affiliateReferrals", affiliate?.id],
     queryFn: () => adminGetAffiliateReferralsFn({
       data: { affiliateId: affiliate!.id }
@@ -93,7 +94,12 @@ export function AffiliateDetailsSheet({
     enabled: open && !!affiliate?.id,
   });
 
+  const isLoadingActivity = isLoadingPayouts || isLoadingReferrals;
+  const activityError = payoutsError || referralsError;
+
   // Simple data access - pagination can be added later if needed
+  const payoutsData = payoutsResponse?.data;
+  const referralsData = referralsResponse?.data;
   const allReferrals = referralsData?.items ?? [];
   const allPayouts = payoutsData?.items ?? [];
   const hasMoreActivity = (referralsData?.hasMore ?? false) || (payoutsData?.hasMore ?? false);
@@ -170,9 +176,9 @@ export function AffiliateDetailsSheet({
           <div className="flex items-center gap-4">
             {/* Avatar */}
             <div className="relative">
-              {affiliate.userImage ? (
+              {sanitizeImageUrl(affiliate.userImage) ? (
                 <img
-                  src={affiliate.userImage}
+                  src={sanitizeImageUrl(affiliate.userImage)!}
                   alt={displayName}
                   className="h-14 w-14 shrink-0 rounded-full object-cover border border-border/50"
                 />
@@ -362,7 +368,23 @@ export function AffiliateDetailsSheet({
             {/* Timeline line */}
             <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" />
 
+            {/* Loading state */}
+            {isLoadingActivity && (
+              <div className="flex items-center gap-3 py-4">
+                <div className="h-4 w-4 border-2 border-muted-foreground/30 border-t-muted-foreground rounded-full animate-spin" />
+                <span className="text-sm text-muted-foreground">Loading activity...</span>
+              </div>
+            )}
+
+            {/* Error state */}
+            {activityError && !isLoadingActivity && (
+              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-600 dark:text-red-400">
+                Failed to load activity history
+              </div>
+            )}
+
             {/* Timeline items */}
+            {!isLoadingActivity && !activityError && (
             <div className="space-y-4">
               {/* Real referral/conversion history */}
               {allReferrals.map((referral) => (
@@ -433,6 +455,7 @@ export function AffiliateDetailsSheet({
                 </div>
               )}
             </div>
+            )}
           </div>
         </div>
       </SheetContent>

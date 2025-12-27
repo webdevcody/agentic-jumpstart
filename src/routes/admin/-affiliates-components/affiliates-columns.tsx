@@ -12,6 +12,7 @@ import {
   Link,
 } from "lucide-react";
 import { cn } from "~/lib/utils";
+import { sanitizeImageUrl } from "~/utils/url-sanitizer";
 
 export type AffiliateRow = {
   id: number;
@@ -74,9 +75,9 @@ export function getAffiliateColumns(
           <div className="flex items-center gap-3 min-w-0 py-1">
             {/* Avatar with status indicator */}
             <div className="relative shrink-0">
-              {affiliate.userImage ? (
+              {sanitizeImageUrl(affiliate.userImage) ? (
                 <img
-                  src={affiliate.userImage}
+                  src={sanitizeImageUrl(affiliate.userImage)!}
                   alt={displayName}
                   className="h-10 w-10 rounded-lg object-cover border border-border/50"
                 />
@@ -274,6 +275,7 @@ export function getAffiliateColumns(
               onClick={() =>
                 options.onToggleStatus(affiliate.id, affiliate.isActive)
               }
+              aria-label={affiliate.isActive ? `Suspend partner ${affiliate.userName || affiliate.affiliateCode}` : `Activate partner ${affiliate.userName || affiliate.affiliateCode}`}
               title={affiliate.isActive ? "Suspend Partner" : "Activate Partner"}
             >
               {affiliate.isActive ? (
@@ -287,6 +289,7 @@ export function getAffiliateColumns(
               size="icon"
               className="h-8 w-8 text-muted-foreground hover:text-foreground"
               onClick={() => options.onViewDetails?.(affiliate)}
+              aria-label={`View details for ${affiliate.userName || affiliate.affiliateCode}`}
               title="View Details"
             >
               <Eye className="h-4 w-4" />

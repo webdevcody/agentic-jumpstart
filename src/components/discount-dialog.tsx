@@ -39,8 +39,8 @@ export function DiscountDialog({
     setError(null);
     
     try {
-      const { valid } = await validateAffiliateCodeFn({ data: { code: discountCode.trim() } });
-      
+      const { data: { valid } } = await validateAffiliateCodeFn({ data: { code: discountCode.trim() } });
+
       if (valid) {
         setIsValid(true);
         onApplyDiscount(discountCode.trim());

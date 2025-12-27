@@ -21,7 +21,7 @@ import {
 export const Route = createFileRoute("/affiliates")({
   beforeLoad: () => assertFeatureEnabled("AFFILIATES_FEATURE"),
   loader: async ({ context }) => {
-    const [affiliateCheck, commissionRate, pricingSettings] = await Promise.all([
+    const [affiliateCheckResponse, commissionRate, pricingSettings] = await Promise.all([
       context.queryClient.fetchQuery({
         queryKey: ["affiliate", "check"],
         queryFn: () => checkIfUserIsAffiliateFn(),
@@ -38,6 +38,7 @@ export const Route = createFileRoute("/affiliates")({
 
     // Calculate max per-sale commission (originalPrice in dollars, commissionRate in percent)
     const maxCommissionPerSale = Math.floor(pricingSettings.originalPrice * (commissionRate / 100));
+    const affiliateCheck = affiliateCheckResponse.data;
 
     return {
       isAffiliate: affiliateCheck.isAffiliate,

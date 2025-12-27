@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { assertIsAdminFn } from "~/fn/auth";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
@@ -80,7 +81,7 @@ function useCommissionRate() {
   const [localRate, setLocalRate] = useState<string>("");
   const [hasLocalChanges, setHasLocalChanges] = useState(false);
 
-  const { data: commissionRate, isLoading } = useQuery({
+  const { data: commissionRate, isLoading, error } = useQuery({
     queryKey: ["affiliateCommissionRate"],
     queryFn: () => getAffiliateCommissionRateFn(),
   });
@@ -198,6 +199,7 @@ function useMinimumPayout() {
 }
 
 export const Route = createFileRoute("/admin/affiliates")({
+  beforeLoad: () => assertIsAdminFn(),
   loader: ({ context }) => {
     context.queryClient.ensureQueryData({
       queryKey: ["admin", "affiliates"],
@@ -235,10 +237,11 @@ function AdminAffiliates() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const { data: affiliates, isLoading } = useQuery({
+  const { data: affiliatesResponse, isLoading } = useQuery({
     queryKey: ["admin", "affiliates"],
     queryFn: () => adminGetAllAffiliatesFn(),
   });
+  const affiliates = affiliatesResponse?.data;
 
   // Keep selectedAffiliate in sync when affiliates list is refreshed
   useEffect(() => {
@@ -331,27 +334,27 @@ function AdminAffiliates() {
     },
   });
 
-  const handleToggleStatus = async (
+  const handleToggleStatus = useCallback(async (
     affiliateId: number,
     currentStatus: boolean
   ) => {
     await toggleStatusMutation.mutateAsync({
       data: { affiliateId, isActive: !currentStatus },
     });
-  };
+  }, [toggleStatusMutation]);
 
   const handleTriggerAutoPayouts = async () => {
     await autoPayoutMutation.mutateAsync();
   };
 
-  const openPayoutDialog = (affiliate: AffiliateRow) => {
+  const openPayoutDialog = useCallback((affiliate: AffiliateRow) => {
     setPayoutAffiliateId(affiliate.id);
     setPayoutAffiliateName(
       affiliate.userName || affiliate.userEmail || "Unknown"
     );
     setPayoutUnpaidBalance(affiliate.unpaidBalance);
     form.setValue("amount", affiliate.unpaidBalance / 100);
-  };
+  }, [form]);
 
   const onSubmitPayout = async (values: PayoutFormValues) => {
     if (!payoutAffiliateId) return;
@@ -374,12 +377,12 @@ function AdminAffiliates() {
     }).format(cents / 100);
   };
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = useCallback((text: string) => {
     navigator.clipboard.writeText(text);
     toast.success("Copied!", {
       description: "Link copied to clipboard.",
     });
-  };
+  }, []);
 
   // Calculate totals
   const totals = affiliates?.reduce(
@@ -392,20 +395,28 @@ function AdminAffiliates() {
     { totalUnpaid: 0, totalPaid: 0, totalEarnings: 0, activeCount: 0 }
   ) || { totalUnpaid: 0, totalPaid: 0, totalEarnings: 0, activeCount: 0 };
 
+  // Handler for viewing affiliate details - wrapped in useCallback
+  const handleViewDetails = useCallback((affiliate: AffiliateRow) => {
+    setSelectedAffiliate(affiliate);
+    setDetailsSheetOpen(true);
+  }, []);
+
+  // Handler for opening links in new tab - wrapped in useCallback
+  const handleViewLink = useCallback((link: string) => {
+    window.open(link, "_blank");
+  }, []);
+
   // Columns for DataTable
   const columns = useMemo(
     () =>
       getAffiliateColumns({
         onCopyLink: copyToClipboard,
-        onViewLink: (link) => window.open(link, "_blank"),
+        onViewLink: handleViewLink,
         onRecordPayout: openPayoutDialog,
         onToggleStatus: handleToggleStatus,
-        onViewDetails: (affiliate) => {
-          setSelectedAffiliate(affiliate);
-          setDetailsSheetOpen(true);
-        },
+        onViewDetails: handleViewDetails,
       }),
-    []
+    [copyToClipboard, handleViewLink, openPayoutDialog, handleToggleStatus, handleViewDetails]
   );
 
   // Data table setup
@@ -476,7 +487,7 @@ function AdminAffiliates() {
             disabled={commissionRateState.isLoading}
             isPending={commissionRateState.isPending}
             hasChanges={commissionRateState.hasLocalChanges}
-            inputWidth="w-24"
+            inputWidth="w-30"
           />
 
           {/* Batch Settle Button */}
@@ -591,7 +602,12 @@ function AdminAffiliates() {
       {/* Payout Dialog */}
       <Dialog
         open={payoutAffiliateId !== null}
-        onOpenChange={(open) => !open && setPayoutAffiliateId(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPayoutAffiliateId(null);
+            form.reset();
+          }
+        }}
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

@@ -74,7 +74,7 @@ export const Route = createFileRoute("/affiliate-onboarding")({
   beforeLoad: () => assertFeatureEnabled("AFFILIATES_FEATURE"),
   loader: async ({ context }) => {
     // Check if user is already an affiliate (always fetch fresh data)
-    const affiliateCheck = await context.queryClient.fetchQuery({
+    const { data: affiliateCheck } = await context.queryClient.fetchQuery({
       queryKey: ["affiliate", "check"],
       queryFn: () => checkIfUserIsAffiliateFn(),
     });
@@ -123,7 +123,6 @@ function AffiliateOnboarding() {
 
   // Determine initial step based on URL params and affiliate status
   const getInitialStep = (): WizardStep => {
-    if (search.step) return search.step;
     if (search.stripeComplete) return "complete"; // Return from Stripe = complete
 
     // If onboarding is complete, show complete step
@@ -138,11 +137,18 @@ function AffiliateOnboarding() {
     }
 
     // If affiliate exists but no payment configured, they need to select payment method
+    // Don't allow going back to terms if already registered
     if (loaderData.isAffiliate) {
+      // Allow explicit step navigation except for "terms" (can't re-register)
+      if (search.step && search.step !== "terms") {
+        return search.step;
+      }
       return "payment-method";
     }
 
-    return "terms"; // New users start with terms
+    // New users: respect step param or start with terms
+    if (search.step) return search.step;
+    return "terms";
   };
 
   const [currentStep, setCurrentStep] = useState<WizardStep>(getInitialStep);
@@ -342,9 +348,11 @@ function AffiliateOnboarding() {
                 <CardContent className="space-y-4">
                   {/* Stripe Express */}
                   <button
+                    type="button"
                     onClick={() => handleMethodSelect("stripe-express")}
+                    aria-pressed={selectedMethod === "stripe-express"}
                     className={cn(
-                      "w-full p-4 rounded-lg border-2 text-left transition-all",
+                      "w-full p-4 rounded-lg border-2 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-500 focus-visible:ring-offset-2",
                       selectedMethod === "stripe-express"
                         ? "border-theme-500 bg-theme-500/10"
                         : "border-border hover:border-theme-500/50"
@@ -369,9 +377,11 @@ function AffiliateOnboarding() {
 
                   {/* Stripe OAuth */}
                   <button
+                    type="button"
                     onClick={() => handleMethodSelect("stripe-oauth")}
+                    aria-pressed={selectedMethod === "stripe-oauth"}
                     className={cn(
-                      "w-full p-4 rounded-lg border-2 text-left transition-all",
+                      "w-full p-4 rounded-lg border-2 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-500 focus-visible:ring-offset-2",
                       selectedMethod === "stripe-oauth"
                         ? "border-theme-500 bg-theme-500/10"
                         : "border-border hover:border-theme-500/50"
@@ -397,9 +407,11 @@ function AffiliateOnboarding() {
                   {/* Custom Link - only if feature enabled */}
                   {loaderData.customPaymentLinkEnabled && (
                     <button
+                      type="button"
                       onClick={() => handleMethodSelect("link")}
+                      aria-pressed={selectedMethod === "link"}
                       className={cn(
-                        "w-full p-4 rounded-lg border-2 text-left transition-all",
+                        "w-full p-4 rounded-lg border-2 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-500 focus-visible:ring-offset-2",
                         selectedMethod === "link"
                           ? "border-theme-500 bg-theme-500/10"
                           : "border-border hover:border-theme-500/50"

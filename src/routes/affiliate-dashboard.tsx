@@ -26,6 +26,7 @@ import {
   disconnectStripeAccountFn,
   updateAffiliateDiscountRateFn,
 } from "~/fn/affiliates";
+import { getPricingSettingsFn } from "~/fn/app-settings";
 import { authenticatedMiddleware } from "~/lib/auth";
 import {
   Copy,
@@ -54,7 +55,7 @@ import {
 } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { env } from "~/utils/env";
-import { AFFILIATE_CONFIG } from "~/config";
+import { AFFILIATE_CONFIG, PRICING_CONFIG } from "~/config";
 import {
   Dialog,
   DialogContent,
@@ -176,7 +177,7 @@ export const Route = createFileRoute("/affiliate-dashboard")({
     await assertAuthenticatedFn();
 
     // Check if onboarding is complete - redirect if not
-    const affiliateCheck = await checkIfUserIsAffiliateFn();
+    const { data: affiliateCheck } = await checkIfUserIsAffiliateFn();
     if (!affiliateCheck.isAffiliate) {
       throw redirect({ to: "/affiliates" });
     }
@@ -185,8 +186,8 @@ export const Route = createFileRoute("/affiliate-dashboard")({
     }
   },
   loader: async ({ context }) => {
-    // Fetch dashboard data and feature flags in parallel
-    const [data, discountSplitEnabled, customPaymentLinkEnabled] = await Promise.all([
+    // Fetch dashboard data, feature flags, and pricing settings in parallel
+    const [dashboardResponse, discountSplitEnabled, customPaymentLinkEnabled, pricingSettings] = await Promise.all([
       context.queryClient.ensureQueryData({
         queryKey: ["affiliate", "dashboard"],
         queryFn: () => getAffiliateDashboardFn(),
@@ -199,13 +200,18 @@ export const Route = createFileRoute("/affiliate-dashboard")({
         queryKey: ["featureFlag", "AFFILIATE_CUSTOM_PAYMENT_LINK"],
         queryFn: () => isFeatureEnabledForUserFn({ data: { flagKey: "AFFILIATE_CUSTOM_PAYMENT_LINK" } }),
       }),
+      context.queryClient.ensureQueryData({
+        queryKey: ["pricing", "settings"],
+        queryFn: () => getPricingSettingsFn(),
+      }),
     ]);
 
     return {
       isAffiliate: true,
-      dashboard: data,
+      dashboard: dashboardResponse.data,
       discountSplitEnabled,
       customPaymentLinkEnabled,
+      pricingSettings,
     };
   },
   component: AffiliateDashboard,
@@ -214,15 +220,12 @@ export const Route = createFileRoute("/affiliate-dashboard")({
 function AffiliateDashboard() {
   const loaderData = Route.useLoaderData();
 
-  // If user is not an affiliate, show error message
-  if (!loaderData.isAffiliate || !loaderData.dashboard) {
-    return <NotAffiliateError />;
-  }
-
-  // Use the dashboard data and feature flags from loader
-  const dashboard = loaderData.dashboard;
+  // The beforeLoad guard already redirects non-affiliates, so dashboard is guaranteed to exist
+  // Use the dashboard data, feature flags, and pricing settings from loader
+  const dashboard = loaderData.dashboard!;
   const discountSplitEnabled = loaderData.discountSplitEnabled ?? true;
   const customPaymentLinkEnabled = loaderData.customPaymentLinkEnabled ?? true;
+  const pricingSettings = loaderData.pricingSettings ?? { currentPrice: PRICING_CONFIG.CURRENT_PRICE, originalPrice: PRICING_CONFIG.ORIGINAL_PRICE, promoLabel: "" };
 
   const user = useAuth();
   const queryClient = useQueryClient();
@@ -443,7 +446,11 @@ function AffiliateDashboard() {
                   readOnly
                   className="font-mono text-sm"
                 />
-                <Button onClick={copyToClipboard} variant="secondary">
+                <Button
+                  onClick={copyToClipboard}
+                  variant="secondary"
+                  aria-label={copied ? "Link copied" : "Copy affiliate link to clipboard"}
+                >
                   {copied ? (
                     <Check className="h-4 w-4" />
                   ) : (
@@ -524,15 +531,15 @@ function AffiliateDashboard() {
                   <Gift className="h-5 w-5 text-green-500 mx-auto mb-2" />
                   <p className="text-xs text-muted-foreground mb-1">Customer saves</p>
                   <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    ${((199 * localDiscountRate) / 100).toFixed(0)}
+                    ${((pricingSettings.currentPrice * localDiscountRate) / 100).toFixed(0)}
                   </p>
-                  <p className="text-xs text-muted-foreground">on $199 course</p>
+                  <p className="text-xs text-muted-foreground">on ${pricingSettings.currentPrice} course</p>
                 </div>
                 <div className="text-center p-4 rounded-xl bg-gradient-to-br from-theme-50 to-theme-100/50 dark:from-theme-900/30 dark:to-theme-800/20 border border-theme-200/60 dark:border-theme-700/40">
                   <DollarSign className="h-5 w-5 text-theme-500 mx-auto mb-2" />
                   <p className="text-xs text-muted-foreground mb-1">You earn</p>
                   <p className="text-2xl font-bold text-theme-600 dark:text-theme-400">
-                    ${((199 * (dashboard.affiliate.commissionRate - localDiscountRate)) / 100).toFixed(0)}
+                    ${((pricingSettings.currentPrice * (dashboard.affiliate.commissionRate - localDiscountRate)) / 100).toFixed(0)}
                   </p>
                   <p className="text-xs text-muted-foreground">per sale</p>
                 </div>
@@ -832,15 +839,21 @@ function AffiliateDashboard() {
                   <span className="text-sm text-muted-foreground">
                     Payment Link:
                   </span>
-                  <a
-                    href={dashboard.affiliate.paymentLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-theme-600 dark:text-theme-400 hover:underline flex items-center gap-1"
-                  >
-                    {dashboard.affiliate.paymentLink}
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
+                  {dashboard.affiliate.paymentLink.startsWith("https://") ? (
+                    <a
+                      href={dashboard.affiliate.paymentLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-theme-600 dark:text-theme-400 hover:underline flex items-center gap-1"
+                    >
+                      {dashboard.affiliate.paymentLink}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">
+                      {dashboard.affiliate.paymentLink}
+                    </span>
+                  )}
                 </div>
               )}
 
@@ -1194,55 +1207,6 @@ function AffiliateDashboard() {
           </motion.div>
         )}
       </motion.div>
-    </div>
-  );
-}
-
-function NotAffiliateError() {
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="max-w-md mx-auto text-center px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-theme-500/10 dark:bg-theme-400/20 flex items-center justify-center">
-            <Users className="h-10 w-10 text-theme-500 dark:text-theme-400" />
-          </div>
-
-          <h1 className="text-3xl font-bold mb-4">
-            Not an <span className="text-theme-400">Affiliate</span>
-          </h1>
-
-          <p className="text-muted-foreground mb-8 text-lg">
-            You are not registered as an affiliate. You need to join our
-            affiliate program to access this dashboard.
-          </p>
-
-          <div className="space-y-4">
-            <Link
-              to="/"
-              className={cn(
-                buttonVariants({ variant: "default", size: "lg" }),
-                "w-full"
-              )}
-            >
-              Return Home
-            </Link>
-
-            <Link
-              to="/affiliate-signup"
-              className={cn(
-                buttonVariants({ variant: "outline", size: "lg" }),
-                "w-full"
-              )}
-            >
-              Join Affiliate Program
-            </Link>
-          </div>
-        </motion.div>
-      </div>
     </div>
   );
 }
