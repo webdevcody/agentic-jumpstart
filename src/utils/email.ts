@@ -1,7 +1,8 @@
-import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
+import { SESClient, SendRawEmailCommand } from "@aws-sdk/client-ses";
 import { render } from "@react-email/render";
 import { marked } from "marked";
 import { env } from "~/utils/env";
+import { createSignedUnsubscribeToken } from "~/utils/crypto";
 import { CourseUpdateEmail } from "~/components/emails/course-update-email";
 import { VideoNotificationEmail } from "~/components/emails/video-notification-email";
 import { MultiSegmentNotificationEmail } from "~/components/emails/multi-segment-notification-email";
@@ -22,6 +23,7 @@ export interface EmailOptions {
   subject: string;
   html: string;
   text?: string;
+  userId?: number; // Optional: if provided, adds List-Unsubscribe header
 }
 
 export interface EmailTemplate {
@@ -30,30 +32,54 @@ export interface EmailTemplate {
   isMarketingEmail?: boolean; // Keep for backwards compatibility but always treated as true
 }
 
-// Send email using AWS SES
+/**
+ * Builds a raw MIME email message with proper headers including List-Unsubscribe.
+ */
+function buildRawEmail(options: EmailOptions): string {
+  const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+
+  // Build headers
+  const headers: string[] = [
+    `From: ${env.FROM_EMAIL_ADDRESS}`,
+    `To: ${options.to}`,
+    `Subject: =?UTF-8?B?${Buffer.from(options.subject).toString("base64")}?=`,
+    `MIME-Version: 1.0`,
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+  ];
+
+  // Add List-Unsubscribe header if userId is provided (improves deliverability)
+  if (options.userId) {
+    const unsubscribeUrl = createUnsubscribeLink(options.userId);
+    headers.push(`List-Unsubscribe: <${unsubscribeUrl}>`);
+    headers.push(`List-Unsubscribe-Post: List-Unsubscribe=One-Click`);
+  }
+
+  // Build body parts
+  const textPart = options.text || "Please view this email in an HTML-compatible email client.";
+  const parts: string[] = [
+    `--${boundary}`,
+    `Content-Type: text/plain; charset=UTF-8`,
+    `Content-Transfer-Encoding: base64`,
+    ``,
+    Buffer.from(textPart).toString("base64"),
+    `--${boundary}`,
+    `Content-Type: text/html; charset=UTF-8`,
+    `Content-Transfer-Encoding: base64`,
+    ``,
+    Buffer.from(options.html).toString("base64"),
+    `--${boundary}--`,
+  ];
+
+  return headers.join("\r\n") + "\r\n\r\n" + parts.join("\r\n");
+}
+
+// Send email using AWS SES with List-Unsubscribe header support
 export async function sendEmail(options: EmailOptions): Promise<void> {
-  const command = new SendEmailCommand({
-    Source: env.FROM_EMAIL_ADDRESS,
-    Destination: {
-      ToAddresses: [options.to],
-    },
-    Message: {
-      Subject: {
-        Data: options.subject,
-        Charset: "UTF-8",
-      },
-      Body: {
-        Html: {
-          Data: options.html,
-          Charset: "UTF-8",
-        },
-        ...(options.text && {
-          Text: {
-            Data: options.text,
-            Charset: "UTF-8",
-          },
-        }),
-      },
+  const rawMessage = buildRawEmail(options);
+
+  const command = new SendRawEmailCommand({
+    RawMessage: {
+      Data: Buffer.from(rawMessage),
     },
   });
 
@@ -171,8 +197,16 @@ export async function checkEmailDeliveryHealth(): Promise<{
   complaintRate: number;
   isHealthy: boolean;
 }> {
-  // In a real implementation, you would fetch SES statistics
-  // For now, return mock data
+  // In production, this should fetch real SES statistics
+  // TODO: Implement real SES stats fetching using GetSendStatisticsCommand
+  if (env.NODE_ENV === "production") {
+    throw new Error(
+      "checkEmailDeliveryHealth() is not implemented for production. " +
+        "Please implement real SES statistics fetching using GetSendStatisticsCommand."
+    );
+  }
+
+  // Development/test mock data
   return {
     bounceRate: 0.01, // 1%
     complaintRate: 0.001, // 0.1%
@@ -180,10 +214,10 @@ export async function checkEmailDeliveryHealth(): Promise<{
   };
 }
 
-// Create unsubscribe link
+// Create unsubscribe link with cryptographically signed token
 export function createUnsubscribeLink(userId: number): string {
-  // In a real implementation, you would create a signed URL or token
-  return `${env.HOST_NAME}/unsubscribe?user=${userId}`;
+  const token = createSignedUnsubscribeToken(userId);
+  return `${env.HOST_NAME}/unsubscribe?token=${encodeURIComponent(token)}`;
 }
 
 // Validate email template before sending
@@ -275,10 +309,14 @@ export async function sendAffiliatePayoutSuccessEmail(
 ): Promise<void> {
   try {
     const html = await render(AffiliatePayoutSuccessEmail(props));
+    const text = await render(AffiliatePayoutSuccessEmail(props), {
+      plainText: true,
+    });
     await sendEmail({
       to,
       subject: `Your affiliate payout of ${props.payoutAmount} has been sent!`,
       html,
+      text,
     });
     console.log(
       `[Affiliate Email] Sent payout success notification for ${props.stripeTransferId}`
@@ -302,10 +340,14 @@ export async function sendAffiliatePayoutFailedEmail(
 ): Promise<void> {
   try {
     const html = await render(AffiliatePayoutFailedEmail(props));
+    const text = await render(AffiliatePayoutFailedEmail(props), {
+      plainText: true,
+    });
     await sendEmail({
       to,
       subject: "Action required: Your affiliate payout could not be processed",
       html,
+      text,
     });
     console.log(`[Affiliate Email] Sent payout failure notification`);
   } catch (error) {
