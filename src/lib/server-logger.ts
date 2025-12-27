@@ -15,9 +15,9 @@ export type LogScope = (typeof LOG_SCOPES)[keyof typeof LOG_SCOPES];
 // === CONFIG: Record<scope, boolean> ===
 export const logScopeConfig: Record<LogScope, boolean> = {
   default: process.env.NODE_ENV === "development",
-  payments: true, // zawsze loguj płatności
+  payments: true, // always log payments
   auth: true,
-  affiliates: false, // wyłączone - za dużo szumu
+  affiliates: false, // disabled - too noisy
   "early-access": false,
   "app-settings": false,
 };

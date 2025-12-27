@@ -57,7 +57,7 @@ export function AffiliatePayoutFailedEmail({
             {/* Error Details */}
             <Section style={errorSection}>
               <Text style={errorLabel}>Error Details</Text>
-              <Text style={errorMessage}>{errorMessage}</Text>
+              <Text style={errorMessageStyle}>{errorMessage}</Text>
               <Text style={errorDate}>Occurred on: {failureDate}</Text>
             </Section>
 
@@ -177,7 +177,7 @@ const errorLabel = {
   margin: "0 0 8px 0",
 };
 
-const errorMessage = {
+const errorMessageStyle = {
   fontSize: "14px",
   color: "#b91c1c",
   margin: "0 0 8px 0",
