@@ -6,7 +6,8 @@ import {
   getAffiliateByUserId,
   updateAffiliateStripeAccount,
 } from "~/data-access/affiliates";
-import { determineStripeAccountStatus, StripeAccountStatus } from "~/utils/stripe-status";
+import { determineStripeAccountStatus } from "~/utils/stripe-status";
+import { timingSafeStringEqual } from "~/utils/crypto";
 
 const AFTER_CONNECT_URL = "/affiliate-dashboard";
 const ONBOARDING_COMPLETE_URL = "/affiliate-onboarding?step=complete";
@@ -42,30 +43,44 @@ export const Route = createFileRoute("/api/connect/stripe/oauth/callback/")({
         const storedAffiliateId = getCookie("stripe_oauth_affiliate_id") ?? null;
         const onboardingInProgress = getCookie("affiliate_onboarding") ?? null;
 
-        // Clear cookies
-        deleteCookie("stripe_oauth_state");
-        deleteCookie("stripe_oauth_affiliate_id");
-        deleteCookie("stripe_oauth_type");
-        if (onboardingInProgress) {
-          deleteCookie("affiliate_onboarding");
-        }
-
         // Handle OAuth errors (user denied, etc.)
         if (error) {
           console.error("Stripe OAuth error:", error, errorDescription);
+          // Clear cookies on error
+          deleteCookie("stripe_oauth_state");
+          deleteCookie("stripe_oauth_affiliate_id");
+          deleteCookie("stripe_oauth_type");
+          if (onboardingInProgress) {
+            deleteCookie("affiliate_onboarding");
+          }
           return new Response(null, {
             status: 302,
             headers: { Location: `${AFTER_CONNECT_URL}?error=oauth_denied` },
           });
         }
 
-        // Validate CSRF state token
-        if (!state || !storedState || state !== storedState) {
+        // Validate CSRF state token using timing-safe comparison
+        // Clear cookies on validation failure to prevent reuse
+        if (!timingSafeStringEqual(state, storedState)) {
+          deleteCookie("stripe_oauth_state");
+          deleteCookie("stripe_oauth_affiliate_id");
+          deleteCookie("stripe_oauth_type");
+          if (onboardingInProgress) {
+            deleteCookie("affiliate_onboarding");
+          }
           return new Response("Invalid state parameter", { status: 400 });
         }
 
         if (!code) {
           return new Response("Missing authorization code", { status: 400 });
+        }
+
+        // Clear cookies AFTER successful validation
+        deleteCookie("stripe_oauth_state");
+        deleteCookie("stripe_oauth_affiliate_id");
+        deleteCookie("stripe_oauth_type");
+        if (onboardingInProgress) {
+          deleteCookie("affiliate_onboarding");
         }
 
         try {

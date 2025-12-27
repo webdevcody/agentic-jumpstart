@@ -4,8 +4,7 @@ import { assertAuthenticated } from "~/utils/session";
 import {
   getAffiliateByUserId,
   updateAffiliateStripeAccount,
-  isConnectAttemptRateLimited,
-  recordConnectAttempt,
+  checkAndRecordConnectAttempt,
 } from "~/data-access/affiliates";
 import { env } from "~/utils/env";
 import { StripeAccountStatus } from "~/utils/stripe-status";
@@ -53,17 +52,14 @@ export const Route = createFileRoute("/api/connect/stripe/")({
       return new Response("Affiliate account not found", { status: 404 });
     }
 
-    // Check rate limiting (3 attempts per hour)
-    // const isRateLimited = await isConnectAttemptRateLimited(affiliate.id);
-    // if (isRateLimited) {
-    //   return new Response(
-    //     "Too many Stripe Connect attempts. Please try again later.",
-    //     { status: 429 }
-    //   );
-    // }
-
-    // Record this attempt for rate limiting
-    await recordConnectAttempt(affiliate.id);
+    // Check rate limiting and record attempt atomically (3 attempts per hour)
+    const allowed = await checkAndRecordConnectAttempt(affiliate.id);
+    if (!allowed) {
+      return new Response(
+        "Too many Stripe Connect attempts. Please try again later.",
+        { status: 429 }
+      );
+    }
 
     // Generate CSRF state token
     const state = generateCsrfState();

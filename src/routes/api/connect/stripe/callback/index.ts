@@ -7,6 +7,7 @@ import {
   updateAffiliateStripeAccount,
 } from "~/data-access/affiliates";
 import { determineStripeAccountStatus } from "~/utils/stripe-status";
+import { timingSafeStringEqual } from "~/utils/crypto";
 
 const AFTER_CONNECT_URL = "/affiliate-dashboard";
 const ONBOARDING_COMPLETE_URL = "/affiliate-onboarding?step=complete";
@@ -45,12 +46,18 @@ export const Route = createFileRoute("/api/connect/stripe/callback/")({
     const storedAffiliateId = getCookie("stripe_connect_affiliate_id") ?? null;
     const onboardingInProgress = getCookie("affiliate_onboarding") ?? null;
 
-    // Validate CSRF state token
-    if (!state || !storedState || state !== storedState) {
+    // Validate CSRF state token using timing-safe comparison
+    // Clear cookies on validation failure to prevent reuse
+    if (!timingSafeStringEqual(state, storedState)) {
+      deleteCookie("stripe_connect_state");
+      deleteCookie("stripe_connect_affiliate_id");
+      if (onboardingInProgress) {
+        deleteCookie("affiliate_onboarding");
+      }
       return new Response("Invalid state parameter", { status: 400 });
     }
 
-    // Clear cookies
+    // Clear cookies after successful validation
     deleteCookie("stripe_connect_state");
     deleteCookie("stripe_connect_affiliate_id");
     if (onboardingInProgress) {

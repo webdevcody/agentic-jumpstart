@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { assertAuthenticated } from "~/utils/session";
 import {
   getAffiliateByUserId,
-  recordConnectAttempt,
+  checkAndRecordConnectAttempt,
 } from "~/data-access/affiliates";
 import { env } from "~/utils/env";
 import { generateCsrfState } from "~/utils/crypto";
@@ -54,8 +54,14 @@ export const Route = createFileRoute("/api/connect/stripe/oauth/")({
           return new Response("Stripe account already connected", { status: 400 });
         }
 
-        // Record this attempt for rate limiting
-        await recordConnectAttempt(affiliate.id);
+        // Check rate limiting and record attempt atomically (3 attempts per hour)
+        const allowed = await checkAndRecordConnectAttempt(affiliate.id);
+        if (!allowed) {
+          return new Response(
+            "Too many Stripe Connect attempts. Please try again later.",
+            { status: 429 }
+          );
+        }
 
         // Generate CSRF state token
         const state = generateCsrfState();

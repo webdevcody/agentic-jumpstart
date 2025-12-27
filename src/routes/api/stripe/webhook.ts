@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import type Stripe from "stripe";
 import { stripe } from "~/lib/stripe";
 import { updateUserToPremiumUseCase } from "~/use-cases/users";
 import {
@@ -7,6 +8,7 @@ import {
 } from "~/use-cases/affiliates";
 import {
   getAffiliateByCode,
+  getAffiliateByStripeSession,
   getPayoutByStripeTransferId,
   getAffiliateByStripeAccountIdWithUserEmail,
   updateAffiliatePayoutError,
@@ -37,7 +39,7 @@ function getUserFriendlyPayoutError(stripeError: string | undefined): string {
   return "A payout error occurred. Please check your Stripe dashboard or contact support.";
 }
 
-const webhookSecret = env.STRIPE_WEBHOOK_SECRET!;
+const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
 
 export const Route = createFileRoute("/api/stripe/webhook")({
   server: {
@@ -56,18 +58,60 @@ export const Route = createFileRoute("/api/stripe/webhook")({
         );
       }
 
+      // Validate webhook secret is configured
+      if (!webhookSecret) {
+        logger.error("Webhook Error: STRIPE_WEBHOOK_SECRET not configured", { fn: "stripe-webhook" });
+        return new Response(
+          JSON.stringify({ error: "Webhook secret not configured" }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
+
       const payload = await request.text();
 
+      // Verify webhook signature - return 400 on failure so Stripe doesn't retry with invalid signatures
+      let event: Stripe.Event;
       try {
-        const event = stripe.webhooks.constructEvent(
+        event = stripe.webhooks.constructEvent(
           payload,
           sig,
           webhookSecret
         );
+      } catch (signatureError) {
+        logger.error("Webhook signature verification failed", {
+          fn: "stripe-webhook",
+          error: signatureError instanceof Error ? signatureError.message : String(signatureError),
+        });
+        return new Response(
+          JSON.stringify({ error: "Invalid signature" }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
 
+      // Process the event - return 200 on errors to prevent Stripe from retrying
+      // (we've already verified the webhook, so retrying won't help with processing errors)
+      try {
         switch (event.type) {
           case "checkout.session.completed": {
             const session = event.data.object;
+
+            // Idempotency check: skip if this session was already processed
+            const existingReferral = await getAffiliateByStripeSession(session.id);
+            if (existingReferral) {
+              logger.info("Skipping already processed checkout session", {
+                fn: "stripe-webhook",
+                sessionId: session.id,
+                existingReferralId: existingReferral.referral.id,
+              });
+              break;
+            }
+
             const userId = session.metadata?.userId;
             const affiliateCode = session.metadata?.affiliateCode;
             const analyticsSessionId = session.metadata?.analyticsSessionId;
@@ -222,11 +266,12 @@ export const Route = createFileRoute("/api/stripe/webhook")({
 
           default: {
             // Handle transfer.paid, transfer.failed and other events that may not be in the type definitions
-            const eventType = event.type as string;
+            // Cast to string to allow comparison with event types not in Stripe's type definitions
+            const eventType: string = event.type;
 
             // Handle transfer.paid - confirms funds have arrived at destination
             if (eventType === "transfer.paid") {
-              const transfer = (event as unknown as { data: { object: { id: string; amount: number; destination: string; metadata?: Record<string, string> } } }).data.object;
+              const transfer = event.data.object as Stripe.Transfer;
 
               logger.info("Stripe transfer paid", {
                 fn: "stripe-webhook",
@@ -249,7 +294,9 @@ export const Route = createFileRoute("/api/stripe/webhook")({
 
             // Handle transfer.failed
             if (eventType === "transfer.failed") {
-              const transfer = (event as unknown as { data: { object: { id: string; amount: number; destination: string; failure_message?: string; metadata?: Record<string, string> } } }).data.object;
+              const transfer = event.data.object as Stripe.Transfer;
+              // Note: failure_message is available on Transfer objects in failed state
+              const transferWithFailure = transfer as Stripe.Transfer & { failure_message?: string };
               logger.error("Stripe transfer failed", {
                 fn: "stripe-webhook",
                 transferId: transfer.id,
@@ -258,9 +305,9 @@ export const Route = createFileRoute("/api/stripe/webhook")({
               });
 
               // Extract raw error message from transfer for logging
-              const rawErrorMessage = transfer.failure_message || "Transfer failed - unknown reason";
+              const rawErrorMessage = transferWithFailure.failure_message || "Transfer failed - unknown reason";
               // Convert to user-friendly message for storage and emails
-              const userFriendlyError = getUserFriendlyPayoutError(transfer.failure_message);
+              const userFriendlyError = getUserFriendlyPayoutError(transferWithFailure.failure_message);
 
               // Log error details for admin notification (with raw error for debugging)
               const metadata = transfer.metadata || {};
@@ -345,15 +392,20 @@ export const Route = createFileRoute("/api/stripe/webhook")({
         return new Response(JSON.stringify({ received: true }), {
           headers: { "Content-Type": "application/json" },
         });
-      } catch (err) {
-        logger.error("Webhook Error", {
+      } catch (processingError) {
+        // Log the error but return 200 to acknowledge receipt
+        // Returning non-2xx would cause Stripe to retry, but since we've verified
+        // the signature, the issue is likely with our processing logic
+        logger.error("Webhook processing error", {
           fn: "stripe-webhook",
-          error: err instanceof Error ? err.message : String(err),
+          eventType: event.type,
+          error: processingError instanceof Error ? processingError.message : String(processingError),
+          stack: processingError instanceof Error ? processingError.stack : undefined,
         });
         return new Response(
-          JSON.stringify({ error: "Webhook handler failed" }),
+          JSON.stringify({ received: true, processingError: true }),
           {
-            status: 400,
+            status: 200,
             headers: { "Content-Type": "application/json" },
           }
         );
