@@ -351,6 +351,13 @@
       "when": 1766615388060,
       "tag": "0049_complete_groot",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1766859824038,
+      "tag": "0050_gorgeous_kulan_gath",
+      "breakpoints": true
     }
   ]
 }
