@@ -1,7 +1,8 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   AnyPgColumn,
   boolean,
+  check,
   index,
   integer,
   pgEnum,
@@ -247,6 +248,18 @@ export const attachments = tableCreator(
   ]
 );
 
+export const stripeAccountStatusEnum = pgEnum("stripe_account_status_enum", [
+  "not_started",
+  "onboarding",
+  "active",
+  "restricted",
+]);
+
+export const affiliatePaymentMethodEnum = pgEnum("affiliate_payment_method_enum", [
+  "link",
+  "stripe",
+]);
+
 export const affiliates = tableCreator(
   "affiliate",
   {
@@ -256,7 +269,7 @@ export const affiliates = tableCreator(
       .references(() => users.id, { onDelete: "cascade" })
       .unique(),
     affiliateCode: text("affiliateCode").notNull().unique(),
-    paymentMethod: text("paymentMethod").notNull().default("link"), // 'link' or 'stripe'
+    paymentMethod: affiliatePaymentMethodEnum("paymentMethod").notNull().default("link"),
     paymentLink: text("paymentLink"),
     commissionRate: integer("commissionRate").notNull().default(30),
     // Discount rate: percentage of commission given to customer as discount
@@ -268,7 +281,7 @@ export const affiliates = tableCreator(
     isActive: boolean("isActive").notNull().default(true),
     // Stripe Connect fields
     stripeConnectAccountId: text("stripeConnectAccountId"),
-    stripeAccountStatus: text("stripeAccountStatus").notNull().default("not_started"), // 'not_started', 'onboarding', 'active', 'restricted'
+    stripeAccountStatus: stripeAccountStatusEnum("stripeAccountStatus").notNull().default("not_started"),
     stripeChargesEnabled: boolean("stripeChargesEnabled").notNull().default(false),
     stripePayoutsEnabled: boolean("stripePayoutsEnabled").notNull().default(false),
     stripeDetailsSubmitted: boolean("stripeDetailsSubmitted").notNull().default(false),
@@ -290,8 +303,10 @@ export const affiliates = tableCreator(
   },
   (table) => [
     index("affiliates_user_id_idx").on(table.userId),
-    index("affiliates_code_idx").on(table.affiliateCode),
+    // affiliateCode already has unique() constraint which creates implicit index
     uniqueIndex("affiliates_stripe_account_idx").on(table.stripeConnectAccountId),
+    // Ensure discountRate never exceeds commissionRate (would result in negative affiliate earnings)
+    check("discount_rate_check", sql`${table.discountRate} <= ${table.commissionRate} AND ${table.discountRate} >= 0`),
   ]
 );
 
@@ -320,6 +335,7 @@ export const affiliateReferrals = tableCreator(
       table.affiliateId,
       table.createdAt
     ),
+    index("referrals_affiliate_unpaid_idx").on(table.affiliateId, table.isPaid),
     index("referrals_purchaser_idx").on(table.purchaserId),
     uniqueIndex("referrals_stripe_session_unique").on(table.stripeSessionId),
   ]
