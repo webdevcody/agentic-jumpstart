@@ -36,6 +36,9 @@ export const env = {
   STRIPE_PRICE_ID: testFallback(process.env.STRIPE_PRICE_ID, "price_test_placeholder", "STRIPE_PRICE_ID"),
   STRIPE_WEBHOOK_SECRET: testFallback(process.env.STRIPE_WEBHOOK_SECRET, "whsec_test_placeholder", "STRIPE_WEBHOOK_SECRET"),
   STRIPE_DISCOUNT_COUPON_ID: process.env.STRIPE_DISCOUNT_COUPON_ID,
+  // Dedicated secret for signing tokens (unsubscribe links, etc.)
+  // Independent of Stripe webhook secret for better security separation
+  TOKEN_SIGNING_SECRET: testFallback(process.env.TOKEN_SIGNING_SECRET, "test-token-signing-secret-32chars", "TOKEN_SIGNING_SECRET"),
   // Stripe Connect OAuth Client ID (for connecting existing accounts)
   // Get this from Stripe Dashboard > Settings > Connect > Platform settings
   STRIPE_CLIENT_ID: process.env.STRIPE_CLIENT_ID,
@@ -46,6 +49,4 @@ export const env = {
   AWS_SES_SECRET_ACCESS_KEY: testFallback(process.env.AWS_SES_SECRET_ACCESS_KEY, "test-ses-secret-key", "AWS_SES_SECRET_ACCESS_KEY"),
   AWS_SES_REGION: process.env.AWS_SES_REGION || "us-east-1",
   FROM_EMAIL_ADDRESS: testFallback(process.env.FROM_EMAIL_ADDRESS, "test@example.com", "FROM_EMAIL_ADDRESS"),
-  // System user ID for automatic operations (e.g., automatic payouts)
-  SYSTEM_USER_ID: parseInt(process.env.SYSTEM_USER_ID || "1", 10),
 };
