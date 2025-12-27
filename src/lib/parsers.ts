@@ -88,12 +88,21 @@ export const getFiltersStateParser = <TData>(
     serialize: (value) => JSON.stringify(value),
     eq: (a, b) =>
       a.length === b.length &&
-      a.every(
-        (filter, index) =>
-          filter.id === b[index]?.id &&
-          filter.value === b[index]?.value &&
-          filter.variant === b[index]?.variant &&
-          filter.operator === b[index]?.operator,
-      ),
+      a.every((filter, index) => {
+        const otherFilter = b[index];
+        if (!otherFilter) return false;
+
+        const valueEqual = Array.isArray(filter.value) && Array.isArray(otherFilter.value)
+          ? filter.value.length === otherFilter.value.length &&
+            filter.value.every((v, i) => v === otherFilter.value[i])
+          : filter.value === otherFilter.value;
+
+        return (
+          filter.id === otherFilter.id &&
+          valueEqual &&
+          filter.variant === otherFilter.variant &&
+          filter.operator === otherFilter.operator
+        );
+      }),
   });
 };

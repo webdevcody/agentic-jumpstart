@@ -69,8 +69,9 @@ export function DataTablePagination<TData>({
           </Select>
         </div>
         <div className="flex items-center justify-center font-medium text-sm">
-          Page {table.getState().pagination.pageIndex + 1} of{" "}
-          {table.getPageCount()}
+          {table.getPageCount() > 0
+            ? `Page ${table.getState().pagination.pageIndex + 1} of ${table.getPageCount()}`
+            : "No pages"}
         </div>
         <div className="flex items-center space-x-2">
           <Button

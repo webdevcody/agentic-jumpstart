@@ -131,10 +131,8 @@ export function DataTableSliderFilter<TData>({
   );
 
   const onReset = React.useCallback(
-    (event: React.MouseEvent) => {
-      if (event.target instanceof HTMLDivElement) {
-        event.stopPropagation();
-      }
+    (event?: React.MouseEvent) => {
+      event?.stopPropagation();
       column.setFilterValue(undefined);
     },
     [column],
@@ -149,15 +147,21 @@ export function DataTableSliderFilter<TData>({
           className="border-dashed font-normal"
         >
           {columnFilterValue ? (
-            <div
+            <span
               role="button"
-              aria-label={`Clear ${title} filter`}
               tabIndex={0}
+              aria-label={`Clear ${title} filter`}
               className="rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               onClick={onReset}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onReset();
+                }
+              }}
             >
               <XCircle />
-            </div>
+            </span>
           ) : (
             <PlusCircle />
           )}

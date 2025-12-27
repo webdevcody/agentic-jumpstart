@@ -40,8 +40,9 @@ export function DataTableFacetedFilter<TData, TValue>({
   const [open, setOpen] = React.useState(false);
 
   const columnFilterValue = column?.getFilterValue();
-  const selectedValues = new Set(
-    Array.isArray(columnFilterValue) ? columnFilterValue : [],
+  const selectedValues = React.useMemo(
+    () => new Set(Array.isArray(columnFilterValue) ? columnFilterValue : []),
+    [columnFilterValue]
   );
 
   const onItemSelect = React.useCallback(
@@ -82,15 +83,21 @@ export function DataTableFacetedFilter<TData, TValue>({
           className="border-dashed font-normal"
         >
           {selectedValues?.size > 0 ? (
-            <div
+            <span
               role="button"
-              aria-label={`Clear ${title} filter`}
               tabIndex={0}
+              aria-label={`Clear ${title} filter`}
               className="rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               onClick={onReset}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onReset();
+                }
+              }}
             >
               <XCircle />
-            </div>
+            </span>
           ) : (
             <PlusCircle />
           )}
