@@ -2,23 +2,11 @@ import { createMiddleware } from "@tanstack/react-start";
 import { validateRequest } from "~/utils/auth";
 import { redirect } from "@tanstack/react-router";
 import { type User } from "~/db/schema";
+import { logMiddleware } from "./server-logger";
 
 export function isAdmin(user: User | null) {
   return user?.isAdmin ?? false;
 }
-
-export const logMiddleware = createMiddleware({ type: "function" }).server(
-  async ({ next, context, functionId }) => {
-    const now = Date.now();
-
-    const result = await next();
-
-    const duration = Date.now() - now;
-    console.log("Server Req/Res:", { duration: `${duration}ms`, functionId });
-
-    return result;
-  }
-);
 
 export const authenticatedMiddleware = createMiddleware({ type: "function" })
   .middleware([logMiddleware])
