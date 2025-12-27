@@ -27,6 +27,7 @@ import { Route as CreateTestimonialRouteImport } from './routes/create-testimoni
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as CancelRouteImport } from './routes/cancel'
 import { Route as AffiliatesRouteImport } from './routes/affiliates'
+import { Route as AffiliateOnboardingRouteImport } from './routes/affiliate-onboarding'
 import { Route as AffiliateDashboardRouteImport } from './routes/affiliate-dashboard'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
@@ -50,8 +51,8 @@ import { Route as AgentsSlugRouteImport } from './routes/agents/$slug'
 import { Route as AdminVideoProcessingRouteImport } from './routes/admin/video-processing'
 import { Route as AdminUtmAnalyticsRouteImport } from './routes/admin/utm-analytics'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
-import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminPricingRouteImport } from './routes/admin/pricing'
+import { Route as AdminFeatureFlagsRouteImport } from './routes/admin/feature-flags'
 import { Route as AdminCommentsRouteImport } from './routes/admin/comments'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AdminAffiliatesRouteImport } from './routes/admin/affiliates'
@@ -180,6 +181,11 @@ const AffiliatesRoute = AffiliatesRouteImport.update({
   path: '/affiliates',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AffiliateOnboardingRoute = AffiliateOnboardingRouteImport.update({
+  id: '/affiliate-onboarding',
+  path: '/affiliate-onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AffiliateDashboardRoute = AffiliateDashboardRouteImport.update({
   id: '/affiliate-dashboard',
   path: '/affiliate-dashboard',
@@ -295,14 +301,14 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminRouteRoute,
 } as any)
-const AdminSettingsRoute = AdminSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
 const AdminPricingRoute = AdminPricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminFeatureFlagsRoute = AdminFeatureFlagsRouteImport.update({
+  id: '/feature-flags',
+  path: '/feature-flags',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminCommentsRoute = AdminCommentsRouteImport.update({
@@ -504,6 +510,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/affiliate-dashboard': typeof AffiliateDashboardRoute
+  '/affiliate-onboarding': typeof AffiliateOnboardingRoute
   '/affiliates': typeof AffiliatesRoute
   '/cancel': typeof CancelRoute
   '/community': typeof CommunityRoute
@@ -527,8 +534,8 @@ export interface FileRoutesByFullPath {
   '/admin/affiliates': typeof AdminAffiliatesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/comments': typeof AdminCommentsRoute
+  '/admin/feature-flags': typeof AdminFeatureFlagsRoute
   '/admin/pricing': typeof AdminPricingRoute
-  '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/utm-analytics': typeof AdminUtmAnalyticsRoute
   '/admin/video-processing': typeof AdminVideoProcessingRoute
@@ -586,6 +593,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/affiliate-dashboard': typeof AffiliateDashboardRoute
+  '/affiliate-onboarding': typeof AffiliateOnboardingRoute
   '/affiliates': typeof AffiliatesRoute
   '/cancel': typeof CancelRoute
   '/community': typeof CommunityRoute
@@ -607,8 +615,8 @@ export interface FileRoutesByTo {
   '/admin/affiliates': typeof AdminAffiliatesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/comments': typeof AdminCommentsRoute
+  '/admin/feature-flags': typeof AdminFeatureFlagsRoute
   '/admin/pricing': typeof AdminPricingRoute
-  '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/utm-analytics': typeof AdminUtmAnalyticsRoute
   '/admin/video-processing': typeof AdminVideoProcessingRoute
@@ -666,6 +674,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/affiliate-dashboard': typeof AffiliateDashboardRoute
+  '/affiliate-onboarding': typeof AffiliateOnboardingRoute
   '/affiliates': typeof AffiliatesRoute
   '/cancel': typeof CancelRoute
   '/community': typeof CommunityRoute
@@ -689,8 +698,8 @@ export interface FileRoutesById {
   '/admin/affiliates': typeof AdminAffiliatesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/comments': typeof AdminCommentsRoute
+  '/admin/feature-flags': typeof AdminFeatureFlagsRoute
   '/admin/pricing': typeof AdminPricingRoute
-  '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/utm-analytics': typeof AdminUtmAnalyticsRoute
   '/admin/video-processing': typeof AdminVideoProcessingRoute
@@ -750,6 +759,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/about'
     | '/affiliate-dashboard'
+    | '/affiliate-onboarding'
     | '/affiliates'
     | '/cancel'
     | '/community'
@@ -773,8 +783,8 @@ export interface FileRouteTypes {
     | '/admin/affiliates'
     | '/admin/analytics'
     | '/admin/comments'
+    | '/admin/feature-flags'
     | '/admin/pricing'
-    | '/admin/settings'
     | '/admin/users'
     | '/admin/utm-analytics'
     | '/admin/video-processing'
@@ -832,6 +842,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/about'
     | '/affiliate-dashboard'
+    | '/affiliate-onboarding'
     | '/affiliates'
     | '/cancel'
     | '/community'
@@ -853,8 +864,8 @@ export interface FileRouteTypes {
     | '/admin/affiliates'
     | '/admin/analytics'
     | '/admin/comments'
+    | '/admin/feature-flags'
     | '/admin/pricing'
-    | '/admin/settings'
     | '/admin/users'
     | '/admin/utm-analytics'
     | '/admin/video-processing'
@@ -911,6 +922,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/about'
     | '/affiliate-dashboard'
+    | '/affiliate-onboarding'
     | '/affiliates'
     | '/cancel'
     | '/community'
@@ -934,8 +946,8 @@ export interface FileRouteTypes {
     | '/admin/affiliates'
     | '/admin/analytics'
     | '/admin/comments'
+    | '/admin/feature-flags'
     | '/admin/pricing'
-    | '/admin/settings'
     | '/admin/users'
     | '/admin/utm-analytics'
     | '/admin/video-processing'
@@ -994,6 +1006,7 @@ export interface RootRouteChildren {
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AffiliateDashboardRoute: typeof AffiliateDashboardRoute
+  AffiliateOnboardingRoute: typeof AffiliateOnboardingRoute
   AffiliatesRoute: typeof AffiliatesRoute
   CancelRoute: typeof CancelRoute
   CommunityRoute: typeof CommunityRoute
@@ -1169,6 +1182,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AffiliatesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/affiliate-onboarding': {
+      id: '/affiliate-onboarding'
+      path: '/affiliate-onboarding'
+      fullPath: '/affiliate-onboarding'
+      preLoaderRoute: typeof AffiliateOnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/affiliate-dashboard': {
       id: '/affiliate-dashboard'
       path: '/affiliate-dashboard'
@@ -1330,18 +1350,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRouteRoute
     }
-    '/admin/settings': {
-      id: '/admin/settings'
-      path: '/settings'
-      fullPath: '/admin/settings'
-      preLoaderRoute: typeof AdminSettingsRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
     '/admin/pricing': {
       id: '/admin/pricing'
       path: '/pricing'
       fullPath: '/admin/pricing'
       preLoaderRoute: typeof AdminPricingRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/feature-flags': {
+      id: '/admin/feature-flags'
+      path: '/feature-flags'
+      fullPath: '/admin/feature-flags'
+      preLoaderRoute: typeof AdminFeatureFlagsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/comments': {
@@ -1652,8 +1672,8 @@ interface AdminRouteRouteChildren {
   AdminAffiliatesRoute: typeof AdminAffiliatesRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminCommentsRoute: typeof AdminCommentsRoute
+  AdminFeatureFlagsRoute: typeof AdminFeatureFlagsRoute
   AdminPricingRoute: typeof AdminPricingRoute
-  AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminUtmAnalyticsRoute: typeof AdminUtmAnalyticsRoute
   AdminVideoProcessingRoute: typeof AdminVideoProcessingRoute
@@ -1675,8 +1695,8 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminAffiliatesRoute: AdminAffiliatesRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminCommentsRoute: AdminCommentsRoute,
+  AdminFeatureFlagsRoute: AdminFeatureFlagsRoute,
   AdminPricingRoute: AdminPricingRoute,
-  AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminUtmAnalyticsRoute: AdminUtmAnalyticsRoute,
   AdminVideoProcessingRoute: AdminVideoProcessingRoute,
@@ -1713,6 +1733,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRouteRoute: AdminRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AffiliateDashboardRoute: AffiliateDashboardRoute,
+  AffiliateOnboardingRoute: AffiliateOnboardingRoute,
   AffiliatesRoute: AffiliatesRoute,
   CancelRoute: CancelRoute,
   CommunityRoute: CommunityRoute,

@@ -123,8 +123,8 @@ const navigation: NavigationItem[] = [
 
   // System
   {
-    name: "Settings",
-    href: "/admin/settings",
+    name: "Feature Flags",
+    href: "/admin/feature-flags",
     icon: Settings,
     category: "system",
   },

@@ -70,10 +70,39 @@ export const checkIfUserIsAffiliateFn = createServerFn()
   .middleware([unauthenticatedMiddleware, affiliatesFeatureMiddleware])
   .handler(async ({ context }) => {
     if (!context.userId) {
-      return { isAffiliate: false };
+      return {
+        isAffiliate: false,
+        isOnboardingComplete: false,
+        paymentMethod: null,
+        stripeAccountStatus: null,
+        hasStripeAccount: false,
+      };
     }
     const affiliate = await getAffiliateByUserId(context.userId);
-    return { isAffiliate: !!affiliate };
+    if (!affiliate) {
+      return {
+        isAffiliate: false,
+        isOnboardingComplete: false,
+        paymentMethod: null,
+        stripeAccountStatus: null,
+        hasStripeAccount: false,
+      };
+    }
+
+    // Check if onboarding is complete:
+    // - For 'link' payment method: always complete (no extra setup needed)
+    // - For 'stripe' payment method: complete only if Stripe account is fully active
+    const isOnboardingComplete =
+      affiliate.paymentMethod === "link" ||
+      (affiliate.paymentMethod === "stripe" && affiliate.stripeAccountStatus === "active");
+
+    return {
+      isAffiliate: true,
+      isOnboardingComplete,
+      paymentMethod: affiliate.paymentMethod,
+      stripeAccountStatus: affiliate.stripeAccountStatus,
+      hasStripeAccount: !!affiliate.stripeConnectAccountId,
+    };
   });
 
 const updatePaymentMethodSchema = z.object({

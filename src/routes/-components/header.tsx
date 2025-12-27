@@ -237,8 +237,8 @@ const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
 
   // System
   {
-    to: "/admin/settings",
-    label: "Settings",
+    to: "/admin/feature-flags",
+    label: "Feature Flags",
     icon: Settings,
     category: "system",
   },

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { assertFeatureEnabled } from "~/lib/feature-flags";
 import {
   useSuspenseQuery,
@@ -54,6 +54,7 @@ import {
 } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { env } from "~/utils/env";
+import { AFFILIATE_CONFIG } from "~/config";
 import {
   Dialog,
   DialogContent,
@@ -87,6 +88,7 @@ import {
 } from "~/components/ui/form";
 import { publicEnv } from "~/utils/env-public";
 import { assertAuthenticatedFn } from "~/fn/auth";
+import { isFeatureEnabledForUserFn } from "~/fn/app-settings";
 import { motion } from "framer-motion";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Slider } from "~/components/ui/slider";
@@ -172,24 +174,39 @@ export const Route = createFileRoute("/affiliate-dashboard")({
   beforeLoad: async () => {
     await assertFeatureEnabled("AFFILIATES_FEATURE");
     await assertAuthenticatedFn();
+
+    // Check if onboarding is complete - redirect if not
+    const affiliateCheck = await checkIfUserIsAffiliateFn();
+    if (!affiliateCheck.isAffiliate) {
+      throw redirect({ to: "/affiliates" });
+    }
+    if (!affiliateCheck.isOnboardingComplete) {
+      throw redirect({ to: "/affiliate-onboarding" });
+    }
   },
   loader: async ({ context }) => {
-    // First check if user is an affiliate
-    const affiliateCheck = await context.queryClient.ensureQueryData({
-      queryKey: ["affiliate", "check"],
-      queryFn: () => checkIfUserIsAffiliateFn(),
-    });
+    // Fetch dashboard data and feature flags in parallel
+    const [data, discountSplitEnabled, customPaymentLinkEnabled] = await Promise.all([
+      context.queryClient.ensureQueryData({
+        queryKey: ["affiliate", "dashboard"],
+        queryFn: () => getAffiliateDashboardFn(),
+      }),
+      context.queryClient.ensureQueryData({
+        queryKey: ["featureFlag", "AFFILIATE_DISCOUNT_SPLIT"],
+        queryFn: () => isFeatureEnabledForUserFn({ data: { flagKey: "AFFILIATE_DISCOUNT_SPLIT" } }),
+      }),
+      context.queryClient.ensureQueryData({
+        queryKey: ["featureFlag", "AFFILIATE_CUSTOM_PAYMENT_LINK"],
+        queryFn: () => isFeatureEnabledForUserFn({ data: { flagKey: "AFFILIATE_CUSTOM_PAYMENT_LINK" } }),
+      }),
+    ]);
 
-    if (!affiliateCheck.isAffiliate) {
-      return { isAffiliate: false };
-    }
-
-    // If they are an affiliate, get dashboard data
-    const data = await context.queryClient.ensureQueryData({
-      queryKey: ["affiliate", "dashboard"],
-      queryFn: () => getAffiliateDashboardFn(),
-    });
-    return { isAffiliate: true, dashboard: data };
+    return {
+      isAffiliate: true,
+      dashboard: data,
+      discountSplitEnabled,
+      customPaymentLinkEnabled,
+    };
   },
   component: AffiliateDashboard,
 });
@@ -198,19 +215,21 @@ function AffiliateDashboard() {
   const loaderData = Route.useLoaderData();
 
   // If user is not an affiliate, show error message
-  if (!loaderData.isAffiliate) {
+  if (!loaderData.isAffiliate || !loaderData.dashboard) {
     return <NotAffiliateError />;
   }
+
+  // Use the dashboard data and feature flags from loader
+  const dashboard = loaderData.dashboard;
+  const discountSplitEnabled = loaderData.discountSplitEnabled ?? true;
+  const customPaymentLinkEnabled = loaderData.customPaymentLinkEnabled ?? true;
 
   const user = useAuth();
   const queryClient = useQueryClient();
   const [copied, setCopied] = useState(false);
   const [editPaymentOpen, setEditPaymentOpen] = useState(false);
   const [disconnectDialogOpen, setDisconnectDialogOpen] = useState(false);
-  const [localDiscountRate, setLocalDiscountRate] = useState(loaderData.dashboard.affiliate.discountRate);
-
-  // Use the dashboard data from loader
-  const dashboard = loaderData.dashboard;
+  const [localDiscountRate, setLocalDiscountRate] = useState(dashboard.affiliate.discountRate);
 
   // Sync local discount rate with server data when it changes
   useEffect(() => {
@@ -371,6 +390,41 @@ function AffiliateDashboard() {
         initial="hidden"
         animate="visible"
       >
+        {/* Migration Prompt - Show when custom payment link is disabled but affiliate uses it */}
+        {!customPaymentLinkEnabled && dashboard.affiliate.paymentMethod === "link" && (
+          <motion.div variants={itemVariants}>
+            <Card className="mb-8 border-amber-500/50 bg-amber-50/10 dark:bg-amber-900/10">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                  <AlertTriangle className="h-5 w-5" />
+                  Payment Method Update Required
+                </CardTitle>
+                <CardDescription>
+                  Custom payment links are no longer supported. Please connect a Stripe account to continue receiving payouts.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <a
+                    href="/api/connect/stripe"
+                    className={cn(buttonVariants({ variant: "default" }), "flex items-center gap-2")}
+                  >
+                    <Zap className="h-4 w-4" />
+                    Create New Stripe Account
+                  </a>
+                  <a
+                    href="/api/connect/stripe/oauth"
+                    className={cn(buttonVariants({ variant: "outline" }), "flex items-center gap-2")}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Connect Existing Stripe Account
+                  </a>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Affiliate Link Card */}
         <motion.div variants={itemVariants}>
           <Card className="mb-8 bg-card/80 dark:bg-card/60 backdrop-blur-sm border border-theme-200/60 dark:border-theme-500/30 shadow-elevation-2 hover:shadow-glow-cyan hover:border-theme-400/80 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group">
@@ -400,7 +454,7 @@ function AffiliateDashboard() {
               <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
-                  <span>30-day cookie duration</span>
+                  <span>{AFFILIATE_CONFIG.COOKIE_DURATION_DAYS}-day cookie duration</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <DollarSign className="h-4 w-4" />
@@ -411,256 +465,8 @@ function AffiliateDashboard() {
           </Card>
         </motion.div>
 
-        {/* Stripe Connect Status Card - Only show for Stripe payment method */}
-        {dashboard.affiliate.paymentMethod === "stripe" && (
-          <motion.div variants={itemVariants}>
-            <Card className="mb-8 bg-card/80 dark:bg-card/60 backdrop-blur-sm border border-theme-200/60 dark:border-theme-500/30 shadow-elevation-2 hover:shadow-glow-cyan hover:border-theme-400/80 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group">
-              {/* Glow effect on hover */}
-              <div className="absolute inset-0 bg-gradient-to-br from-theme-500/5 to-theme-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <CreditCard className="h-5 w-5 text-theme-500" />
-                      Stripe Connect
-                    </CardTitle>
-                    <CardDescription>
-                      Automatic payouts via Stripe Connect
-                    </CardDescription>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {(dashboard.affiliate.stripeAccountStatus === "onboarding" ||
-                      dashboard.affiliate.stripeAccountStatus === "active" ||
-                      dashboard.affiliate.stripeAccountStatus === "restricted") && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => refreshStripeStatusMutation.mutate({ data: {} })}
-                        disabled={refreshStripeStatusMutation.isPending}
-                      >
-                        <RefreshCw
-                          className={cn(
-                            "h-4 w-4 mr-2",
-                            refreshStripeStatusMutation.isPending && "animate-spin"
-                          )}
-                        />
-                        {refreshStripeStatusMutation.isPending ? "Refreshing..." : "Refresh Status"}
-                      </Button>
-                    )}
-                    {dashboard.affiliate.stripeAccountStatus === "active" && dashboard.affiliate.stripePayoutsEnabled && (
-                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Connected
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="relative z-10 space-y-4">
-                {/* Payout Error Banner */}
-                {dashboard.affiliate.lastPayoutError && (
-                  <div className="p-4 rounded-lg border border-red-500/50 bg-red-500/10 dark:bg-red-900/20">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                        <AlertTriangle className="h-5 w-5 text-red-500 dark:text-red-400" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-red-600 dark:text-red-400 mb-1">Payout Failed</p>
-                        <p className="text-sm text-red-600/90 dark:text-red-300/90 mb-2">
-                          {dashboard.affiliate.lastPayoutError}
-                        </p>
-                        {dashboard.affiliate.lastPayoutErrorAt && (
-                          <p className="text-xs text-red-600/70 dark:text-red-400/70 mb-2">
-                            <Clock className="h-3 w-3 inline mr-1" />
-                            Failed on {formatDate(dashboard.affiliate.lastPayoutErrorAt)}
-                          </p>
-                        )}
-                        <p className="text-sm text-muted-foreground">
-                          Please verify your Stripe Connect account settings or contact support if this issue persists.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Account Status Display */}
-                {dashboard.affiliate.stripeAccountStatus === "not_started" && (
-                  <div className="p-4 rounded-lg border border-dashed border-theme-500/50 bg-theme-500/5">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-full bg-theme-500/10 flex items-center justify-center">
-                        <LinkIcon className="h-5 w-5 text-theme-500" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Connect Your Stripe Account</p>
-                        <p className="text-sm text-muted-foreground">
-                          Set up Stripe to receive automatic payouts on every sale
-                        </p>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <a
-                        href="/api/connect/stripe"
-                        className={cn(
-                          "inline-flex items-center justify-center gap-2 w-full",
-                          "bg-theme-500 hover:bg-theme-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
-                        )}
-                      >
-                        <Zap className="h-4 w-4" />
-                        Create New Stripe Account
-                      </a>
-                      <a
-                        href="/api/connect/stripe/oauth"
-                        className={cn(
-                          "inline-flex items-center justify-center gap-2 w-full",
-                          "border border-theme-500/50 hover:bg-theme-500/10 text-theme-600 dark:text-theme-400 font-medium py-2.5 px-4 rounded-lg transition-colors"
-                        )}
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        Connect Existing Stripe Account
-                      </a>
-                    </div>
-                  </div>
-                )}
-
-                {dashboard.affiliate.stripeAccountStatus === "onboarding" && (
-                  <div className="p-4 rounded-lg border border-dashed border-orange-500/50 bg-orange-500/5">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center">
-                        <AlertCircle className="h-5 w-5 text-orange-500" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-orange-600 dark:text-orange-400">Complete Your Onboarding</p>
-                        <p className="text-sm text-muted-foreground">
-                          Your Stripe account setup is incomplete. Please complete onboarding to enable payouts.
-                        </p>
-                      </div>
-                    </div>
-                    <a
-                      href="/api/connect/stripe/refresh"
-                      className={cn(
-                        "inline-flex items-center justify-center gap-2 w-full",
-                        "bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                      )}
-                    >
-                      <RefreshCw className="h-4 w-4" />
-                      Complete Onboarding
-                    </a>
-                  </div>
-                )}
-
-                {(dashboard.affiliate.stripeAccountStatus === "active" || dashboard.affiliate.stripeAccountStatus === "restricted") && (
-                  <div className="space-y-4">
-                    {/* Status Badges */}
-                    <div className="flex flex-wrap gap-3">
-                      <div className={cn(
-                        "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium",
-                        dashboard.affiliate.stripePayoutsEnabled
-                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                          : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                      )}>
-                        {dashboard.affiliate.stripePayoutsEnabled ? (
-                          <CheckCircle className="h-4 w-4" />
-                        ) : (
-                          <XCircle className="h-4 w-4" />
-                        )}
-                        Payouts {dashboard.affiliate.stripePayoutsEnabled ? "Enabled" : "Disabled"}
-                      </div>
-                      <div className={cn(
-                        "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium",
-                        dashboard.affiliate.stripeChargesEnabled
-                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                          : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                      )}>
-                        {dashboard.affiliate.stripeChargesEnabled ? (
-                          <CheckCircle className="h-4 w-4" />
-                        ) : (
-                          <XCircle className="h-4 w-4" />
-                        )}
-                        Charges {dashboard.affiliate.stripeChargesEnabled ? "Enabled" : "Disabled"}
-                      </div>
-                      {dashboard.affiliate.stripeDetailsSubmitted && (
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                          <CheckCircle className="h-4 w-4" />
-                          Details Submitted
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Restricted Account Warning */}
-                    {dashboard.affiliate.stripeAccountStatus === "restricted" && (
-                      <div className="p-3 rounded-lg border border-orange-500/50 bg-orange-500/5">
-                        <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400">
-                          <AlertCircle className="h-4 w-4" />
-                          <p className="text-sm font-medium">Account Restricted</p>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Your Stripe account has restrictions. Please visit your Stripe dashboard to resolve any issues.
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Auto-Payout Info */}
-                    {dashboard.affiliate.stripePayoutsEnabled && (
-                      <div className="p-3 rounded-lg bg-theme-500/5 border border-theme-500/20">
-                        <div className="flex items-center gap-2 text-theme-600 dark:text-theme-400">
-                          <Zap className="h-4 w-4" />
-                          <p className="text-sm font-medium">Automatic Payouts Active</p>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Payouts are automatically processed when your balance reaches $50
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Last Sync Time */}
-                    {dashboard.affiliate.lastStripeSync && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        <span>Last synced: {formatDate(dashboard.affiliate.lastStripeSync)}</span>
-                      </div>
-                    )}
-
-                    {/* Disconnect Stripe Button */}
-                    <div className="pt-4 border-t border-border/50">
-                      <AlertDialog open={disconnectDialogOpen} onOpenChange={setDisconnectDialogOpen}>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950/30 border-red-200 dark:border-red-800"
-                          >
-                            <Unlink className="h-4 w-4 mr-2" />
-                            Disconnect Stripe
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Disconnect Stripe Connect?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This will disconnect your Stripe Connect account and switch you back to manual payouts via a payment link. You can reconnect Stripe Connect at any time.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => disconnectStripeAccountMutation.mutate({ data: {} })}
-                              disabled={disconnectStripeAccountMutation.isPending}
-                              className="bg-red-600 text-white hover:bg-red-700"
-                            >
-                              {disconnectStripeAccountMutation.isPending ? "Disconnecting..." : "Disconnect"}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-
-        {/* Share the Benefit Card */}
+        {/* Share the Benefit Card - only shown when discount split feature is enabled */}
+        {discountSplitEnabled && (
         <motion.div variants={itemVariants} className="mb-8">
           <Card className="bg-card/80 dark:bg-card/60 backdrop-blur-sm border border-theme-200/60 dark:border-theme-500/30 shadow-elevation-2 hover:shadow-glow-cyan hover:border-theme-400/80 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-theme-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
@@ -740,6 +546,7 @@ function AffiliateDashboard() {
             </CardContent>
           </Card>
         </motion.div>
+        )}
 
         {/* Stats Grid */}
         <motion.div
@@ -864,6 +671,7 @@ function AffiliateDashboard() {
                     Your payment details for receiving commissions
                   </CardDescription>
                 </div>
+                {customPaymentLinkEnabled && (
                 <Dialog
                   open={editPaymentOpen}
                   onOpenChange={setEditPaymentOpen}
@@ -896,21 +704,23 @@ function AffiliateDashboard() {
                                 <RadioGroup
                                   onValueChange={field.onChange}
                                   defaultValue={field.value}
-                                  className="grid grid-cols-2 gap-4"
+                                  className={cn("grid gap-4", customPaymentLinkEnabled ? "grid-cols-2" : "grid-cols-1")}
                                 >
-                                  <label
-                                    className={cn(
-                                      "flex flex-col items-center justify-center p-4 rounded-lg border-2 cursor-pointer transition-all",
-                                      field.value === "link"
-                                        ? "border-theme-500 bg-theme-500/10"
-                                        : "border-border hover:border-theme-500/50"
-                                    )}
-                                  >
-                                    <RadioGroupItem value="link" className="sr-only" />
-                                    <DollarSign className="h-8 w-8 mb-2 text-theme-500" />
-                                    <span className="font-medium">Payment Link</span>
-                                    <span className="text-xs text-muted-foreground">PayPal, Venmo, etc.</span>
-                                  </label>
+                                  {customPaymentLinkEnabled && (
+                                    <label
+                                      className={cn(
+                                        "flex flex-col items-center justify-center p-4 rounded-lg border-2 cursor-pointer transition-all",
+                                        field.value === "link"
+                                          ? "border-theme-500 bg-theme-500/10"
+                                          : "border-border hover:border-theme-500/50"
+                                      )}
+                                    >
+                                      <RadioGroupItem value="link" className="sr-only" />
+                                      <DollarSign className="h-8 w-8 mb-2 text-theme-500" />
+                                      <span className="font-medium">Payment Link</span>
+                                      <span className="text-xs text-muted-foreground">PayPal, Venmo, etc.</span>
+                                    </label>
+                                  )}
                                   <label
                                     className={cn(
                                       "flex flex-col items-center justify-center p-4 rounded-lg border-2 cursor-pointer transition-all",
@@ -930,7 +740,7 @@ function AffiliateDashboard() {
                           )}
                         />
 
-                        {paymentMethod === "link" ? (
+                        {customPaymentLinkEnabled && paymentMethod === "link" ? (
                           <FormField
                             control={form.control}
                             name="paymentLink"
@@ -957,7 +767,11 @@ function AffiliateDashboard() {
                               <p className="font-medium">Stripe Connect</p>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              Automatic payouts will be enabled once Stripe Connect is configured
+                              {dashboard.affiliate.stripeAccountStatus === "active" && dashboard.affiliate.stripePayoutsEnabled
+                                ? "Your Stripe account is connected and payouts are enabled"
+                                : dashboard.affiliate.stripeConnectAccountId
+                                  ? "Complete your Stripe setup to enable payouts"
+                                  : "Connect your Stripe account to enable automatic payouts"}
                             </p>
                           </div>
                         )}
@@ -975,10 +789,12 @@ function AffiliateDashboard() {
                     </Form>
                   </DialogContent>
                 </Dialog>
+                )}
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
+            <CardContent className="relative z-10 space-y-4">
+              {/* Payment Method Badge */}
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">
                     Payment Method:
@@ -989,38 +805,189 @@ function AffiliateDashboard() {
                       : "Payment Link"}
                   </Badge>
                 </div>
+                {/* Refresh Button - only for onboarding/restricted states */}
+                {dashboard.affiliate.paymentMethod === "stripe" &&
+                  (dashboard.affiliate.stripeAccountStatus === "onboarding" ||
+                   dashboard.affiliate.stripeAccountStatus === "restricted") && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refreshStripeStatusMutation.mutate({ data: {} })}
+                    disabled={refreshStripeStatusMutation.isPending}
+                  >
+                    <RefreshCw
+                      className={cn(
+                        "h-4 w-4 mr-2",
+                        refreshStripeStatusMutation.isPending && "animate-spin"
+                      )}
+                    />
+                    {refreshStripeStatusMutation.isPending ? "Refreshing..." : "Refresh"}
+                  </Button>
+                )}
+              </div>
 
-                {dashboard.affiliate.paymentMethod === "link" && dashboard.affiliate.paymentLink ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">
-                      Payment Link:
-                    </span>
-                    <a
-                      href={dashboard.affiliate.paymentLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-theme-600 dark:text-theme-400 hover:underline flex items-center gap-1"
-                    >
-                      {dashboard.affiliate.paymentLink}
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                ) : dashboard.affiliate.paymentMethod === "stripe" ? (
-                  <div className="p-3 rounded-lg border border-dashed border-theme-500/50 bg-theme-500/5">
-                    <p className="text-sm text-muted-foreground">
-                      <CreditCard className="h-4 w-4 inline mr-1" />
-                      Stripe Connect integration pending - automatic payouts will be enabled once configured
-                    </p>
-                  </div>
-                ) : null}
+              {/* Payment Link Info (for link method) */}
+              {dashboard.affiliate.paymentMethod === "link" && dashboard.affiliate.paymentLink && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    Payment Link:
+                  </span>
+                  <a
+                    href={dashboard.affiliate.paymentLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-theme-600 dark:text-theme-400 hover:underline flex items-center gap-1"
+                  >
+                    {dashboard.affiliate.paymentLink}
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              )}
 
-                <div>
+              {/* Stripe Account Status (for stripe method) */}
+              {dashboard.affiliate.paymentMethod === "stripe" && (
+                <>
+                  {/* Payout Error Banner */}
+                  {dashboard.affiliate.lastPayoutError && (
+                    <div className="p-4 rounded-lg border border-red-500/50 bg-red-500/10 dark:bg-red-900/20">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                          <AlertTriangle className="h-5 w-5 text-red-500 dark:text-red-400" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-red-600 dark:text-red-400 mb-1">Payout Failed</p>
+                          <p className="text-sm text-red-600/90 dark:text-red-300/90 mb-2">
+                            {dashboard.affiliate.lastPayoutError}
+                          </p>
+                          {dashboard.affiliate.lastPayoutErrorAt && (
+                            <p className="text-xs text-red-600/70 dark:text-red-400/70 mb-2">
+                              <Clock className="h-3 w-3 inline mr-1" />
+                              Failed on {formatDate(dashboard.affiliate.lastPayoutErrorAt)}
+                            </p>
+                          )}
+                          <p className="text-sm text-muted-foreground">
+                            Please verify your Stripe Connect account settings or contact support if this issue persists.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Not Started State */}
+                  {dashboard.affiliate.stripeAccountStatus === "not_started" && (
+                    <div className="p-4 rounded-lg border border-dashed border-theme-500/50 bg-theme-500/5">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-full bg-theme-500/10 flex items-center justify-center">
+                          <LinkIcon className="h-5 w-5 text-theme-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Connect Your Stripe Account</p>
+                          <p className="text-sm text-muted-foreground">
+                            Set up Stripe to receive automatic payouts on every sale
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <a
+                          href="/api/connect/stripe"
+                          className={cn(
+                            "inline-flex items-center justify-center gap-2 w-full",
+                            "bg-theme-500 hover:bg-theme-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
+                          )}
+                        >
+                          <Zap className="h-4 w-4" />
+                          Create New Stripe Account
+                        </a>
+                        <a
+                          href="/api/connect/stripe/oauth"
+                          className={cn(
+                            "inline-flex items-center justify-center gap-2 w-full",
+                            "border border-theme-500/50 hover:bg-theme-500/10 text-theme-600 dark:text-theme-400 font-medium py-2.5 px-4 rounded-lg transition-colors"
+                          )}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Connect Existing Stripe Account
+                        </a>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Onboarding State */}
+                  {dashboard.affiliate.stripeAccountStatus === "onboarding" && (
+                    <div className="p-4 rounded-lg border border-dashed border-orange-500/50 bg-orange-500/5">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center">
+                          <AlertCircle className="h-5 w-5 text-orange-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-orange-600 dark:text-orange-400">Complete Your Onboarding</p>
+                          <p className="text-sm text-muted-foreground">
+                            Your Stripe account setup is incomplete. Please complete onboarding to enable payouts.
+                          </p>
+                        </div>
+                      </div>
+                      <a
+                        href="/api/connect/stripe/refresh"
+                        className={cn(
+                          "inline-flex items-center justify-center gap-2 w-full",
+                          "bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                        )}
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                        Complete Onboarding
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Active State - simple confirmation with account info */}
+                  {dashboard.affiliate.stripeAccountStatus === "active" && dashboard.affiliate.stripePayoutsEnabled && (
+                    <div className="p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                          <Zap className="h-4 w-4" />
+                          <p className="text-sm font-medium">Instant Payouts Active</p>
+                        </div>
+                        {dashboard.affiliate.stripeAccountType && (
+                          <Badge variant="outline" className="text-xs">
+                            {dashboard.affiliate.stripeAccountType}
+                          </Badge>
+                        )}
+                      </div>
+                      {dashboard.affiliate.stripeAccountName && (
+                        <p className="text-sm font-medium text-foreground mt-2">
+                          {dashboard.affiliate.stripeAccountName}
+                        </p>
+                      )}
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Commissions are automatically transferred with each sale
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Restricted Account Warning - this one IS important */}
+                  {dashboard.affiliate.stripeAccountStatus === "restricted" && (
+                    <div className="p-3 rounded-lg border border-orange-500/50 bg-orange-500/5">
+                      <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400">
+                        <AlertCircle className="h-4 w-4" />
+                        <p className="text-sm font-medium">Account Restricted</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Your Stripe account has restrictions. Please visit your Stripe dashboard to resolve any issues.
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Minimum Payout Info - only for manual link payouts */}
+              {dashboard.affiliate.paymentMethod === "link" && (
+                <div className="pt-2 border-t border-border/50">
                   <span className="text-sm text-muted-foreground">
                     Minimum Payout:{" "}
                   </span>
                   <span className="text-sm font-medium">$50.00</span>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>

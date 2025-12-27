@@ -1,4 +1,4 @@
-import { eq, desc, and, sql, gte, lt, lte, inArray, isNotNull } from "drizzle-orm";
+import { eq, desc, and, sql, gte, lt, lte, inArray, isNotNull, ne } from "drizzle-orm";
 import { database } from "~/db";
 import {
   affiliates,
@@ -353,9 +353,33 @@ export async function updateAffiliateStripeAccount(
     stripeChargesEnabled?: boolean;
     stripePayoutsEnabled?: boolean;
     stripeDetailsSubmitted?: boolean;
+    stripeAccountType?: string | null;
     lastStripeSync?: Date;
   }
 ) {
+  // If assigning a Stripe account, first clear it from any other affiliate
+  // This handles the case where the same Stripe account was previously connected
+  // to a different affiliate (e.g., during testing)
+  if (data.stripeConnectAccountId) {
+    await database
+      .update(affiliates)
+      .set({
+        stripeConnectAccountId: null,
+        stripeAccountStatus: "not_started",
+        stripeChargesEnabled: false,
+        stripePayoutsEnabled: false,
+        stripeDetailsSubmitted: false,
+        stripeAccountType: null,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(affiliates.stripeConnectAccountId, data.stripeConnectAccountId),
+          ne(affiliates.id, affiliateId)
+        )
+      );
+  }
+
   const [updated] = await database
     .update(affiliates)
     .set({

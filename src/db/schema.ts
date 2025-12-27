@@ -272,6 +272,7 @@ export const affiliates = tableCreator(
     stripeChargesEnabled: boolean("stripeChargesEnabled").notNull().default(false),
     stripePayoutsEnabled: boolean("stripePayoutsEnabled").notNull().default(false),
     stripeDetailsSubmitted: boolean("stripeDetailsSubmitted").notNull().default(false),
+    stripeAccountType: text("stripeAccountType"), // express, standard, custom
     lastStripeSync: timestamp("lastStripeSync"),
     // Payout error tracking
     lastPayoutError: text("lastPayoutError"),

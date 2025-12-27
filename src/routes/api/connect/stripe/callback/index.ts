@@ -9,6 +9,7 @@ import {
 import { determineStripeAccountStatus } from "~/utils/stripe-status";
 
 const AFTER_CONNECT_URL = "/affiliate-dashboard";
+const ONBOARDING_COMPLETE_URL = "/affiliate-onboarding?step=complete";
 
 /**
  * Stripe Connect OAuth callback route.
@@ -42,6 +43,7 @@ export const Route = createFileRoute("/api/connect/stripe/callback/")({
     const state = url.searchParams.get("state");
     const storedState = getCookie("stripe_connect_state") ?? null;
     const storedAffiliateId = getCookie("stripe_connect_affiliate_id") ?? null;
+    const onboardingInProgress = getCookie("affiliate_onboarding") ?? null;
 
     // Validate CSRF state token
     if (!state || !storedState || state !== storedState) {
@@ -51,6 +53,9 @@ export const Route = createFileRoute("/api/connect/stripe/callback/")({
     // Clear cookies
     deleteCookie("stripe_connect_state");
     deleteCookie("stripe_connect_affiliate_id");
+    if (onboardingInProgress) {
+      deleteCookie("affiliate_onboarding");
+    }
 
     try {
       // Require authentication
@@ -86,13 +91,18 @@ export const Route = createFileRoute("/api/connect/stripe/callback/")({
         stripeChargesEnabled: account.charges_enabled ?? false,
         stripePayoutsEnabled: account.payouts_enabled ?? false,
         stripeDetailsSubmitted: account.details_submitted ?? false,
+        stripeAccountType: account.type ?? null,
         lastStripeSync: new Date(),
       });
 
-      // Redirect to affiliate dashboard
+      // Redirect to onboarding complete step if coming from onboarding flow
+      // Otherwise go directly to dashboard
+      const redirectUrl = onboardingInProgress
+        ? ONBOARDING_COMPLETE_URL
+        : AFTER_CONNECT_URL;
       return new Response(null, {
         status: 302,
-        headers: { Location: AFTER_CONNECT_URL },
+        headers: { Location: redirectUrl },
       });
     } catch (error) {
       console.error("Stripe Connect callback error:", error);

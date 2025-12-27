@@ -179,11 +179,20 @@ export const toggleFeatureFlagFn = createServerFn({ method: "POST" })
   });
 
 /**
- * Get the affiliate commission rate from app settings.
+ * Get the affiliate commission rate from app settings (admin only).
  */
 export const getAffiliateCommissionRateFn = createServerFn({ method: "GET" })
   .middleware([adminMiddleware])
   .inputValidator(z.void())
+  .handler(async () => {
+    return getAffiliateCommissionRateUseCase();
+  });
+
+/**
+ * Get the affiliate commission rate (public - for onboarding page).
+ */
+export const getPublicAffiliateCommissionRateFn = createServerFn({ method: "GET" })
+  .middleware([unauthenticatedMiddleware])
   .handler(async () => {
     return getAffiliateCommissionRateUseCase();
   });
@@ -200,11 +209,20 @@ export const setAffiliateCommissionRateFn = createServerFn({ method: "POST" })
   });
 
 /**
- * Get the affiliate minimum payout from app settings.
+ * Get the affiliate minimum payout from app settings (admin only).
  */
 export const getAffiliateMinimumPayoutFn = createServerFn({ method: "GET" })
   .middleware([adminMiddleware])
   .inputValidator(z.void())
+  .handler(async () => {
+    return getAffiliateMinimumPayoutUseCase();
+  });
+
+/**
+ * Get the affiliate minimum payout (public - for onboarding page).
+ */
+export const getPublicAffiliateMinimumPayoutFn = createServerFn({ method: "GET" })
+  .middleware([unauthenticatedMiddleware])
   .handler(async () => {
     return getAffiliateMinimumPayoutUseCase();
   });

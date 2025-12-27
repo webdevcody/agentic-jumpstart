@@ -721,6 +721,17 @@ export async function getAffiliateAnalyticsUseCase(userId: number) {
     );
   }
 
+  // Fetch Stripe account details if connected
+  let stripeAccountName: string | null = null;
+  if (affiliate.stripeConnectAccountId && affiliate.stripeAccountStatus === "active") {
+    try {
+      const stripeAccount = await stripe.accounts.retrieve(affiliate.stripeConnectAccountId);
+      stripeAccountName = stripeAccount.business_profile?.name ?? null;
+    } catch {
+      // Ignore errors - name is optional
+    }
+  }
+
   const [stats, referralsResult, payoutsResult, monthlyEarnings] = await Promise.all([
     getAffiliateStats(affiliate.id),
     getAffiliateReferrals(affiliate.id),
@@ -729,7 +740,10 @@ export async function getAffiliateAnalyticsUseCase(userId: number) {
   ]);
 
   return {
-    affiliate,
+    affiliate: {
+      ...affiliate,
+      stripeAccountName, // Add fetched name from Stripe API
+    },
     stats,
     referrals: referralsResult.items,
     payouts: payoutsResult.items,

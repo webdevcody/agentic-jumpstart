@@ -9,6 +9,7 @@ import {
 import { determineStripeAccountStatus, StripeAccountStatus } from "~/utils/stripe-status";
 
 const AFTER_CONNECT_URL = "/affiliate-dashboard";
+const ONBOARDING_COMPLETE_URL = "/affiliate-onboarding?step=complete";
 
 /**
  * Stripe OAuth callback route for connecting existing Stripe accounts.
@@ -39,11 +40,15 @@ export const Route = createFileRoute("/api/connect/stripe/oauth/callback/")({
 
         const storedState = getCookie("stripe_oauth_state") ?? null;
         const storedAffiliateId = getCookie("stripe_oauth_affiliate_id") ?? null;
+        const onboardingInProgress = getCookie("affiliate_onboarding") ?? null;
 
         // Clear cookies
         deleteCookie("stripe_oauth_state");
         deleteCookie("stripe_oauth_affiliate_id");
         deleteCookie("stripe_oauth_type");
+        if (onboardingInProgress) {
+          deleteCookie("affiliate_onboarding");
+        }
 
         // Handle OAuth errors (user denied, etc.)
         if (error) {
@@ -105,13 +110,18 @@ export const Route = createFileRoute("/api/connect/stripe/oauth/callback/")({
             stripeChargesEnabled: account.charges_enabled ?? false,
             stripePayoutsEnabled: account.payouts_enabled ?? false,
             stripeDetailsSubmitted: account.details_submitted ?? false,
+            stripeAccountType: account.type ?? null,
             lastStripeSync: new Date(),
           });
 
-          // Redirect to affiliate dashboard with success message
+          // Redirect to onboarding complete step if coming from onboarding flow
+          // Otherwise go directly to dashboard
+          const redirectUrl = onboardingInProgress
+            ? ONBOARDING_COMPLETE_URL
+            : `${AFTER_CONNECT_URL}?connected=true`;
           return new Response(null, {
             status: 302,
-            headers: { Location: `${AFTER_CONNECT_URL}?connected=true` },
+            headers: { Location: redirectUrl },
           });
         } catch (err) {
           console.error("Stripe OAuth callback error:", err);
