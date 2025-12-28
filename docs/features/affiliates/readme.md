@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Affiliate Program allows users to earn 30% commission by referring new customers to purchase the Agentic Jumpstart course. The system now includes a GDPR-compliant discount system where affiliate codes provide customers with 10% discounts while maintaining affiliate tracking through Stripe metadata. This feature includes a complete affiliate management system with tracking, analytics, and payout management.
+The Affiliate Program allows users to earn commission (configurable by admin, default 30%) by referring new customers to purchase the Agentic Jumpstart course. The system now includes a GDPR-compliant discount system where affiliate codes provide customers with 10% discounts while maintaining affiliate tracking through Stripe metadata. This feature includes a complete affiliate management system with tracking, analytics, and payout management.
 
 ## Quick Links
 
@@ -23,7 +23,7 @@ The Affiliate Program allows users to earn 30% commission by referring new custo
 1. Navigate to [/affiliates](http://localhost:4000/affiliates)
 2. If not logged in, you'll see the enhanced landing page with:
    - Modern gradient backgrounds and animations
-   - Program benefits overview (30% commission, 30-day cookies, real-time tracking)
+   - Program benefits overview (configurable commission, 30-day cookies, real-time tracking)
    - "How It Works" 4-step process visualization
 3. Click "Login to Join Program" and authenticate with Google
 4. Once logged in, you'll see the registration form with:
@@ -90,8 +90,8 @@ The enhanced affiliate dashboard displays real-time statistics with improved vis
 
 #### Main Statistics Cards
 
-- **Total Earnings**: Lifetime commission earned (30% of all referral sales)
-- **Unpaid Balance**: Pending payment amount (minimum $50 payout threshold)
+- **Total Earnings**: Lifetime commission earned (configurable % of all referral sales)
+- **Unpaid Balance**: Pending payment amount (minimum payout threshold applies to Payment Link affiliates only)
 - **Total Referrals**: Number of successful conversions tracked
 - **Paid Out**: Amount already paid via recorded payouts
 
@@ -130,7 +130,7 @@ The enhanced affiliate dashboard displays real-time statistics with improved vis
 - **Activate/Deactivate**: Toggle affiliate status
 - **Record Payout**:
   1. Click "Record Payout" for an affiliate
-  2. Enter amount (minimum $50)
+  2. Enter amount (minimum threshold applies for Payment Link affiliates)
   3. Select payment method
   4. Add transaction ID (optional)
   5. Add notes (optional)
@@ -162,16 +162,18 @@ VALUES (1, 2, 'cs_test_123', 20000, 6000);
 
 ## Configuration
 
-Settings are defined in `/src/config.ts`:
+Default settings are defined in `/src/config.ts`:
 
 ```typescript
 AFFILIATE_CONFIG = {
-  COMMISSION_RATE: 30, // 30% commission
-  MINIMUM_PAYOUT: 5000, // $50 minimum
+  DEFAULT_COMMISSION_RATE: 30, // Default 30% commission (configurable via admin)
+  DEFAULT_MINIMUM_PAYOUT: 5000, // Default $50 minimum (Payment Link affiliates only, configurable via admin)
   AFFILIATE_CODE_LENGTH: 8, // Code length
   AFFILIATE_CODE_RETRY_ATTEMPTS: 10,
 };
 ```
+
+**Note**: Commission rate and minimum payout are configurable via the Admin Dashboard at `/admin/affiliates`. The minimum payout setting only appears when the `AFFILIATE_CUSTOM_PAYMENT_LINK` feature flag is enabled (Stripe Connect affiliates have no minimum threshold).
 
 ### Environment Variables
 
@@ -229,14 +231,14 @@ The affiliate system integrates with Stripe in multiple ways:
 
 #### Commission System (REQ-AF-013 to REQ-AF-016)
 
-- 30% commission rate calculation accuracy
+- Configurable commission rate calculation accuracy (default 30%)
 - Net sale price commission calculation
 - Cents-based storage to avoid floating point issues
 - Self-referral prevention mechanism
 
 #### Payment & Payouts (REQ-AF-017 to REQ-AF-021)
 
-- $50 minimum payout threshold enforcement
+- Configurable minimum payout threshold (Payment Link affiliates only, default $50)
 - Monthly payout schedule management
 - Payment link update functionality
 - Admin payout recording with transaction details
@@ -338,7 +340,7 @@ npm run test:affiliate:admin
 #### Commission calculation errors
 
 - Verify amounts are stored in cents (integers)
-- Check commission rate is exactly 30%
+- Check commission rate matches the configured value in admin settings
 - Ensure no floating point precision issues
 - **Test Scenario**: REQ-AF-013 covers commission calculations
 
@@ -409,7 +411,7 @@ Stripe Connect enables automatic payouts to affiliates who connect their Stripe 
 **How It Works:**
 1. Affiliate connects their Stripe account via OAuth flow
 2. System tracks their earnings as usual
-3. When unpaid balance reaches $50, admin can trigger automatic payout
+3. When there's any positive unpaid balance, admin can trigger automatic payout (no minimum for Stripe Connect)
 4. Funds are transferred directly to the affiliate's Stripe account
 5. Affiliate receives funds according to their Stripe payout schedule
 
@@ -471,7 +473,7 @@ For an affiliate to receive automatic payouts:
 1. **Active affiliate account** - Account must not be deactivated
 2. **Connected Stripe account** - Must have `stripeConnectAccountId` set
 3. **Payouts enabled** - Stripe account status must be `active` with `stripePayoutsEnabled: true`
-4. **Minimum balance** - Unpaid balance must be at least $50 (5000 cents)
+4. **Positive balance** - Any positive unpaid balance (no minimum threshold for Stripe Connect)
 
 #### Payout Process
 
@@ -550,9 +552,9 @@ Admin Dashboard → "Process All Automatic Payouts" → Review Results
 
 #### "Balance below minimum payout"
 
-**Cause**: Affiliate's unpaid balance is less than $50.
+**Cause**: Payment Link affiliate's unpaid balance is less than the configured minimum.
 
-**Solution**: Wait for more referral conversions until balance reaches $50.
+**Solution**: Wait for more referral conversions until balance reaches the minimum threshold. Note: Stripe Connect affiliates have no minimum threshold and can receive payouts for any positive balance.
 
 #### "No affiliate found with this Stripe account ID"
 
