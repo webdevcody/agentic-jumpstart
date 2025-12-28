@@ -22,6 +22,7 @@ import { Route as NewsRouteImport } from './routes/news'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HealthRouteImport } from './routes/health'
+import { Route as DevLoginRouteImport } from './routes/dev-login'
 import { Route as CreateTestimonialRouteImport } from './routes/create-testimonial'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as CancelRouteImport } from './routes/cancel'
@@ -146,6 +147,11 @@ const LoginRoute = LoginRouteImport.update({
 const HealthRoute = HealthRouteImport.update({
   id: '/health',
   path: '/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DevLoginRoute = DevLoginRouteImport.update({
+  id: '/dev-login',
+  path: '/dev-login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CreateTestimonialRoute = CreateTestimonialRouteImport.update({
@@ -462,6 +468,7 @@ export interface FileRoutesByFullPath {
   '/cancel': typeof CancelRoute
   '/community': typeof CommunityRoute
   '/create-testimonial': typeof CreateTestimonialRoute
+  '/dev-login': typeof DevLoginRoute
   '/health': typeof HealthRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -537,6 +544,7 @@ export interface FileRoutesByTo {
   '/cancel': typeof CancelRoute
   '/community': typeof CommunityRoute
   '/create-testimonial': typeof CreateTestimonialRoute
+  '/dev-login': typeof DevLoginRoute
   '/health': typeof HealthRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -610,6 +618,7 @@ export interface FileRoutesById {
   '/cancel': typeof CancelRoute
   '/community': typeof CommunityRoute
   '/create-testimonial': typeof CreateTestimonialRoute
+  '/dev-login': typeof DevLoginRoute
   '/health': typeof HealthRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -687,6 +696,7 @@ export interface FileRouteTypes {
     | '/cancel'
     | '/community'
     | '/create-testimonial'
+    | '/dev-login'
     | '/health'
     | '/login'
     | '/members'
@@ -762,6 +772,7 @@ export interface FileRouteTypes {
     | '/cancel'
     | '/community'
     | '/create-testimonial'
+    | '/dev-login'
     | '/health'
     | '/login'
     | '/members'
@@ -834,6 +845,7 @@ export interface FileRouteTypes {
     | '/cancel'
     | '/community'
     | '/create-testimonial'
+    | '/dev-login'
     | '/health'
     | '/login'
     | '/members'
@@ -910,6 +922,7 @@ export interface RootRouteChildren {
   CancelRoute: typeof CancelRoute
   CommunityRoute: typeof CommunityRoute
   CreateTestimonialRoute: typeof CreateTestimonialRoute
+  DevLoginRoute: typeof DevLoginRoute
   HealthRoute: typeof HealthRoute
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
@@ -1038,6 +1051,13 @@ declare module '@tanstack/react-router' {
       path: '/health'
       fullPath: '/health'
       preLoaderRoute: typeof HealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dev-login': {
+      id: '/dev-login'
+      path: '/dev-login'
+      fullPath: '/dev-login'
+      preLoaderRoute: typeof DevLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/create-testimonial': {
@@ -1572,6 +1592,7 @@ const rootRouteChildren: RootRouteChildren = {
   CancelRoute: CancelRoute,
   CommunityRoute: CommunityRoute,
   CreateTestimonialRoute: CreateTestimonialRoute,
+  DevLoginRoute: DevLoginRoute,
   HealthRoute: HealthRoute,
   LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,

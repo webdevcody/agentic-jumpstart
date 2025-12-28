@@ -35,7 +35,7 @@ const getFirstVideoSegmentFn = createServerFn().handler(async () => {
   let thumbnailUrl: string | null = null;
   if (firstVideoSegment?.videoKey) {
     const { storage, type } = getStorage();
-    if (type === "r2") {
+    if (type === "r2" || type === "mock") {
       const thumbnailKey =
         firstVideoSegment.thumbnailKey ||
         getThumbnailKey(firstVideoSegment.videoKey);

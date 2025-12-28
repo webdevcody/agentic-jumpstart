@@ -1,7 +1,8 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { setCookie } from "@tanstack/react-start/server";
 import { generateCodeVerifier, generateState } from "arctic";
 import { googleAuth } from "~/utils/auth";
-import { setCookie } from "@tanstack/react-start/server";
+import { getAuthMode } from "~/utils/auth-mode";
 
 const MAX_COOKIE_AGE_SECONDS = 60 * 10;
 
@@ -12,6 +13,13 @@ export const Route = createFileRoute("/api/login/google/")({
         const url = new URL(request.url);
         const redirectUri = url.searchParams.get("redirect_uri") || "/";
 
+        // Dev mode: check auth preference (dev login vs real OAuth)
+        if (process.env.NODE_ENV === "development" && getAuthMode() === "dev") {
+          const devLoginUrl = new URL("/dev-login", url.origin);
+          devLoginUrl.searchParams.set("redirect_uri", redirectUri);
+          return Response.redirect(devLoginUrl.href);
+        }
+
         const state = generateState();
         const codeVerifier = generateCodeVerifier();
         const authorizationInfo = googleAuth.createAuthorizationURL(
@@ -21,7 +29,6 @@ export const Route = createFileRoute("/api/login/google/")({
         );
 
         // Force Google to show account selection on every login
-        // Using just "select_account" instead of "consent select_account" to avoid re-consent
         authorizationInfo.searchParams.set("prompt", "select_account");
         authorizationInfo.searchParams.set("access_type", "online");
 

@@ -1,6 +1,7 @@
 name: Run Tests
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [main, develop]
   push:
@@ -32,11 +33,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        run: rm -f package-lock.json && npm install
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
@@ -47,6 +48,7 @@ jobs:
           echo "IS_TEST=true" >> $GITHUB_ENV
           echo "PORT=3001" >> $GITHUB_ENV
           echo "HOST_NAME=http://localhost:3001" >> $GITHUB_ENV
+          echo "NODE_ENV=test" >> $GITHUB_ENV
 
       - name: Build application
         run: npm run build
@@ -68,6 +70,7 @@ jobs:
       - name: Run Playwright tests
         run: npm run test
         env:
+          DATABASE_URL: postgresql://postgres:example@localhost:5433/postgres
           DATABASE_URL_TEST: postgresql://postgres:example@localhost:5433/postgres
           IS_TEST: true
 

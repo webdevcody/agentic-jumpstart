@@ -162,5 +162,8 @@ export function createTempThumbnailPath(prefix: string): string {
  * @returns The thumbnail key (e.g., "abc123_thumb.jpg")
  */
 export function getThumbnailKey(baseKey: string): string {
-  return baseKey.replace(".mp4", "_thumb.jpg");
+  if (baseKey.endsWith(".mp4")) {
+    return baseKey.replace(".mp4", "_thumb.jpg");
+  }
+  return `${baseKey}_thumb.jpg`;
 }

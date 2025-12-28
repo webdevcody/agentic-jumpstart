@@ -44,3 +44,9 @@ export const isAdminFn = createServerFn()
   .handler(async () => {
     return isAdminUseCase();
   });
+
+export const getCurrentUserIdFn = createServerFn()
+  .middleware([unauthenticatedMiddleware])
+  .handler(async ({ context }) => {
+    return context.user?.id ?? null;
+  });

@@ -102,7 +102,7 @@ test.describe("Feature Name", () => {
 
 The Playwright configuration is in `playwright.config.ts` with the following key settings:
 
-- **Base URL**: `http://localhost:4000`
+- **Base URL**: `http://localhost:3001`
 - **Browsers**: Chrome, Firefox, Safari, Mobile Chrome, Mobile Safari
 - **Test Directory**: `./tests`
 - **Parallel Execution**: Enabled

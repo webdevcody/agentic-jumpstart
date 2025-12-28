@@ -5,6 +5,8 @@ import {
   createAndLoginAsNewRegularUser,
 } from "./helpers/auth";
 import { testDatabase } from "./helpers/database";
+import { clickWithRetry } from "./helpers/click-retry";
+import { TEST_CONFIG } from "./setup/config";
 import {
   launchKits,
   launchKitTags,
@@ -43,8 +45,19 @@ test.describe("Tag Management", () => {
 
       await page.goto(`/admin/launch-kits/edit/${testKit.id}`);
 
-      // Open tag creation dialog
-      await page.click('[data-testid="new-tag-button"]');
+      // Wait for form to be fully loaded (check for the form title)
+      const newTagButton = page.locator('[data-testid="new-tag-button"]');
+      await expect(newTagButton).toBeVisible({ timeout: TEST_CONFIG.TIMEOUTS.ELEMENT_VISIBLE });
+      // Ensure button is enabled and ready for interaction
+      await expect(newTagButton).toBeEnabled({ timeout: TEST_CONFIG.TIMEOUTS.ELEMENT_VISIBLE });
+
+      // Open tag creation dialog with retry for headless mode reliability
+      const dialog = page.getByRole("dialog");
+      await clickWithRetry(newTagButton, { type: "visible", locator: dialog });
+
+      // Wait for dialog form field to be ready
+      const tagNameInput = page.locator('[data-testid="tag-name-input"]');
+      await expect(tagNameInput).toBeVisible({ timeout: TEST_CONFIG.TIMEOUTS.ELEMENT_VISIBLE });
 
       // Fill tag form
       await page.fill('[data-testid="tag-name-input"]', "React");
@@ -99,7 +112,18 @@ test.describe("Tag Management", () => {
         .returning();
 
       await page.goto(`/admin/launch-kits/edit/${testKit.id}`);
-      await page.click('button:has-text("New Tag")');
+
+      // Wait for form to be fully loaded
+      const newTagButton = page.locator('[data-testid="new-tag-button"]');
+      await expect(newTagButton).toBeVisible({ timeout: TEST_CONFIG.TIMEOUTS.ELEMENT_VISIBLE });
+      await expect(newTagButton).toBeEnabled({ timeout: TEST_CONFIG.TIMEOUTS.ELEMENT_VISIBLE });
+
+      // Open tag creation dialog with retry for headless mode reliability
+      const dialog = page.getByRole("dialog");
+      await clickWithRetry(newTagButton, { type: "visible", locator: dialog });
+
+      const colorInput = page.locator('input[type="color"]');
+      await expect(colorInput).toBeVisible({ timeout: TEST_CONFIG.TIMEOUTS.ELEMENT_VISIBLE });
 
       // Get initial color value
       const initialColor = await page
@@ -153,11 +177,14 @@ test.describe("Tag Management", () => {
 
       await page.goto(`/admin/launch-kits/edit/${testKit.id}`);
 
-      // Click delete button for the tag
-      await page.click(`button[aria-label="Delete tag Obsolete"]`);
+      // Wait for the delete button to be visible and enabled
+      const deleteButton = page.locator(`button[aria-label="Delete tag Obsolete"]`);
+      await expect(deleteButton).toBeVisible({ timeout: TEST_CONFIG.TIMEOUTS.ELEMENT_VISIBLE });
+      await expect(deleteButton).toBeEnabled({ timeout: TEST_CONFIG.TIMEOUTS.ELEMENT_VISIBLE });
 
-      // Confirm deletion in dialog
-      await expect(page.locator('text="Delete Tag"')).toBeVisible();
+      // Click delete button with retry for headless mode reliability
+      const deleteTagText = page.locator('text="Delete Tag"');
+      await clickWithRetry(deleteButton, { type: "visible", locator: deleteTagText });
       await page.click('button:has-text("Delete")');
 
       // Verify tag was deleted from UI
