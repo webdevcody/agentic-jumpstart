@@ -61,6 +61,7 @@ import {
   type AffiliateRow,
 } from "./-affiliates-components/affiliates-columns";
 import { AffiliateDetailsSheet } from "./-affiliates-components/affiliate-details-sheet";
+import { FeatureFlag } from "~/components/feature-flag";
 
 // Skeleton components
 function CountSkeleton() {
@@ -324,7 +325,7 @@ function AdminAffiliates() {
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "affiliates"] });
       toast.success("Auto-Payouts Triggered", {
-        description: `Processed ${result.processed} affiliates: ${result.successful} successful, ${result.failed} failed`,
+        description: `Processed ${result.data.processed} affiliates: ${result.data.successful} successful, ${result.data.failed} failed`,
       });
     },
     onError: (error) => {
@@ -344,7 +345,7 @@ function AdminAffiliates() {
   }, [toggleStatusMutation]);
 
   const handleTriggerAutoPayouts = async () => {
-    await autoPayoutMutation.mutateAsync();
+    await autoPayoutMutation.mutateAsync({ data: undefined });
   };
 
   const openPayoutDialog = useCallback((affiliate: AffiliateRow) => {
@@ -426,7 +427,7 @@ function AdminAffiliates() {
     pageCount: Math.ceil((filteredAffiliates?.length ?? 0) / 10),
     initialState: {
       pagination: { pageSize: 10, pageIndex: 0 },
-      sorting: [{ id: "balance", desc: true }],
+      sorting: [{ id: "unpaidBalance", desc: true }],
     },
     getRowId: (row) => String(row.id),
     shallow: false,
@@ -459,22 +460,24 @@ function AdminAffiliates() {
 
         {/* Right side controls */}
         <div className="flex items-center gap-4">
-          {/* Minimum Payout */}
-          <NumberInputWithControls
-            value={minimumPayoutState.displayAmount}
-            onChange={minimumPayoutState.handleAmountChange}
-            onSave={minimumPayoutState.handleSave}
-            label="Min"
-            prefix="$"
-            step={10}
-            min={0}
-            disabled={minimumPayoutState.isLoading}
-            isPending={minimumPayoutState.isPending}
-            hasChanges={minimumPayoutState.hasLocalChanges}
-            inputWidth="w-28"
-          />
+          {/* Minimum Payout - only shown when custom payment links are enabled */}
+          <FeatureFlag flag="AFFILIATE_CUSTOM_PAYMENT_LINK" strict>
+            <NumberInputWithControls
+              value={minimumPayoutState.displayAmount}
+              onChange={minimumPayoutState.handleAmountChange}
+              onSave={minimumPayoutState.handleSave}
+              label="Min"
+              prefix="$"
+              step={10}
+              min={0}
+              disabled={minimumPayoutState.isLoading}
+              isPending={minimumPayoutState.isPending}
+              hasChanges={minimumPayoutState.hasLocalChanges}
+              inputWidth="w-28"
+            />
+          </FeatureFlag>
 
-          {/* Default Multiplier */}
+          {/* Commission Rate */}
           <NumberInputWithControls
             value={commissionRateState.displayRate}
             onChange={commissionRateState.handleRateChange}
@@ -490,24 +493,26 @@ function AdminAffiliates() {
             inputWidth="w-30"
           />
 
-          {/* Batch Settle Button */}
-          <Button
-            onClick={handleTriggerAutoPayouts}
-            disabled={autoPayoutMutation.isPending}
-            className="bg-theme-500 hover:bg-theme-600 h-10 px-6"
-          >
-            {autoPayoutMutation.isPending ? (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <Zap className="h-4 w-4 mr-2" />
-                Batch Settle
-              </>
-            )}
-          </Button>
+          {/* Batch Settle Button - only for Payment Link affiliates */}
+          <FeatureFlag flag="AFFILIATE_CUSTOM_PAYMENT_LINK" strict>
+            <Button
+              onClick={handleTriggerAutoPayouts}
+              disabled={autoPayoutMutation.isPending}
+              className="bg-theme-500 hover:bg-theme-600 h-10 px-6"
+            >
+              {autoPayoutMutation.isPending ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Zap className="h-4 w-4 mr-2" />
+                  Batch Settle
+                </>
+              )}
+            </Button>
+          </FeatureFlag>
         </div>
       </div>
 
@@ -599,7 +604,8 @@ function AdminAffiliates() {
         onOpenChange={setDetailsSheetOpen}
       />
 
-      {/* Payout Dialog */}
+      {/* Payout Dialog - only shown when custom payment links are enabled */}
+      <FeatureFlag flag="AFFILIATE_CUSTOM_PAYMENT_LINK" strict>
       <Dialog
         open={payoutAffiliateId !== null}
         onOpenChange={(open) => {
@@ -728,6 +734,7 @@ function AdminAffiliates() {
           </Form>
         </DialogContent>
       </Dialog>
+      </FeatureFlag>
     </Page>
   );
 }

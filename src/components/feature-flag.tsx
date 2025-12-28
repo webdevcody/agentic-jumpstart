@@ -1,15 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import { isFeatureEnabledForUserFn } from "~/fn/app-settings";
+import { isFeatureEnabledForUserFn, getFeatureFlagEnabledFn } from "~/fn/app-settings";
 import { type FlagKey } from "~/config";
 
 interface FeatureFlagProps {
   flag: FlagKey;
   children: React.ReactNode;
   fallback?: React.ReactNode;
+  /** If true, respects flag state even for admins (no admin override). Useful for admin panel. */
+  strict?: boolean;
 }
 
-export function FeatureFlag({ flag, children, fallback }: FeatureFlagProps) {
-  const { isEnabled, isLoading, isError } = useFeatureFlag(flag);
+export function FeatureFlag({ flag, children, fallback, strict = false }: FeatureFlagProps) {
+  const { isEnabled, isLoading, isError } = useFeatureFlag(flag, { strict });
 
   if (isError) {
     console.error("Feature flag check failed for:", flag);
@@ -23,10 +25,19 @@ export function FeatureFlag({ flag, children, fallback }: FeatureFlagProps) {
   return children;
 }
 
-export function useFeatureFlag(flag: FlagKey) {
+interface UseFeatureFlagOptions {
+  /** If true, respects flag state even for admins (no admin override). Useful for admin panel. */
+  strict?: boolean;
+}
+
+export function useFeatureFlag(flag: FlagKey, options: UseFeatureFlagOptions = {}) {
+  const { strict = false } = options;
+
   const { data: isEnabled, isLoading, isError } = useQuery({
-    queryKey: ["featureFlag", flag],
-    queryFn: () => isFeatureEnabledForUserFn({ data: { flagKey: flag } }),
+    queryKey: ["featureFlag", flag, { strict }],
+    queryFn: () => strict
+      ? getFeatureFlagEnabledFn({ data: { flagKey: flag } })
+      : isFeatureEnabledForUserFn({ data: { flagKey: flag } }),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
