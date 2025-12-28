@@ -339,3 +339,6 @@ export const adminGetAffiliateReferralsFn = createServerFn({ method: "GET" })
     });
     return { success: true, data: result };
   });
+
+// Alias for backward compatibility
+export const updatePaymentMethodFn = updateAffiliatePaymentLinkFn;

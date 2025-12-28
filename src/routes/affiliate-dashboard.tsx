@@ -819,7 +819,7 @@ function AffiliateDashboard() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => refreshStripeStatusMutation.mutate({ data: {} })}
+                    onClick={() => refreshStripeStatusMutation.mutate({ data: undefined })}
                     disabled={refreshStripeStatusMutation.isPending}
                   >
                     <RefreshCw

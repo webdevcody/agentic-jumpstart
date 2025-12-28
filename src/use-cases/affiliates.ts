@@ -30,6 +30,7 @@ import {
   createAffiliateReferralTx,
   updateAffiliateBalancesTx,
   incrementAffiliatePaidAmountTx,
+  updateAffiliateCommissionRate,
 } from "~/data-access/affiliates";
 import { getAffiliateCommissionRate, getAffiliateMinimumPayout } from "~/data-access/app-settings";
 import { ApplicationError } from "./errors";

@@ -364,7 +364,7 @@ export async function updateAffiliateStripeAccount(
   affiliateId: number,
   data: {
     stripeConnectAccountId?: string;
-    stripeAccountStatus?: string;
+    stripeAccountStatus?: "not_started" | "onboarding" | "active" | "restricted";
     stripeChargesEnabled?: boolean;
     stripePayoutsEnabled?: boolean;
     stripeDetailsSubmitted?: boolean;
