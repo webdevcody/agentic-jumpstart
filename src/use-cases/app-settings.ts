@@ -9,6 +9,14 @@ import {
   isNewsFeatureEnabled as checkNewsFeatureEnabled,
   isVideoSegmentContentTabsEnabled as checkVideoSegmentContentTabsEnabled,
   isFeatureFlagEnabled,
+  getAffiliateCommissionRate as getCommissionRateFromDb,
+  setAffiliateCommissionRate as setCommissionRateInDb,
+  getAffiliateMinimumPayout as getMinimumPayoutFromDb,
+  setAffiliateMinimumPayout as setMinimumPayoutInDb,
+  getPricingSettings as getPricingSettingsFromDb,
+  setPricingCurrentPrice as setCurrentPriceInDb,
+  setPricingOriginalPrice as setOriginalPriceInDb,
+  setPricingPromoLabel as setPromoLabelInDb,
 } from "~/data-access/app-settings";
 import { type FlagKey } from "~/config";
 
@@ -95,4 +103,74 @@ export async function getFeatureFlagEnabledUseCase(flagKey: FlagKey) {
  */
 export async function toggleFeatureFlagUseCase(flagKey: FlagKey, enabled: boolean) {
   await setAppSetting(flagKey, enabled.toString());
+}
+
+/**
+ * Get the affiliate commission rate from app settings.
+ * Returns the rate as an integer percentage (e.g., 30 for 30%).
+ */
+export async function getAffiliateCommissionRateUseCase(): Promise<number> {
+  return getCommissionRateFromDb();
+}
+
+/**
+ * Set the affiliate commission rate in app settings.
+ * @param rate - Integer percentage (0-100)
+ */
+export async function setAffiliateCommissionRateUseCase(rate: number): Promise<void> {
+  return setCommissionRateInDb(rate);
+}
+
+/**
+ * Get the affiliate minimum payout from app settings.
+ * Returns the amount in cents.
+ */
+export async function getAffiliateMinimumPayoutUseCase(): Promise<number> {
+  return getMinimumPayoutFromDb();
+}
+
+/**
+ * Set the affiliate minimum payout in app settings.
+ * @param amount - Amount in cents (must be >= 0)
+ */
+export async function setAffiliateMinimumPayoutUseCase(amount: number): Promise<void> {
+  return setMinimumPayoutInDb(amount);
+}
+
+// ============================================
+// Pricing Use Cases
+// ============================================
+
+/**
+ * Get all pricing settings at once.
+ */
+export async function getPricingSettingsUseCase(): Promise<{
+  currentPrice: number;
+  originalPrice: number;
+  promoLabel: string;
+}> {
+  return getPricingSettingsFromDb();
+}
+
+/**
+ * Update pricing settings.
+ */
+export async function updatePricingSettingsUseCase(settings: {
+  currentPrice?: number;
+  originalPrice?: number;
+  promoLabel?: string;
+}): Promise<void> {
+  const updates: Promise<void>[] = [];
+
+  if (settings.currentPrice !== undefined) {
+    updates.push(setCurrentPriceInDb(settings.currentPrice));
+  }
+  if (settings.originalPrice !== undefined) {
+    updates.push(setOriginalPriceInDb(settings.originalPrice));
+  }
+  if (settings.promoLabel !== undefined) {
+    updates.push(setPromoLabelInDb(settings.promoLabel));
+  }
+
+  await Promise.all(updates);
 }

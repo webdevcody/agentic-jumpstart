@@ -1,34 +1,11 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { AFFILIATE_CONFIG } from "~/config";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { assertFeatureEnabled } from "~/lib/feature-flags";
-import { Button, buttonVariants } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Checkbox } from "~/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "~/components/ui/form";
-import { toast } from "sonner";
+import { buttonVariants } from "~/components/ui/button";
 import { useAuth } from "~/hooks/use-auth";
-import { registerAffiliateFn, checkIfUserIsAffiliateFn } from "~/fn/affiliates";
-import { useSuspenseQuery, useMutation } from "@tanstack/react-query";
+import { checkIfUserIsAffiliateFn } from "~/fn/affiliates";
+import { getPublicAffiliateCommissionRateFn, getPricingSettingsFn } from "~/fn/app-settings";
+import { AFFILIATE_CONFIG } from "~/config";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   DollarSign,
   Users,
@@ -36,167 +13,66 @@ import {
   Clock,
   Shield,
   Award,
-  CheckCircle,
   ArrowRight,
   Zap,
   BarChart3,
 } from "lucide-react";
-import { cn } from "~/lib/utils";
-
-const affiliateFormSchema = z.object({
-  paymentLink: z.url("Please provide a valid URL"),
-  agreedToTerms: z.boolean().refine((val) => val === true, {
-    message: "You must agree to the terms of service",
-  }),
-});
-
-type AffiliateFormValues = z.infer<typeof affiliateFormSchema>;
 
 export const Route = createFileRoute("/affiliates")({
   beforeLoad: () => assertFeatureEnabled("AFFILIATES_FEATURE"),
   loader: async ({ context }) => {
-    const isAffiliate = await context.queryClient.ensureQueryData({
-      queryKey: ["user", "isAffiliate"],
-      queryFn: () => checkIfUserIsAffiliateFn(),
-    });
-    return isAffiliate;
+    const [affiliateCheckResponse, commissionRate, pricingSettings] = await Promise.all([
+      context.queryClient.fetchQuery({
+        queryKey: ["affiliate", "check"],
+        queryFn: () => checkIfUserIsAffiliateFn(),
+      }),
+      context.queryClient.ensureQueryData({
+        queryKey: ["affiliateCommissionRate"],
+        queryFn: () => getPublicAffiliateCommissionRateFn(),
+      }),
+      context.queryClient.ensureQueryData({
+        queryKey: ["pricingSettings"],
+        queryFn: () => getPricingSettingsFn(),
+      }),
+    ]);
+
+    // Calculate max per-sale commission (originalPrice in dollars, commissionRate in percent)
+    const maxCommissionPerSale = Math.floor(pricingSettings.originalPrice * (commissionRate / 100));
+    const affiliateCheck = affiliateCheckResponse.data;
+
+    return {
+      isAffiliate: affiliateCheck.isAffiliate,
+      isOnboardingComplete: affiliateCheck.isOnboardingComplete,
+      commissionRate,
+      maxCommissionPerSale,
+    };
   },
   component: AffiliatesPage,
 });
 
 function AffiliatesPage() {
   const user = useAuth();
-  const router = useRouter();
-  const [termsOpen, setTermsOpen] = useState(false);
-  const { data: affiliateStatus } = useSuspenseQuery({
-    queryKey: ["user", "isAffiliate"],
-    queryFn: () => checkIfUserIsAffiliateFn(),
-  });
-
-  const form = useForm<AffiliateFormValues>({
-    resolver: zodResolver(affiliateFormSchema),
-    defaultValues: {
-      paymentLink: "",
-      agreedToTerms: false,
-    },
-  });
-
-  const registerMutation = useMutation({
-    mutationFn: registerAffiliateFn,
-    onSuccess: () => {
-      toast.success("Welcome to the Affiliate Program!", {
-        description:
-          "You can now access your affiliate dashboard to get your unique link.",
-      });
-      router.navigate({ to: "/affiliate-dashboard" });
-    },
-    onError: (error) => {
-      toast.error("Registration Failed", {
-        description:
-          error.message ||
-          "Failed to register as an affiliate. Please try again.",
-      });
-    },
-  });
-
-  const onSubmit = async (values: AffiliateFormValues) => {
-    await registerMutation.mutateAsync({ data: values });
-  };
+  const loaderData = Route.useLoaderData();
+  const { isAffiliate, isOnboardingComplete = false, commissionRate, maxCommissionPerSale } = loaderData;
 
   if (!user) {
     return (
-      <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Hero background matching the app's main theme */}
-        <div className="absolute inset-0 hero-background-ai"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-theme-500/5 dark:via-theme-950/20 to-transparent"></div>
-
-        {/* Circuit pattern overlay */}
-        <div className="absolute inset-0 opacity-5 dark:opacity-10">
-          <div className="circuit-pattern absolute inset-0"></div>
-        </div>
-
-        {/* Floating elements for ambiance */}
-        <div className="floating-elements">
-          <div className="floating-element-1"></div>
-          <div className="floating-element-2"></div>
-          <div className="floating-element-3"></div>
-          <div className="floating-element-small top-20 right-20"></div>
-          <div className="floating-element-small bottom-20 left-20"></div>
-        </div>
-
-        {/* Content */}
-        <div className="relative z-10 container mx-auto px-4 py-16">
-          <div className="max-w-2xl mx-auto text-center">
-            {/* Badge */}
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-theme-50/50 dark:bg-background/20 backdrop-blur-sm border border-theme-200 dark:border-border/50 text-theme-600 dark:text-theme-400 text-sm font-medium mb-8">
-              <span className="w-2 h-2 bg-theme-500 dark:bg-theme-400 rounded-full mr-2 animate-pulse"></span>
-              Earn {AFFILIATE_CONFIG.COMMISSION_RATE}% Commission
-            </div>
-
-            {/* Hero title with gradient text */}
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-theme-500 to-theme-600 dark:from-theme-400 dark:to-theme-500 bg-clip-text text-transparent animate-gradient leading-normal pb-1">
-              Join Our Affiliate Program
-            </h1>
-
-            {/* Subtitle */}
-            <p className="text-xl md:text-2xl text-muted-foreground mb-4">
-              Partner with us and earn generous commissions
-            </p>
-            <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-12">
-              Join our exclusive affiliate program and start earning $60 per
-              sale by sharing our AI coding mastery course with your audience.
-            </p>
-
-            {/* Benefits preview */}
-            <div className="grid md:grid-cols-3 gap-6 mb-12 max-w-4xl mx-auto">
-              <div className="video-wrapper p-6 text-center">
-                <DollarSign className="h-10 w-10 text-theme-500 dark:text-theme-400 mx-auto mb-3" />
-                <h3 className="font-semibold mb-2">{AFFILIATE_CONFIG.COMMISSION_RATE}% Commission</h3>
-                <p className="text-sm text-muted-foreground">$60 per sale</p>
-              </div>
-              <div className="video-wrapper p-6 text-center">
-                <Clock className="h-10 w-10 text-theme-500 dark:text-theme-400 mx-auto mb-3" />
-                <h3 className="font-semibold mb-2">30-Day Cookie</h3>
-                <p className="text-sm text-muted-foreground">
-                  Long attribution window
-                </p>
-              </div>
-              <div className="video-wrapper p-6 text-center">
-                <TrendingUp className="h-10 w-10 text-theme-500 dark:text-theme-400 mx-auto mb-3" />
-                <h3 className="font-semibold mb-2">Real-Time Tracking</h3>
-                <p className="text-sm text-muted-foreground">
-                  Monitor your earnings
-                </p>
-              </div>
-            </div>
-
-            {/* Call to action */}
-            <div className="space-y-4">
-              <a
-                href={`/api/login/google?redirect_uri=${encodeURIComponent("/affiliates")}`}
-                className={cn(
-                  buttonVariants({ variant: "default", size: "lg" }),
-                  "text-lg px-8 py-3 h-auto"
-                )}
-              >
-                <Zap className="mr-2 h-5 w-5" />
-                Login to Join Program
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </a>
-              <p className="text-sm text-muted-foreground">
-                Sign in with Google to access the affiliate program
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom gradient divider */}
-        <div className="section-divider-glow-bottom"></div>
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h1 className="text-4xl font-bold mb-4">Join Our Affiliate Program</h1>
+        <p className="text-muted-foreground mb-8">
+          Please login to join our affiliate program
+        </p>
+        <a
+          href={`/api/login/google?redirect_uri=${encodeURIComponent("/affiliates")}`}
+          className={buttonVariants({ variant: "default", size: "lg" })}
+        >
+          Login to Continue
+        </a>
       </div>
     );
   }
 
-  if (affiliateStatus?.isAffiliate) {
+  if (isAffiliate && isOnboardingComplete) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <h1 className="text-4xl font-bold mb-4">
@@ -210,6 +86,26 @@ function AffiliatesPage() {
           className={buttonVariants({ variant: "default", size: "lg" })}
         >
           Go to Dashboard
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Link>
+      </div>
+    );
+  }
+
+  if (isAffiliate && !isOnboardingComplete) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h1 className="text-4xl font-bold mb-4">
+          Complete Your Setup
+        </h1>
+        <p className="text-muted-foreground mb-8">
+          You've started the affiliate registration. Complete your payment setup to start earning.
+        </p>
+        <Link
+          to="/affiliate-onboarding"
+          className={buttonVariants({ variant: "default", size: "lg" })}
+        >
+          Continue Setup
           <ArrowRight className="ml-2 h-4 w-4" />
         </Link>
       </div>
@@ -235,7 +131,7 @@ function AffiliatesPage() {
           <div className="text-center mb-16">
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-theme-50/50 dark:bg-background/20 backdrop-blur-sm border border-theme-200 dark:border-border/50 text-theme-600 dark:text-theme-400 text-sm font-medium mb-8">
               <span className="w-2 h-2 bg-theme-500 dark:bg-theme-400 rounded-full mr-2 animate-pulse"></span>
-              Earn {AFFILIATE_CONFIG.COMMISSION_RATE}% Commission
+              Earn {commissionRate}% Commission
             </div>
 
             <h1 className="text-6xl font-bold mb-6">
@@ -254,19 +150,19 @@ function AffiliatesPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
             <div className="video-wrapper p-6">
               <DollarSign className="h-12 w-12 text-theme-500 dark:text-theme-400 mb-4" />
-              <h3 className="text-xl font-semibold mb-2">{AFFILIATE_CONFIG.COMMISSION_RATE}% Commission</h3>
+              <h3 className="text-xl font-semibold mb-2">{commissionRate}% Commission</h3>
               <p className="text-muted-foreground">
-                Earn $60 for every sale you refer. One of the highest commission
+                Earn generous commissions for every sale you refer. One of the highest commission
                 rates in the industry.
               </p>
             </div>
 
             <div className="video-wrapper p-6">
               <Clock className="h-12 w-12 text-theme-500 dark:text-theme-400 mb-4" />
-              <h3 className="text-xl font-semibold mb-2">30-Day Cookie</h3>
+              <h3 className="text-xl font-semibold mb-2">{AFFILIATE_CONFIG.COOKIE_DURATION_DAYS}-Day Cookie</h3>
               <p className="text-muted-foreground">
                 Long attribution window ensures you get credit for purchases
-                made within 30 days.
+                made within {AFFILIATE_CONFIG.COOKIE_DURATION_DAYS} days.
               </p>
             </div>
 
@@ -360,266 +256,53 @@ function AffiliatesPage() {
             </div>
           </div>
 
-          {/* Registration Form */}
+          {/* Join CTA */}
           <div className="max-w-2xl mx-auto">
-            <div className="video-wrapper p-8">
-              <h2 className="text-2xl font-bold mb-6 text-center">
-                Join the Program
+            <div className="video-wrapper p-8 text-center">
+              <h2 className="text-2xl font-bold mb-4">
+                Ready to Start Earning?
               </h2>
+              <p className="text-muted-foreground mb-6">
+                Join our affiliate program in just a few minutes and start earning {commissionRate}% commission on every referral.
+              </p>
+              <Link
+                to="/affiliate-onboarding"
+                className={buttonVariants({ size: "lg" })}
+              >
+                <Zap className="mr-2 h-4 w-4" />
+                Become an Affiliate
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </div>
+          </div>
 
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-6"
-                >
-                  <FormField
-                    control={form.control}
-                    name="paymentLink"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Payment Link</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="https://paypal.me/yourname"
-                            {...field}
-                            className="bg-background/50"
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Enter your PayPal, Venmo, or other payment link where
-                          you'd like to receive affiliate payouts.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="agreedToTerms"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>
-                            I agree to the{" "}
-                            <Dialog
-                              open={termsOpen}
-                              onOpenChange={setTermsOpen}
-                            >
-                              <DialogTrigger asChild>
-                                <button
-                                  type="button"
-                                  className="text-theme-600 dark:text-theme-400 underline"
-                                >
-                                  Terms of Service
-                                </button>
-                              </DialogTrigger>
-                              <DialogContent
-                                animation="fade"
-                                className="max-w-4xl max-h-[85vh] overflow-y-auto video-wrapper p-0"
-                              >
-                                <div className="relative">
-                                  {/* Decorative background elements */}
-                                  <div className="absolute inset-0 bg-gradient-to-br from-theme-500/5 via-transparent to-theme-600/5"></div>
-                                  <div className="absolute top-0 right-0 w-32 h-32 bg-theme-500/10 rounded-full blur-3xl"></div>
-                                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-theme-400/10 rounded-full blur-2xl"></div>
-
-                                  <div className="relative z-10 p-8">
-                                    <DialogHeader className="text-center mb-8">
-                                      {/* Badge */}
-                                      <div className="inline-flex items-center px-4 py-2 rounded-full bg-theme-50/50 dark:bg-background/30 backdrop-blur-sm border border-theme-200 dark:border-border/50 text-theme-600 dark:text-theme-400 text-sm font-medium mb-4 mx-auto">
-                                        <span className="w-2 h-2 bg-theme-500 dark:bg-theme-400 rounded-full mr-2 animate-pulse"></span>
-                                        Legal Agreement
-                                      </div>
-
-                                      <DialogTitle className="text-3xl font-bold text-center bg-gradient-to-r from-theme-500 to-theme-600 dark:from-theme-400 dark:to-theme-500 bg-clip-text text-transparent">
-                                        Affiliate Program Terms of Service
-                                      </DialogTitle>
-
-                                      <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
-                                        Please review these terms carefully
-                                        before joining our affiliate program
-                                      </p>
-                                    </DialogHeader>
-
-                                    <div className="space-y-6 text-sm max-w-3xl mx-auto">
-                                      <div className="bg-background/30 backdrop-blur-sm rounded-lg p-6 border border-theme-200/20 dark:border-border/20">
-                                        <div className="flex items-center mb-3">
-                                          <div className="w-8 h-8 bg-theme-500/20 dark:bg-theme-500/10 rounded-full flex items-center justify-center mr-3">
-                                            <span className="text-theme-600 dark:text-theme-400 font-bold text-sm">
-                                              1
-                                            </span>
-                                          </div>
-                                          <h3 className="text-lg font-semibold text-theme-700 dark:text-theme-300">
-                                            Commission Structure
-                                          </h3>
-                                        </div>
-                                        <p className="text-muted-foreground leading-relaxed">
-                                          Affiliates earn {AFFILIATE_CONFIG.COMMISSION_RATE}% commission on all
-                                          referred sales. Commissions are
-                                          calculated based on the net sale price
-                                          after any discounts.
-                                        </p>
-                                      </div>
-                                      <div className="bg-background/30 backdrop-blur-sm rounded-lg p-6 border border-theme-200/20 dark:border-border/20">
-                                        <div className="flex items-center mb-3">
-                                          <div className="w-8 h-8 bg-theme-500/20 dark:bg-theme-500/10 rounded-full flex items-center justify-center mr-3">
-                                            <span className="text-theme-600 dark:text-theme-400 font-bold text-sm">
-                                              2
-                                            </span>
-                                          </div>
-                                          <h3 className="text-lg font-semibold text-theme-700 dark:text-theme-300">
-                                            Payment Terms
-                                          </h3>
-                                        </div>
-                                        <p className="text-muted-foreground leading-relaxed">
-                                          Payments are processed monthly with a
-                                          minimum payout threshold of $50.
-                                          Payments are made via the payment link
-                                          provided during registration.
-                                        </p>
-                                      </div>
-                                      <div className="bg-background/30 backdrop-blur-sm rounded-lg p-6 border border-theme-200/20 dark:border-border/20">
-                                        <div className="flex items-center mb-3">
-                                          <div className="w-8 h-8 bg-theme-500/20 dark:bg-theme-500/10 rounded-full flex items-center justify-center mr-3">
-                                            <span className="text-theme-600 dark:text-theme-400 font-bold text-sm">
-                                              3
-                                            </span>
-                                          </div>
-                                          <h3 className="text-lg font-semibold text-theme-700 dark:text-theme-300">
-                                            Cookie Duration
-                                          </h3>
-                                        </div>
-                                        <p className="text-muted-foreground leading-relaxed">
-                                          Affiliate links have a 30-day cookie
-                                          duration. You will receive credit for
-                                          any purchases made within 30 days of a
-                                          user clicking your affiliate link.
-                                        </p>
-                                      </div>
-                                      <div className="bg-background/30 backdrop-blur-sm rounded-lg p-6 border border-theme-200/20 dark:border-border/20">
-                                        <div className="flex items-center mb-3">
-                                          <div className="w-8 h-8 bg-theme-500/20 dark:bg-theme-500/10 rounded-full flex items-center justify-center mr-3">
-                                            <span className="text-theme-600 dark:text-theme-400 font-bold text-sm">
-                                              4
-                                            </span>
-                                          </div>
-                                          <h3 className="text-lg font-semibold text-theme-700 dark:text-theme-300">
-                                            Prohibited Activities
-                                          </h3>
-                                        </div>
-                                        <p className="text-muted-foreground leading-relaxed mb-3">
-                                          The following activities are strictly
-                                          prohibited:
-                                        </p>
-                                        <ul className="list-disc list-inside text-muted-foreground space-y-1 ml-4">
-                                          <li>Spam or unsolicited emails</li>
-                                          <li>
-                                            Misleading or false advertising
-                                          </li>
-                                          <li>
-                                            Self-referrals or fraudulent
-                                            purchases
-                                          </li>
-                                          <li>
-                                            Trademark or brand misrepresentation
-                                          </li>
-                                          <li>
-                                            Paid search advertising on
-                                            trademarked terms
-                                          </li>
-                                        </ul>
-                                      </div>
-                                      <div className="bg-background/30 backdrop-blur-sm rounded-lg p-6 border border-theme-200/20 dark:border-border/20">
-                                        <div className="flex items-center mb-3">
-                                          <div className="w-8 h-8 bg-theme-500/20 dark:bg-theme-500/10 rounded-full flex items-center justify-center mr-3">
-                                            <span className="text-theme-600 dark:text-theme-400 font-bold text-sm">
-                                              5
-                                            </span>
-                                          </div>
-                                          <h3 className="text-lg font-semibold text-theme-700 dark:text-theme-300">
-                                            Termination
-                                          </h3>
-                                        </div>
-                                        <p className="text-muted-foreground leading-relaxed">
-                                          We reserve the right to terminate
-                                          affiliate accounts that violate these
-                                          terms or engage in fraudulent
-                                          activity. Pending commissions may be
-                                          forfeited in cases of violation.
-                                        </p>
-                                      </div>
-                                      <div className="bg-background/30 backdrop-blur-sm rounded-lg p-6 border border-theme-200/20 dark:border-border/20">
-                                        <div className="flex items-center mb-3">
-                                          <div className="w-8 h-8 bg-theme-500/20 dark:bg-theme-500/10 rounded-full flex items-center justify-center mr-3">
-                                            <span className="text-theme-600 dark:text-theme-400 font-bold text-sm">
-                                              6
-                                            </span>
-                                          </div>
-                                          <h3 className="text-lg font-semibold text-theme-700 dark:text-theme-300">
-                                            Modifications
-                                          </h3>
-                                        </div>
-                                        <p className="text-muted-foreground leading-relaxed">
-                                          We may modify these terms at any time.
-                                          Continued participation in the program
-                                          constitutes acceptance of any
-                                          modifications.
-                                        </p>
-                                      </div>
-                                      <div className="bg-background/30 backdrop-blur-sm rounded-lg p-6 border border-theme-200/20 dark:border-border/20">
-                                        <div className="flex items-center mb-3">
-                                          <div className="w-8 h-8 bg-theme-500/20 dark:bg-theme-500/10 rounded-full flex items-center justify-center mr-3">
-                                            <span className="text-theme-600 dark:text-theme-400 font-bold text-sm">
-                                              7
-                                            </span>
-                                          </div>
-                                          <h3 className="text-lg font-semibold text-theme-700 dark:text-theme-300">
-                                            Liability
-                                          </h3>
-                                        </div>
-                                        <p className="text-muted-foreground leading-relaxed">
-                                          We are not liable for indirect,
-                                          special, or consequential damages
-                                          arising from your participation in the
-                                          affiliate program.
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                          </FormLabel>
-                          <FormMessage />
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full"
-                    disabled={registerMutation.isPending}
-                  >
-                    {registerMutation.isPending ? (
-                      "Registering..."
-                    ) : (
-                      <>
-                        <Zap className="mr-2 h-4 w-4" />
-                        Join Affiliate Program
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </Form>
+          {/* Success Metrics */}
+          <div className="mt-16 text-center">
+            <h2 className="text-2xl font-bold mb-8">
+              Why Partners Love Our Program
+            </h2>
+            <div className="grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">
+              <div>
+                <div className="text-4xl font-bold text-theme-600 dark:text-theme-400 mb-2">
+                  <BarChart3 className="h-12 w-12 mx-auto mb-2" />
+                  12%
+                </div>
+                <p className="text-muted-foreground">Average conversion rate</p>
+              </div>
+              <div>
+                <div className="text-4xl font-bold text-theme-600 dark:text-theme-400 mb-2">
+                  <DollarSign className="h-12 w-12 mx-auto mb-2" />
+                  Up to ${maxCommissionPerSale}
+                </div>
+                <p className="text-muted-foreground">Per sale commission</p>
+              </div>
+              <div>
+                <div className="text-4xl font-bold text-theme-600 dark:text-theme-400 mb-2">
+                  <Users className="h-12 w-12 mx-auto mb-2" />
+                  98%
+                </div>
+                <p className="text-muted-foreground">Customer satisfaction</p>
+              </div>
             </div>
           </div>
         </div>

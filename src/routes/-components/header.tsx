@@ -237,8 +237,8 @@ const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
 
   // System
   {
-    to: "/admin/settings",
-    label: "Settings",
+    to: "/admin/feature-flags",
+    label: "Feature Flags",
     icon: Settings,
     category: "system",
   },
@@ -507,11 +507,12 @@ export function Header({ hasBanner = false }: { hasBanner?: boolean }) {
   };
 
   // Check if user is an affiliate (only for authenticated users)
-  const { data: affiliateStatus } = useQuery({
+  const { data: affiliateStatusResponse } = useQuery({
     queryKey: ["user", "isAffiliate"],
     queryFn: () => checkIfUserIsAffiliateFn(),
     enabled: !!user && !user.isAdmin,
   });
+  const affiliateStatus = affiliateStatusResponse?.data;
 
   const { isEnabled: agentsFeatureEnabled } = useFeatureFlag("AGENTS_FEATURE");
   const { isEnabled: affiliatesFeatureEnabled } = useFeatureFlag("AFFILIATES_FEATURE");

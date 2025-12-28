@@ -1,7 +1,8 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   AnyPgColumn,
   boolean,
+  check,
   index,
   integer,
   pgEnum,
@@ -123,7 +124,7 @@ export const segments = tableCreator(
     icon: text("icon"), // Lucide icon name, e.g., "PlayCircle", "Code", "FileText"
     isPremium: boolean("isPremium").notNull().default(false),
     isComingSoon: boolean("isComingSoon").notNull().default(false),
-    moduleId: serial("moduleId")
+    moduleId: integer("moduleId")
       .notNull()
       .references(() => modules.id, { onDelete: "cascade" }),
     videoKey: text("videoKey"),
@@ -247,6 +248,18 @@ export const attachments = tableCreator(
   ]
 );
 
+export const stripeAccountStatusEnum = pgEnum("stripe_account_status_enum", [
+  "not_started",
+  "onboarding",
+  "active",
+  "restricted",
+]);
+
+export const affiliatePaymentMethodEnum = pgEnum("affiliate_payment_method_enum", [
+  "link",
+  "stripe",
+]);
+
 export const affiliates = tableCreator(
   "affiliate",
   {
@@ -256,18 +269,44 @@ export const affiliates = tableCreator(
       .references(() => users.id, { onDelete: "cascade" })
       .unique(),
     affiliateCode: text("affiliateCode").notNull().unique(),
-    paymentLink: text("paymentLink").notNull(),
+    paymentMethod: affiliatePaymentMethodEnum("paymentMethod").notNull().default("link"),
+    paymentLink: text("paymentLink"),
     commissionRate: integer("commissionRate").notNull().default(30),
+    // Discount rate: percentage of commission given to customer as discount
+    // E.g., if commissionRate=30 and discountRate=15, customer gets 15% off, affiliate earns 15%
+    discountRate: integer("discountRate").notNull().default(0),
     totalEarnings: integer("totalEarnings").notNull().default(0),
     paidAmount: integer("paidAmount").notNull().default(0),
     unpaidBalance: integer("unpaidBalance").notNull().default(0),
     isActive: boolean("isActive").notNull().default(true),
+    // Stripe Connect fields
+    stripeConnectAccountId: text("stripeConnectAccountId"),
+    stripeAccountStatus: stripeAccountStatusEnum("stripeAccountStatus").notNull().default("not_started"),
+    stripeChargesEnabled: boolean("stripeChargesEnabled").notNull().default(false),
+    stripePayoutsEnabled: boolean("stripePayoutsEnabled").notNull().default(false),
+    stripeDetailsSubmitted: boolean("stripeDetailsSubmitted").notNull().default(false),
+    stripeAccountType: text("stripeAccountType"), // express, standard, custom
+    lastStripeSync: timestamp("lastStripeSync"),
+    // Payout error tracking
+    lastPayoutError: text("lastPayoutError"),
+    lastPayoutErrorAt: timestamp("lastPayoutErrorAt"),
+    // Payout cooldown tracking (for webhook replay protection)
+    lastPayoutAttemptAt: timestamp("lastPayoutAttemptAt"),
+    // Connect onboarding rate limiting
+    lastConnectAttemptAt: timestamp("lastConnectAttemptAt"),
+    connectAttemptCount: integer("connectAttemptCount").notNull().default(0),
+    // Payout retry tracking
+    payoutRetryCount: integer("payoutRetryCount").notNull().default(0),
+    nextPayoutRetryAt: timestamp("nextPayoutRetryAt"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => [
     index("affiliates_user_id_idx").on(table.userId),
-    index("affiliates_code_idx").on(table.affiliateCode),
+    // affiliateCode already has unique() constraint which creates implicit index
+    uniqueIndex("affiliates_stripe_account_idx").on(table.stripeConnectAccountId),
+    // Ensure discountRate never exceeds commissionRate (would result in negative affiliate earnings)
+    check("discount_rate_check", sql`${table.discountRate} <= ${table.commissionRate} AND ${table.discountRate} >= 0`),
   ]
 );
 
@@ -284,6 +323,10 @@ export const affiliateReferrals = tableCreator(
     stripeSessionId: text("stripeSessionId").notNull(),
     amount: integer("amount").notNull(),
     commission: integer("commission").notNull(),
+    // Frozen rates at checkout time for audit trail
+    commissionRate: integer("commissionRate"), // The effective rate used (originalRate - discountRate)
+    discountRate: integer("discountRate"), // Customer discount given by affiliate
+    originalCommissionRate: integer("originalCommissionRate"), // Platform's base commission rate
     isPaid: boolean("isPaid").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
@@ -292,10 +335,17 @@ export const affiliateReferrals = tableCreator(
       table.affiliateId,
       table.createdAt
     ),
+    index("referrals_affiliate_unpaid_idx").on(table.affiliateId, table.isPaid),
     index("referrals_purchaser_idx").on(table.purchaserId),
     uniqueIndex("referrals_stripe_session_unique").on(table.stripeSessionId),
   ]
 );
+
+export const affiliatePayoutStatusEnum = pgEnum("affiliate_payout_status_enum", [
+  "pending",
+  "completed",
+  "failed",
+]);
 
 export const affiliatePayouts = tableCreator(
   "affiliate_payout",
@@ -307,6 +357,9 @@ export const affiliatePayouts = tableCreator(
     amount: integer("amount").notNull(),
     paymentMethod: text("paymentMethod").notNull(),
     transactionId: text("transactionId"),
+    stripeTransferId: text("stripeTransferId"), // For automatic Stripe Connect payouts
+    status: affiliatePayoutStatusEnum("status").notNull().default("completed"), // Default "completed" for backward compatibility with manual payouts
+    errorMessage: text("errorMessage"), // Error details if status is "failed"
     notes: text("notes"),
     paidAt: timestamp("paid_at").notNull().defaultNow(),
     paidBy: serial("paidBy")
@@ -315,6 +368,8 @@ export const affiliatePayouts = tableCreator(
   },
   (table) => [
     index("payouts_affiliate_paid_idx").on(table.affiliateId, table.paidAt),
+    uniqueIndex("payouts_stripe_transfer_idx").on(table.stripeTransferId),
+    index("payouts_status_idx").on(table.status),
   ]
 );
 

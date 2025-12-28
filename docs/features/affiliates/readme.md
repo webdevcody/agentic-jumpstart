@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Affiliate Program allows users to earn 30% commission by referring new customers to purchase the Agentic Jumpstart course. The system now includes a GDPR-compliant discount system where affiliate codes provide customers with 10% discounts while maintaining affiliate tracking through Stripe metadata. This feature includes a complete affiliate management system with tracking, analytics, and payout management.
+The Affiliate Program allows users to earn commission (configurable by admin, default 30%) by referring new customers to purchase the Agentic Jumpstart course. The system now includes a GDPR-compliant discount system where affiliate codes provide customers with 10% discounts while maintaining affiliate tracking through Stripe metadata. This feature includes a complete affiliate management system with tracking, analytics, and payout management.
 
 ## Quick Links
 
@@ -23,7 +23,7 @@ The Affiliate Program allows users to earn 30% commission by referring new custo
 1. Navigate to [/affiliates](http://localhost:4000/affiliates)
 2. If not logged in, you'll see the enhanced landing page with:
    - Modern gradient backgrounds and animations
-   - Program benefits overview (30% commission, 30-day cookies, real-time tracking)
+   - Program benefits overview (configurable commission, 30-day cookies, real-time tracking)
    - "How It Works" 4-step process visualization
 3. Click "Login to Join Program" and authenticate with Google
 4. Once logged in, you'll see the registration form with:
@@ -90,8 +90,8 @@ The enhanced affiliate dashboard displays real-time statistics with improved vis
 
 #### Main Statistics Cards
 
-- **Total Earnings**: Lifetime commission earned (30% of all referral sales)
-- **Unpaid Balance**: Pending payment amount (minimum $50 payout threshold)
+- **Total Earnings**: Lifetime commission earned (configurable % of all referral sales)
+- **Unpaid Balance**: Pending payment amount (minimum payout threshold applies to Payment Link affiliates only)
 - **Total Referrals**: Number of successful conversions tracked
 - **Paid Out**: Amount already paid via recorded payouts
 
@@ -130,7 +130,7 @@ The enhanced affiliate dashboard displays real-time statistics with improved vis
 - **Activate/Deactivate**: Toggle affiliate status
 - **Record Payout**:
   1. Click "Record Payout" for an affiliate
-  2. Enter amount (minimum $50)
+  2. Enter amount (minimum threshold applies for Payment Link affiliates)
   3. Select payment method
   4. Add transaction ID (optional)
   5. Add notes (optional)
@@ -162,16 +162,18 @@ VALUES (1, 2, 'cs_test_123', 20000, 6000);
 
 ## Configuration
 
-Settings are defined in `/src/config.ts`:
+Default settings are defined in `/src/config.ts`:
 
 ```typescript
 AFFILIATE_CONFIG = {
-  COMMISSION_RATE: 30, // 30% commission
-  MINIMUM_PAYOUT: 5000, // $50 minimum
+  DEFAULT_COMMISSION_RATE: 30, // Default 30% commission (configurable via admin)
+  DEFAULT_MINIMUM_PAYOUT: 5000, // Default $50 minimum (Payment Link affiliates only, configurable via admin)
   AFFILIATE_CODE_LENGTH: 8, // Code length
   AFFILIATE_CODE_RETRY_ATTEMPTS: 10,
 };
 ```
+
+**Note**: Commission rate and minimum payout are configurable via the Admin Dashboard at `/admin/affiliates`. The minimum payout setting only appears when the `AFFILIATE_CUSTOM_PAYMENT_LINK` feature flag is enabled (Stripe Connect affiliates have no minimum threshold).
 
 ### Environment Variables
 
@@ -229,14 +231,14 @@ The affiliate system integrates with Stripe in multiple ways:
 
 #### Commission System (REQ-AF-013 to REQ-AF-016)
 
-- 30% commission rate calculation accuracy
+- Configurable commission rate calculation accuracy (default 30%)
 - Net sale price commission calculation
 - Cents-based storage to avoid floating point issues
 - Self-referral prevention mechanism
 
 #### Payment & Payouts (REQ-AF-017 to REQ-AF-021)
 
-- $50 minimum payout threshold enforcement
+- Configurable minimum payout threshold (Payment Link affiliates only, default $50)
 - Monthly payout schedule management
 - Payment link update functionality
 - Admin payout recording with transaction details
@@ -338,7 +340,7 @@ npm run test:affiliate:admin
 #### Commission calculation errors
 
 - Verify amounts are stored in cents (integers)
-- Check commission rate is exactly 30%
+- Check commission rate matches the configured value in admin settings
 - Ensure no floating point precision issues
 - **Test Scenario**: REQ-AF-013 covers commission calculations
 
@@ -399,6 +401,239 @@ To debug affiliate discount and tracking:
 - `/src/stores/discount-store.ts` - New in-memory store for codes
 - `/src/utils/env.ts` - Added STRIPE_DISCOUNT_COUPON_ID environment variable
 - `/src/fn/affiliates.ts` - Contains validateAffiliateCodeFn for real-time validation
+
+## Stripe Connect Integration
+
+### Overview
+
+Stripe Connect enables automatic payouts to affiliates who connect their Stripe account. Instead of manually tracking payment links and processing payouts, affiliates with connected Stripe accounts receive automatic transfers when their balance reaches the minimum threshold.
+
+**How It Works:**
+1. Affiliate connects their Stripe account via OAuth flow
+2. System tracks their earnings as usual
+3. When there's any positive unpaid balance, admin can trigger automatic payout (no minimum for Stripe Connect)
+4. Funds are transferred directly to the affiliate's Stripe account
+5. Affiliate receives funds according to their Stripe payout schedule
+
+### Account Status Lifecycle
+
+Affiliates can choose between two payment methods:
+- **Payment Link**: Manual payouts via PayPal, Venmo, or other payment services
+- **Stripe Connect**: Automatic payouts directly to connected Stripe account
+
+#### Stripe Account Statuses
+
+| Status | Description | Can Receive Payouts? |
+|--------|-------------|---------------------|
+| `not_started` | No Stripe account connected | No |
+| `onboarding` | Account created but setup incomplete | No |
+| `pending` | Details submitted, awaiting Stripe verification | No |
+| `active` | Fully verified, charges and payouts enabled | Yes |
+| `restricted` | Account has restrictions or compliance issues | No |
+
+### Connecting a Stripe Account (Affiliate Guide)
+
+#### Step-by-Step Process
+
+1. **Navigate to Dashboard**: Go to [/affiliate-dashboard](http://localhost:4000/affiliate-dashboard)
+2. **Select Payment Method**: Choose "Stripe Connect" as your payment method
+3. **Initiate Connection**: Click "Connect with Stripe" button
+4. **Complete Stripe Onboarding**: You'll be redirected to Stripe's secure onboarding flow
+   - Provide business/personal information
+   - Verify identity
+   - Set up bank account for payouts
+5. **Return to Dashboard**: After completing onboarding, you're redirected back
+6. **Verify Status**: Your account status should show "Active" for automatic payouts
+
+#### OAuth Flow Details
+
+The Stripe Connect integration uses OAuth with Express accounts:
+
+```
+User clicks "Connect" → /api/connect/stripe (creates account, generates link)
+                      ↓
+User completes Stripe onboarding (hosted by Stripe)
+                      ↓
+Stripe redirects → /api/connect/stripe/callback (updates status)
+                      ↓
+User returns to affiliate dashboard with connected account
+```
+
+**Security Features:**
+- CSRF protection via state tokens stored in HTTP-only cookies
+- 10-minute expiration on onboarding sessions
+- Double verification of affiliate ID on callback
+- Secure cookie settings in production
+
+### Automatic Payouts
+
+#### Eligibility Requirements
+
+For an affiliate to receive automatic payouts:
+1. **Active affiliate account** - Account must not be deactivated
+2. **Connected Stripe account** - Must have `stripeConnectAccountId` set
+3. **Payouts enabled** - Stripe account status must be `active` with `stripePayoutsEnabled: true`
+4. **Positive balance** - Any positive unpaid balance (no minimum threshold for Stripe Connect)
+
+#### Payout Process
+
+**Single Affiliate Payout:**
+1. Admin triggers payout for specific affiliate
+2. System validates eligibility
+3. Creates Stripe Transfer to connected account
+4. Records payout in database
+5. Updates affiliate balances
+
+**Batch Payout Processing:**
+1. Admin triggers "Process All Automatic Payouts"
+2. System queries all eligible affiliates
+3. Processes payouts in batches of 3 (respects Stripe rate limits)
+4. 1-second delay between batches
+5. Returns summary of successful/failed payouts
+
+#### Rate Limiting
+
+The batch payout system implements controlled concurrency:
+- **Concurrent payouts**: 3 at a time
+- **Batch delay**: 1 second between batches
+- **Idempotency**: Duplicate transfer detection prevents double payouts
+
+### Disconnecting Stripe Account
+
+To switch back to manual payment links:
+1. Go to affiliate dashboard
+2. Change payment method from "Stripe Connect" to "Payment Link"
+3. Enter your PayPal or other payment link
+4. Save changes
+
+**Note**: The Stripe account remains in the system but is no longer used for payouts. To fully disconnect the Stripe account, contact support.
+
+### Admin Functions for Stripe Connect
+
+#### Viewing Stripe Connect Status
+
+The admin affiliate dashboard displays:
+- Payment method (link vs stripe)
+- Stripe account status
+- Charges enabled flag
+- Payouts enabled flag
+- Last sync timestamp
+
+#### Manual Status Sync
+
+If an affiliate's status appears outdated:
+1. The system automatically syncs when `account.updated` webhooks are received
+2. Affiliates can manually refresh from their dashboard
+3. Admins can view the `lastStripeSync` timestamp
+
+#### Processing Automatic Payouts
+
+**Individual Payout:**
+```
+Admin Dashboard → Select Affiliate → "Process Automatic Payout"
+```
+
+**Batch Processing:**
+```
+Admin Dashboard → "Process All Automatic Payouts" → Review Results
+```
+
+### Troubleshooting
+
+#### "Stripe payouts not enabled for this affiliate"
+
+**Cause**: The affiliate's Stripe account is not fully set up.
+
+**Solutions**:
+1. Check account status - should be `active`
+2. Have affiliate complete Stripe onboarding
+3. Verify identity documents if requested by Stripe
+4. Check for any restrictions in Stripe dashboard
+
+#### "Balance below minimum payout"
+
+**Cause**: Payment Link affiliate's unpaid balance is less than the configured minimum.
+
+**Solution**: Wait for more referral conversions until balance reaches the minimum threshold. Note: Stripe Connect affiliates have no minimum threshold and can receive payouts for any positive balance.
+
+#### "No affiliate found with this Stripe account ID"
+
+**Cause**: Webhook received for unknown account.
+
+**Solution**: This is normal for accounts not in your system. No action needed.
+
+#### Affiliate stuck in "onboarding" status
+
+**Cause**: User didn't complete Stripe onboarding flow.
+
+**Solutions**:
+1. Have affiliate click "Connect with Stripe" again
+2. They'll be redirected to continue where they left off
+3. Ensure they complete all required steps in Stripe
+
+#### Payout failed with Stripe error
+
+**Common causes**:
+- Insufficient platform balance
+- Connected account restricted
+- Bank account issues on affiliate's side
+
+**Solutions**:
+1. Check Stripe dashboard for detailed error
+2. Contact affiliate to resolve account issues
+3. Retry payout after issue is resolved
+
+### Environment Variables
+
+Required environment variables for Stripe Connect:
+
+```bash
+# Core Stripe configuration (already required)
+STRIPE_SECRET_KEY=sk_live_xxx  # Your Stripe secret key
+STRIPE_WEBHOOK_SECRET=whsec_xxx  # Webhook signing secret
+
+# Application URL (used for OAuth redirects)
+HOST_NAME=https://yourdomain.com
+
+# REQUIRED: System user ID for automatic payouts
+# This MUST be set to a dedicated system/admin user ID in the database
+# The application will fail to start if this is not set or is invalid
+SYSTEM_USER_ID=123
+```
+
+**Important**: `SYSTEM_USER_ID` is a required environment variable. It must be set to a dedicated system/admin user ID that exists in your database. This user ID is recorded as the "processedBy" user when automatic affiliate payouts are triggered. Do not use a real user's ID - create a dedicated system account for this purpose.
+
+**Note**: No additional Stripe Connect-specific environment variables are required. The integration uses your existing `STRIPE_SECRET_KEY` which must have Connect permissions.
+
+### Webhook Configuration
+
+The system handles the `account.updated` webhook event to sync Stripe account status changes. Ensure your Stripe webhook endpoint is configured to receive Connect events:
+
+1. Go to Stripe Dashboard → Webhooks
+2. Add endpoint: `https://yourdomain.com/api/webhooks/stripe`
+3. Select events: `account.updated` (for Connect accounts)
+
+### API Routes Reference
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/connect/stripe` | GET | Initiates Stripe Connect OAuth flow |
+| `/api/connect/stripe/callback` | GET | Handles OAuth callback, updates status |
+| `/api/connect/stripe/refresh` | GET | Regenerates onboarding link for incomplete setup |
+
+### Database Fields for Stripe Connect
+
+The `app_affiliate` table includes these Stripe Connect fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `paymentMethod` | enum | `link` or `stripe` |
+| `stripeConnectAccountId` | string | Stripe Express account ID (acct_xxx) |
+| `stripeAccountStatus` | string | Account status (not_started, onboarding, pending, active, restricted) |
+| `stripeChargesEnabled` | boolean | Whether account can receive charges |
+| `stripePayoutsEnabled` | boolean | Whether account can receive payouts |
+| `stripeDetailsSubmitted` | boolean | Whether onboarding details are submitted |
+| `lastStripeSync` | timestamp | Last time status was synced from Stripe |
 
 ## Support
 

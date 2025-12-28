@@ -166,6 +166,40 @@ getConversionMetricsFn({
 });
 ```
 
+### Server Function Response Format Convention
+
+**All server functions must return responses wrapped in `{ success: true, data: ... }`** for consistency:
+
+```typescript
+// CORRECT - always wrap in { success, data }
+export const getItemsFn = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const items = await getItems();
+    return { success: true, data: items };
+  });
+
+// WRONG - never return raw data
+export const getItemsFn = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const items = await getItems();
+    return items; // DON'T DO THIS
+  });
+```
+
+When consuming server functions, always destructure the `data` property:
+
+```typescript
+// In loaders
+const { data: items } = await getItemsFn();
+
+// In useQuery
+const { data: response } = useQuery({
+  queryKey: ["items"],
+  queryFn: () => getItemsFn(),
+});
+const items = response?.data;
+```
+
 ## DO NOT RUN SERVER
 
 I always run my server in a separate terminal. NEVER TRY TO RUN `npm run dev`!

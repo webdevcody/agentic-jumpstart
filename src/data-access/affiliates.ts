@@ -1,4 +1,4 @@
-import { eq, desc, and, sql, gte, lt, inArray } from "drizzle-orm";
+import { eq, desc, and, sql, gte, lt, lte, inArray, isNotNull, ne } from "drizzle-orm";
 import { database } from "~/db";
 import {
   affiliates,
@@ -76,7 +76,12 @@ export async function createAffiliateReferral(data: AffiliateReferralCreate) {
   return referral;
 }
 
-export async function getAffiliateReferrals(affiliateId: number) {
+export async function getAffiliateReferrals(
+  affiliateId: number,
+  options?: { limit?: number; offset?: number }
+) {
+  const { limit = 10, offset = 0 } = options || {};
+
   const referrals = await database
     .select({
       id: affiliateReferrals.id,
@@ -93,8 +98,15 @@ export async function getAffiliateReferrals(affiliateId: number) {
     .leftJoin(users, eq(affiliateReferrals.purchaserId, users.id))
     .leftJoin(profiles, eq(users.id, profiles.userId))
     .where(eq(affiliateReferrals.affiliateId, affiliateId))
-    .orderBy(desc(affiliateReferrals.createdAt));
-  return referrals;
+    .orderBy(desc(affiliateReferrals.createdAt))
+    .limit(limit + 1) // Fetch one extra to check if there's more
+    .offset(offset);
+
+  const hasMore = referrals.length > limit;
+  return {
+    items: hasMore ? referrals.slice(0, limit) : referrals,
+    hasMore,
+  };
 }
 
 export async function getAffiliateStats(affiliateId: number) {
@@ -119,11 +131,25 @@ export async function getAffiliateStats(affiliateId: number) {
 }
 
 export async function createAffiliatePayout(
-  data: AffiliatePayoutCreate & { affiliateId: number }
+  data: AffiliatePayoutCreate & { affiliateId: number; stripeTransferId?: string }
 ) {
+  // Validate inputs
+  if (!Number.isInteger(data.affiliateId) || data.affiliateId <= 0) {
+    throw new Error("Affiliate ID must be a positive integer");
+  }
+
+  if (!Number.isInteger(data.amount) || data.amount <= 0) {
+    throw new Error("Payout amount must be a positive integer (cents)");
+  }
+
+  if (data.paidBy === undefined || !Number.isInteger(data.paidBy) || data.paidBy <= 0) {
+    throw new Error("PaidBy (admin user ID) must be a positive integer");
+  }
+
   // Start a transaction to ensure consistency
   return await database.transaction(async (tx) => {
     // Get unpaid referrals to calculate total unpaid amount
+    // Order by createdAt to ensure oldest referrals are paid first (FIFO)
     const unpaidReferrals = await tx
       .select({
         id: affiliateReferrals.id,
@@ -135,7 +161,8 @@ export async function createAffiliatePayout(
           eq(affiliateReferrals.affiliateId, data.affiliateId),
           eq(affiliateReferrals.isPaid, false)
         )
-      );
+      )
+      .orderBy(affiliateReferrals.createdAt);
 
     const totalUnpaidAmount = unpaidReferrals.reduce(
       (sum, referral) => sum + referral.commission,
@@ -150,7 +177,15 @@ export async function createAffiliatePayout(
     }
 
     // Create the payout record
-    const [payout] = await tx.insert(affiliatePayouts).values(data).returning();
+    const [payout] = await tx.insert(affiliatePayouts).values({
+      affiliateId: data.affiliateId,
+      amount: data.amount,
+      paymentMethod: data.paymentMethod,
+      transactionId: data.transactionId || null,
+      stripeTransferId: data.stripeTransferId || null,
+      notes: data.notes || null,
+      paidBy: data.paidBy,
+    }).returning();
 
     // Update affiliate paid amount and unpaid balance
     await tx
@@ -170,14 +205,10 @@ export async function createAffiliatePayout(
       if (remainingPayout >= referral.commission) {
         referralsToUpdate.push(referral.id);
         remainingPayout -= referral.commission;
-      } else if (remainingPayout > 0) {
-        // Partial payout - mark this referral as paid for the remaining amount
-        // Note: This creates a potential issue with partial payments that may need business logic review
-        referralsToUpdate.push(referral.id);
-        remainingPayout = 0;
+      } else {
+        // Skip referrals that would be partially paid - only mark as paid if full commission can be covered
+        break;
       }
-
-      if (remainingPayout === 0) break;
     }
 
     // Update the selected referrals as paid
@@ -197,15 +228,22 @@ export async function createAffiliatePayout(
   });
 }
 
-export async function getAffiliatePayouts(affiliateId: number) {
+export async function getAffiliatePayouts(
+  affiliateId: number,
+  options?: { limit?: number; offset?: number }
+) {
+  const { limit = 10, offset = 0 } = options || {};
+
   const payouts = await database
     .select({
       id: affiliatePayouts.id,
       amount: affiliatePayouts.amount,
       paymentMethod: affiliatePayouts.paymentMethod,
       transactionId: affiliatePayouts.transactionId,
+      stripeTransferId: affiliatePayouts.stripeTransferId,
       notes: affiliatePayouts.notes,
       paidAt: affiliatePayouts.paidAt,
+      status: affiliatePayouts.status,
       // Don't expose admin email - only show display name for privacy
       paidByName: profiles.displayName,
     })
@@ -213,8 +251,15 @@ export async function getAffiliatePayouts(affiliateId: number) {
     .leftJoin(users, eq(affiliatePayouts.paidBy, users.id))
     .leftJoin(profiles, eq(users.id, profiles.userId))
     .where(eq(affiliatePayouts.affiliateId, affiliateId))
-    .orderBy(desc(affiliatePayouts.paidAt));
-  return payouts;
+    .orderBy(desc(affiliatePayouts.paidAt))
+    .limit(limit + 1)
+    .offset(offset);
+
+  const hasMore = payouts.length > limit;
+  return {
+    items: hasMore ? payouts.slice(0, limit) : payouts,
+    hasMore,
+  };
 }
 
 export async function getAllAffiliatesWithStats() {
@@ -226,21 +271,30 @@ export async function getAllAffiliatesWithStats() {
       userName: profiles.displayName,
       userRealName: profiles.realName,
       useDisplayName: profiles.useDisplayName,
+      userImage: profiles.image,
       affiliateCode: affiliates.affiliateCode,
       paymentLink: affiliates.paymentLink,
+      paymentMethod: affiliates.paymentMethod,
       commissionRate: affiliates.commissionRate,
       totalEarnings: affiliates.totalEarnings,
       paidAmount: affiliates.paidAmount,
       unpaidBalance: affiliates.unpaidBalance,
       isActive: affiliates.isActive,
       createdAt: affiliates.createdAt,
+      // Stripe Connect fields
+      stripeConnectAccountId: affiliates.stripeConnectAccountId,
+      stripeAccountStatus: affiliates.stripeAccountStatus,
+      stripeChargesEnabled: affiliates.stripeChargesEnabled,
+      stripePayoutsEnabled: affiliates.stripePayoutsEnabled,
+      stripeDetailsSubmitted: affiliates.stripeDetailsSubmitted,
+      lastStripeSync: affiliates.lastStripeSync,
       totalReferrals: sql<number>`(
-        select count(*)::int from ${affiliateReferrals} 
+        select count(*)::int from ${affiliateReferrals}
         where ${affiliateReferrals.affiliateId} = ${affiliates.id}
       )`,
       lastReferralDate: sql<Date | null>`(
-        select max(${affiliateReferrals.createdAt}) 
-        from ${affiliateReferrals} 
+        select max(${affiliateReferrals.createdAt})
+        from ${affiliateReferrals}
         where ${affiliateReferrals.affiliateId} = ${affiliates.id}
       )`,
     })
@@ -267,7 +321,7 @@ export async function getAffiliateByStripeSession(stripeSessionId: string) {
 
 export async function updateAffiliateProfile(
   affiliateId: number,
-  data: Partial<Pick<Affiliate, "paymentLink" | "isActive">>
+  data: Partial<Pick<Affiliate, "paymentLink" | "paymentMethod" | "isActive">>
 ) {
   const [updated] = await database
     .update(affiliates)
@@ -304,4 +358,706 @@ export async function getMonthlyAffiliateEarnings(
     .orderBy(sql`to_char(${affiliateReferrals.createdAt}, 'YYYY-MM')`);
 
   return earnings;
+}
+
+export async function updateAffiliateStripeAccount(
+  affiliateId: number,
+  data: {
+    stripeConnectAccountId?: string;
+    stripeAccountStatus?: "not_started" | "onboarding" | "active" | "restricted";
+    stripeChargesEnabled?: boolean;
+    stripePayoutsEnabled?: boolean;
+    stripeDetailsSubmitted?: boolean;
+    stripeAccountType?: string | null;
+    lastStripeSync?: Date;
+  }
+) {
+  // Wrap in transaction to ensure atomicity when reassigning Stripe accounts
+  return await database.transaction(async (tx) => {
+    // If assigning a Stripe account, first clear it from any other affiliate
+    // This handles the case where the same Stripe account was previously connected
+    // to a different affiliate (e.g., during testing)
+    if (data.stripeConnectAccountId) {
+      await tx
+        .update(affiliates)
+        .set({
+          stripeConnectAccountId: null,
+          stripeAccountStatus: "not_started",
+          stripeChargesEnabled: false,
+          stripePayoutsEnabled: false,
+          stripeDetailsSubmitted: false,
+          stripeAccountType: null,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(affiliates.stripeConnectAccountId, data.stripeConnectAccountId),
+            ne(affiliates.id, affiliateId)
+          )
+        );
+    }
+
+    const [updated] = await tx
+      .update(affiliates)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(affiliates.id, affiliateId))
+      .returning();
+    return updated;
+  });
+}
+
+export async function getAffiliateByStripeAccountId(stripeAccountId: string) {
+  const [affiliate] = await database
+    .select()
+    .from(affiliates)
+    .where(eq(affiliates.stripeConnectAccountId, stripeAccountId));
+  return affiliate;
+}
+
+export async function getAffiliateById(id: number) {
+  const [affiliate] = await database
+    .select()
+    .from(affiliates)
+    .where(eq(affiliates.id, id));
+  return affiliate;
+}
+
+export async function getEligibleAffiliatesForAutoPayout(
+  minimumBalanceCents: number = 5000 // $50 default
+) {
+  // Find affiliates that:
+  // 1. Have Stripe Connect enabled (stripePayoutsEnabled = true)
+  // 2. Have balance >= minimum threshold
+  // 3. Are active
+  // 4. Have not exceeded max retry count (payoutRetryCount < 3)
+  //    After 3 failures, admin intervention is required
+  const eligibleAffiliates = await database
+    .select()
+    .from(affiliates)
+    .where(
+      and(
+        eq(affiliates.isActive, true),
+        eq(affiliates.stripePayoutsEnabled, true),
+        gte(affiliates.unpaidBalance, minimumBalanceCents),
+        lt(affiliates.payoutRetryCount, 3)
+      )
+    );
+
+  return eligibleAffiliates;
+}
+
+export async function createAffiliatePayoutWithStripeTransfer(
+  data: AffiliatePayoutCreate & { affiliateId: number; stripeTransferId: string }
+) {
+  return createAffiliatePayout(data);
+}
+
+export async function getPayoutByStripeTransferId(stripeTransferId: string) {
+  const [payout] = await database
+    .select()
+    .from(affiliatePayouts)
+    .where(eq(affiliatePayouts.stripeTransferId, stripeTransferId));
+  return payout;
+}
+
+export async function updateAffiliatePayoutError(
+  affiliateId: number,
+  error: string,
+  errorAt: Date
+) {
+  const [updated] = await database
+    .update(affiliates)
+    .set({
+      lastPayoutError: error,
+      lastPayoutErrorAt: errorAt,
+      updatedAt: new Date(),
+    })
+    .where(eq(affiliates.id, affiliateId))
+    .returning();
+  return updated;
+}
+
+export async function clearAffiliatePayoutError(affiliateId: number) {
+  const [updated] = await database
+    .update(affiliates)
+    .set({
+      lastPayoutError: null,
+      lastPayoutErrorAt: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(affiliates.id, affiliateId))
+    .returning();
+  return updated;
+}
+
+export async function disconnectAffiliateStripeAccount(affiliateId: number) {
+  const [updated] = await database
+    .update(affiliates)
+    .set({
+      stripeConnectAccountId: null,
+      stripeAccountStatus: "not_started",
+      stripeChargesEnabled: false,
+      stripePayoutsEnabled: false,
+      stripeDetailsSubmitted: false,
+      lastStripeSync: null,
+      lastPayoutError: null,
+      lastPayoutErrorAt: null,
+      paymentMethod: "link",
+      paymentLink: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(affiliates.id, affiliateId))
+    .returning();
+  return updated;
+}
+
+/**
+ * Get affiliate by ID with user email and profile name for notifications.
+ * Used when sending payout notification emails.
+ */
+export async function getAffiliateWithUserEmail(affiliateId: number): Promise<{
+  id: number;
+  userId: number;
+  affiliateCode: string;
+  stripeConnectAccountId: string | null;
+  unpaidBalance: number;
+  userEmail: string | null;
+  userName: string | null;
+} | undefined> {
+  const [result] = await database
+    .select({
+      id: affiliates.id,
+      userId: affiliates.userId,
+      affiliateCode: affiliates.affiliateCode,
+      stripeConnectAccountId: affiliates.stripeConnectAccountId,
+      unpaidBalance: affiliates.unpaidBalance,
+      userEmail: users.email,
+      userName: profiles.displayName,
+    })
+    .from(affiliates)
+    .leftJoin(users, eq(affiliates.userId, users.id))
+    .leftJoin(profiles, eq(users.id, profiles.userId))
+    .where(eq(affiliates.id, affiliateId));
+  return result;
+}
+
+/**
+ * Get affiliate by Stripe account ID with user email and profile name for notifications.
+ * Used when handling transfer.failed webhooks to send failure notification emails.
+ */
+export async function getAffiliateByStripeAccountIdWithUserEmail(
+  stripeAccountId: string
+): Promise<{
+  id: number;
+  userId: number;
+  affiliateCode: string;
+  stripeConnectAccountId: string | null;
+  unpaidBalance: number;
+  userEmail: string | null;
+  userName: string | null;
+} | undefined> {
+  const [result] = await database
+    .select({
+      id: affiliates.id,
+      userId: affiliates.userId,
+      affiliateCode: affiliates.affiliateCode,
+      stripeConnectAccountId: affiliates.stripeConnectAccountId,
+      unpaidBalance: affiliates.unpaidBalance,
+      userEmail: users.email,
+      userName: profiles.displayName,
+    })
+    .from(affiliates)
+    .leftJoin(users, eq(affiliates.userId, users.id))
+    .leftJoin(profiles, eq(users.id, profiles.userId))
+    .where(eq(affiliates.stripeConnectAccountId, stripeAccountId));
+  return result;
+}
+
+/**
+ * Update the last payout attempt timestamp for an affiliate.
+ * Used for cooldown protection against webhook event replays.
+ */
+export async function updateLastPayoutAttempt(affiliateId: number): Promise<void> {
+  await database
+    .update(affiliates)
+    .set({ lastPayoutAttemptAt: new Date(), updatedAt: new Date() })
+    .where(eq(affiliates.id, affiliateId));
+}
+
+/**
+ * Increment the payout retry count for an affiliate and calculate the next retry time.
+ * Uses exponential backoff: 1 hour, 4 hours, 24 hours, then stops auto-retry.
+ * Uses atomic SQL increment to prevent race conditions.
+ */
+export async function incrementPayoutRetryCount(affiliateId: number): Promise<void> {
+  // Use atomic SQL operations to prevent race conditions
+  // The CASE expression calculates the next retry time based on the NEW count
+  // Backoff: count 1 -> 1 hour, count 2 -> 4 hours, count 3 -> 24 hours, count > 3 -> null (stop)
+  await database.update(affiliates)
+    .set({
+      payoutRetryCount: sql`${affiliates.payoutRetryCount} + 1`,
+      nextPayoutRetryAt: sql`
+        CASE
+          WHEN ${affiliates.payoutRetryCount} + 1 = 1 THEN NOW() + INTERVAL '1 hour'
+          WHEN ${affiliates.payoutRetryCount} + 1 = 2 THEN NOW() + INTERVAL '4 hours'
+          WHEN ${affiliates.payoutRetryCount} + 1 = 3 THEN NOW() + INTERVAL '24 hours'
+          ELSE NULL
+        END
+      `,
+      updatedAt: new Date()
+    })
+    .where(eq(affiliates.id, affiliateId));
+}
+
+/**
+ * Reset the payout retry count for an affiliate after a successful payout.
+ */
+export async function resetPayoutRetryCount(affiliateId: number): Promise<void> {
+  await database.update(affiliates)
+    .set({
+      payoutRetryCount: 0,
+      nextPayoutRetryAt: null,
+      updatedAt: new Date()
+    })
+    .where(eq(affiliates.id, affiliateId));
+}
+
+/**
+ * Get affiliates that are eligible for payout retry.
+ * These are affiliates where:
+ * 1. nextPayoutRetryAt is set and has passed
+ * 2. payoutRetryCount <= 3 (haven't exceeded max retries)
+ */
+export async function getAffiliatesEligibleForRetry(): Promise<Affiliate[]> {
+  return database.select().from(affiliates)
+    .where(
+      and(
+        isNotNull(affiliates.nextPayoutRetryAt),
+        lte(affiliates.nextPayoutRetryAt, new Date()),
+        lte(affiliates.payoutRetryCount, 3)
+      )
+    );
+}
+
+/**
+ * Check if an affiliate has exceeded the rate limit for connect attempts.
+ * Returns true if rate limited (3+ attempts in the last hour).
+ */
+export async function isConnectAttemptRateLimited(affiliateId: number): Promise<boolean> {
+  const affiliate = await getAffiliateById(affiliateId);
+  if (!affiliate) return false;
+
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+  // If last attempt was more than an hour ago, reset the count (not rate limited)
+  if (!affiliate.lastConnectAttemptAt || affiliate.lastConnectAttemptAt < oneHourAgo) {
+    return false;
+  }
+
+  // Rate limited if 3 or more attempts in the last hour
+  return affiliate.connectAttemptCount >= 3;
+}
+
+/**
+ * Record a connect attempt for rate limiting purposes.
+ * Resets the count if the last attempt was more than an hour ago.
+ * Uses atomic SQL CASE to prevent TOCTOU race conditions.
+ */
+export async function recordConnectAttempt(affiliateId: number): Promise<void> {
+  // Use atomic SQL CASE to determine whether to reset or increment
+  // This prevents TOCTOU race conditions by doing the check and update in one query
+  await database.update(affiliates)
+    .set({
+      lastConnectAttemptAt: new Date(),
+      connectAttemptCount: sql`
+        CASE
+          WHEN ${affiliates.lastConnectAttemptAt} IS NULL
+               OR ${affiliates.lastConnectAttemptAt} < NOW() - INTERVAL '1 hour'
+          THEN 1
+          ELSE ${affiliates.connectAttemptCount} + 1
+        END
+      `,
+      updatedAt: new Date()
+    })
+    .where(eq(affiliates.id, affiliateId));
+}
+
+/**
+ * Atomically check rate limit and record a connect attempt.
+ * Returns true if the attempt was allowed (not rate limited), false if rate limited.
+ * This function combines the check and record into a single atomic operation
+ * to prevent TOCTOU race conditions.
+ */
+export async function checkAndRecordConnectAttempt(affiliateId: number): Promise<boolean> {
+  // Use a transaction to ensure atomicity
+  return await database.transaction(async (tx) => {
+    // Lock the row and get current state
+    const [affiliate] = await tx
+      .select({
+        lastConnectAttemptAt: affiliates.lastConnectAttemptAt,
+        connectAttemptCount: affiliates.connectAttemptCount,
+      })
+      .from(affiliates)
+      .where(eq(affiliates.id, affiliateId))
+      .for("update"); // FOR UPDATE lock
+
+    if (!affiliate) {
+      return false;
+    }
+
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const isExpired = !affiliate.lastConnectAttemptAt || affiliate.lastConnectAttemptAt < oneHourAgo;
+    const currentCount = isExpired ? 0 : affiliate.connectAttemptCount;
+
+    // Check if rate limited BEFORE this attempt
+    if (currentCount >= 3) {
+      return false;
+    }
+
+    // Record the attempt
+    const newCount = isExpired ? 1 : currentCount + 1;
+    await tx.update(affiliates)
+      .set({
+        lastConnectAttemptAt: new Date(),
+        connectAttemptCount: newCount,
+        updatedAt: new Date()
+      })
+      .where(eq(affiliates.id, affiliateId));
+
+    return true;
+  });
+}
+
+/**
+ * Create a pending payout record BEFORE initiating the Stripe transfer.
+ * This is part of the two-phase payout approach to prevent money being
+ * transferred without being recorded in the database.
+ *
+ * Note: This does NOT mark referrals as paid yet - that happens when
+ * the payout is completed via completePendingPayout.
+ */
+export async function createPendingPayout(data: {
+  affiliateId: number;
+  amount: number;
+  paidBy: number;
+}): Promise<{ id: number }> {
+  // Validate inputs
+  if (!Number.isInteger(data.affiliateId) || data.affiliateId <= 0) {
+    throw new Error("Affiliate ID must be a positive integer");
+  }
+
+  if (!Number.isInteger(data.amount) || data.amount <= 0) {
+    throw new Error("Payout amount must be a positive integer (cents)");
+  }
+
+  if (!Number.isInteger(data.paidBy) || data.paidBy <= 0) {
+    throw new Error("PaidBy (admin user ID) must be a positive integer");
+  }
+
+  const [payout] = await database
+    .insert(affiliatePayouts)
+    .values({
+      affiliateId: data.affiliateId,
+      amount: data.amount,
+      paymentMethod: "stripe_connect",
+      status: "pending",
+      notes: "Automatic payout via Stripe Connect (pending)",
+      paidBy: data.paidBy,
+    })
+    .returning({ id: affiliatePayouts.id });
+  return payout;
+}
+
+/**
+ * Complete a pending payout after Stripe transfer succeeds.
+ * Updates the payout record with the transfer ID, marks status as "completed",
+ * updates affiliate balances, and marks referrals as paid.
+ */
+export async function completePendingPayout(
+  payoutId: number,
+  stripeTransferId: string
+): Promise<void> {
+  await database.transaction(async (tx) => {
+    // Get the pending payout with FOR UPDATE lock to prevent race conditions
+    const [payout] = await tx
+      .select()
+      .from(affiliatePayouts)
+      .where(eq(affiliatePayouts.id, payoutId))
+      .for("update");
+
+    if (!payout) {
+      throw new Error(`Payout ${payoutId} not found`);
+    }
+
+    if (payout.status !== "pending") {
+      throw new Error(`Payout ${payoutId} is not in pending status (current: ${payout.status})`);
+    }
+
+    // Update payout with transfer ID and mark as completed
+    await tx
+      .update(affiliatePayouts)
+      .set({
+        stripeTransferId,
+        status: "completed",
+        notes: "Automatic payout via Stripe Connect",
+      })
+      .where(eq(affiliatePayouts.id, payoutId));
+
+    // Update affiliate balances
+    await tx
+      .update(affiliates)
+      .set({
+        paidAmount: sql`${affiliates.paidAmount} + ${payout.amount}`,
+        unpaidBalance: sql`${affiliates.unpaidBalance} - ${payout.amount}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(affiliates.id, payout.affiliateId));
+
+    // Get unpaid referrals ordered by createdAt (FIFO - oldest first)
+    const unpaidReferrals = await tx
+      .select({
+        id: affiliateReferrals.id,
+        commission: affiliateReferrals.commission,
+      })
+      .from(affiliateReferrals)
+      .where(
+        and(
+          eq(affiliateReferrals.affiliateId, payout.affiliateId),
+          eq(affiliateReferrals.isPaid, false)
+        )
+      )
+      .orderBy(affiliateReferrals.createdAt);
+
+    // Mark referrals as paid up to the payout amount
+    // Only mark referrals where full commission can be covered (consistent with createAffiliatePayout)
+    let remainingPayout = payout.amount;
+    const referralsToUpdate: number[] = [];
+
+    for (const referral of unpaidReferrals) {
+      if (remainingPayout >= referral.commission) {
+        referralsToUpdate.push(referral.id);
+        remainingPayout -= referral.commission;
+      } else {
+        // Skip referrals that would be partially paid - only mark as paid if full commission can be covered
+        break;
+      }
+    }
+
+    // Update the selected referrals as paid
+    if (referralsToUpdate.length > 0) {
+      await tx
+        .update(affiliateReferrals)
+        .set({ isPaid: true })
+        .where(
+          and(
+            eq(affiliateReferrals.affiliateId, payout.affiliateId),
+            inArray(affiliateReferrals.id, referralsToUpdate)
+          )
+        );
+    }
+  });
+}
+
+/**
+ * Mark a pending payout as failed if the Stripe transfer fails.
+ * Records the error message for debugging/auditing purposes.
+ */
+export async function failPendingPayout(
+  payoutId: number,
+  error: string
+): Promise<void> {
+  await database
+    .update(affiliatePayouts)
+    .set({
+      status: "failed",
+      errorMessage: error,
+      notes: `Automatic payout failed: ${error}`,
+    })
+    .where(eq(affiliatePayouts.id, payoutId));
+}
+
+/**
+ * Get a payout by ID.
+ * Used to check payout status.
+ */
+export async function getPayoutById(payoutId: number) {
+  const [payout] = await database
+    .select()
+    .from(affiliatePayouts)
+    .where(eq(affiliatePayouts.id, payoutId));
+  return payout;
+}
+
+/**
+ * Update an affiliate's commission rate.
+ * Used by admins to set custom commission rates for individual affiliates.
+ */
+export async function updateAffiliateCommissionRate(
+  affiliateId: number,
+  commissionRate: number
+) {
+  const [updated] = await database
+    .update(affiliates)
+    .set({
+      commissionRate,
+      updatedAt: new Date(),
+    })
+    .where(eq(affiliates.id, affiliateId))
+    .returning();
+  return updated;
+}
+
+/**
+ * Update an affiliate's discount rate (the portion of commission given to customers).
+ * Used by affiliates to control how much of their commission goes to customer discount vs their earnings.
+ * @param affiliateId - The affiliate's ID
+ * @param discountRate - The discount percentage (must be <= commissionRate)
+ */
+export async function updateAffiliateDiscountRate(
+  affiliateId: number,
+  discountRate: number
+) {
+  const [updated] = await database
+    .update(affiliates)
+    .set({
+      discountRate,
+      updatedAt: new Date(),
+    })
+    .where(eq(affiliates.id, affiliateId))
+    .returning();
+  return updated;
+}
+
+/**
+ * Increment the paidAmount for an affiliate.
+ * Used when Stripe handles auto-transfer and we need to mark the commission as paid.
+ * @param affiliateId - The affiliate's ID
+ * @param amount - The amount to increment (in cents)
+ */
+export async function incrementAffiliatePaidAmount(
+  affiliateId: number,
+  amount: number
+) {
+  const [updated] = await database
+    .update(affiliates)
+    .set({
+      paidAmount: sql`${affiliates.paidAmount} + ${amount}`,
+      updatedAt: new Date(),
+    })
+    .where(eq(affiliates.id, affiliateId))
+    .returning();
+  return updated;
+}
+
+// Export the transaction type for use in use-cases
+export type DatabaseTransaction = Parameters<Parameters<typeof database.transaction>[0]>[0];
+
+/**
+ * Get affiliate by code using a transaction.
+ * Used within transactions to maintain consistency.
+ */
+export async function getAffiliateByCodeTx(
+  tx: DatabaseTransaction,
+  code: string
+) {
+  const [affiliate] = await tx
+    .select()
+    .from(affiliates)
+    .where(
+      and(eq(affiliates.affiliateCode, code), eq(affiliates.isActive, true))
+    );
+  return affiliate;
+}
+
+/**
+ * Get affiliate referral by Stripe session ID using a transaction.
+ * Used within transactions to maintain consistency.
+ */
+export async function getAffiliateByStripeSessionTx(
+  tx: DatabaseTransaction,
+  stripeSessionId: string
+) {
+  const [result] = await tx
+    .select({
+      affiliate: affiliates,
+      referral: affiliateReferrals,
+    })
+    .from(affiliateReferrals)
+    .innerJoin(affiliates, eq(affiliateReferrals.affiliateId, affiliates.id))
+    .where(eq(affiliateReferrals.stripeSessionId, stripeSessionId));
+
+  return result;
+}
+
+/**
+ * Create affiliate referral using a transaction.
+ * Used within transactions to maintain consistency.
+ */
+export async function createAffiliateReferralTx(
+  tx: DatabaseTransaction,
+  data: AffiliateReferralCreate
+) {
+  const [referral] = await tx
+    .insert(affiliateReferrals)
+    .values(data)
+    .returning();
+  return referral;
+}
+
+/**
+ * Update affiliate balances using a transaction.
+ * Used within transactions to maintain consistency.
+ */
+export async function updateAffiliateBalancesTx(
+  tx: DatabaseTransaction,
+  affiliateId: number,
+  earnings: number,
+  unpaid: number
+) {
+  // Validate inputs
+  if (!Number.isInteger(affiliateId) || affiliateId <= 0) {
+    throw new Error("Affiliate ID must be a positive integer");
+  }
+
+  if (!Number.isInteger(earnings) || earnings < 0) {
+    throw new Error("Earnings must be a non-negative integer");
+  }
+
+  if (!Number.isInteger(unpaid) || unpaid < 0) {
+    throw new Error("Unpaid amount must be a non-negative integer");
+  }
+
+  const [updated] = await tx
+    .update(affiliates)
+    .set({
+      totalEarnings: sql`${affiliates.totalEarnings} + ${earnings}`,
+      unpaidBalance: sql`${affiliates.unpaidBalance} + ${unpaid}`,
+      updatedAt: new Date(),
+    })
+    .where(eq(affiliates.id, affiliateId))
+    .returning();
+  return updated;
+}
+
+/**
+ * Increment the paidAmount for an affiliate using a transaction.
+ * Used within transactions when Stripe handles auto-transfer.
+ */
+export async function incrementAffiliatePaidAmountTx(
+  tx: DatabaseTransaction,
+  affiliateId: number,
+  amount: number
+) {
+  const [updated] = await tx
+    .update(affiliates)
+    .set({
+      paidAmount: sql`${affiliates.paidAmount} + ${amount}`,
+      updatedAt: new Date(),
+    })
+    .where(eq(affiliates.id, affiliateId))
+    .returning();
+  return updated;
 }

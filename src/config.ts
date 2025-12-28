@@ -20,7 +20,10 @@ export const PRICING_CONFIG = {
 // Affiliate program configuration
 export const AFFILIATE_CONFIG = {
   COMMISSION_RATE: 30, // 30% commission (default, can be overridden in admin settings)
-  MINIMUM_PAYOUT: 5000, // $50 minimum payout (in cents)
+  DEFAULT_COMMISSION_RATE: 30, // Default commission rate percentage
+  MINIMUM_PAYOUT: 5000, // $50 minimum payout (in cents) - for Payment Link affiliates only
+  DEFAULT_MINIMUM_PAYOUT: 5000, // Default minimum payout in cents
+  COOKIE_DURATION_DAYS: 30, // Attribution window for affiliate referrals
   AFFILIATE_CODE_LENGTH: 8, // Length of generated affiliate codes
   AFFILIATE_CODE_RETRY_ATTEMPTS: 10, // Max attempts to generate unique code
   MAX_PURCHASE_AMOUNT: 100_000_00, // $100,000 in cents - reasonable max for single purchase
@@ -31,6 +34,10 @@ export const AFFILIATE_CONFIG = {
 // App settings keys (not feature flags)
 export const APP_SETTING_KEYS = {
   AFFILIATE_COMMISSION_RATE: "AFFILIATE_COMMISSION_RATE",
+  AFFILIATE_MINIMUM_PAYOUT: "AFFILIATE_MINIMUM_PAYOUT",
+  PRICING_CURRENT_PRICE: "PRICING_CURRENT_PRICE",
+  PRICING_ORIGINAL_PRICE: "PRICING_ORIGINAL_PRICE",
+  PRICING_PROMO_LABEL: "PRICING_PROMO_LABEL",
 } as const;
 
 // Company information for marketing emails
@@ -51,9 +58,11 @@ export {
   FLAGS,
   TARGET_MODES,
   FALLBACK_CONFIG,
+  FLAG_GROUPS,
   FEATURE_FLAGS_CONFIG,
   DISPLAYED_FLAGS,
   type FlagKey,
   type TargetMode,
+  type FlagGroup,
   type FeatureFlagUIConfig,
 } from "./config/feature-flags";

@@ -16,6 +16,7 @@ import {
   AlertCircle,
   TrendingUp,
   Video,
+  DollarSign,
 } from "lucide-react";
 import { useFeatureFlag } from "~/components/feature-flag";
 
@@ -105,6 +106,12 @@ const navigation: NavigationItem[] = [
     icon: TrendingUp,
     category: "business",
   },
+  {
+    name: "Pricing",
+    href: "/admin/pricing",
+    icon: DollarSign,
+    category: "business",
+  },
 
   // Communications
   {
@@ -116,8 +123,8 @@ const navigation: NavigationItem[] = [
 
   // System
   {
-    name: "Settings",
-    href: "/admin/settings",
+    name: "Feature Flags",
+    href: "/admin/feature-flags",
     icon: Settings,
     category: "system",
   },

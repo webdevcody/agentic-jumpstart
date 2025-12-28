@@ -20,6 +20,12 @@ import {
   toggleVideoSegmentContentTabsUseCase,
   getFeatureFlagEnabledUseCase,
   toggleFeatureFlagUseCase,
+  getAffiliateCommissionRateUseCase,
+  setAffiliateCommissionRateUseCase,
+  getAffiliateMinimumPayoutUseCase,
+  setAffiliateMinimumPayoutUseCase,
+  getPricingSettingsUseCase,
+  updatePricingSettingsUseCase,
 } from "~/use-cases/app-settings";
 import { isFeatureEnabledForUser } from "~/data-access/app-settings";
 
@@ -169,5 +175,98 @@ export const toggleFeatureFlagFn = createServerFn({ method: "POST" })
   .inputValidator(z.object({ flagKey: flagKeySchema, enabled: z.boolean() }))
   .handler(async ({ data }) => {
     await toggleFeatureFlagUseCase(data.flagKey, data.enabled);
+    return { success: true };
+  });
+
+/**
+ * Get the affiliate commission rate from app settings (admin only).
+ */
+export const getAffiliateCommissionRateFn = createServerFn({ method: "GET" })
+  .middleware([adminMiddleware])
+  .inputValidator(z.void())
+  .handler(async () => {
+    return getAffiliateCommissionRateUseCase();
+  });
+
+/**
+ * Get the affiliate commission rate (public - for onboarding page).
+ */
+export const getPublicAffiliateCommissionRateFn = createServerFn({ method: "GET" })
+  .middleware([unauthenticatedMiddleware])
+  .inputValidator(z.void())
+  .handler(async () => {
+    return getAffiliateCommissionRateUseCase();
+  });
+
+/**
+ * Set the affiliate commission rate in app settings.
+ */
+export const setAffiliateCommissionRateFn = createServerFn({ method: "POST" })
+  .middleware([adminMiddleware])
+  .inputValidator(z.object({ rate: z.number().int().min(0).max(100) }))
+  .handler(async ({ data }) => {
+    await setAffiliateCommissionRateUseCase(data.rate);
+    return { success: true };
+  });
+
+/**
+ * Get the affiliate minimum payout from app settings (admin only).
+ */
+export const getAffiliateMinimumPayoutFn = createServerFn({ method: "GET" })
+  .middleware([adminMiddleware])
+  .inputValidator(z.void())
+  .handler(async () => {
+    return getAffiliateMinimumPayoutUseCase();
+  });
+
+/**
+ * Get the affiliate minimum payout (public - for onboarding page).
+ */
+export const getPublicAffiliateMinimumPayoutFn = createServerFn({ method: "GET" })
+  .middleware([unauthenticatedMiddleware])
+  .inputValidator(z.void())
+  .handler(async () => {
+    return getAffiliateMinimumPayoutUseCase();
+  });
+
+/**
+ * Set the affiliate minimum payout in app settings.
+ */
+export const setAffiliateMinimumPayoutFn = createServerFn({ method: "POST" })
+  .middleware([adminMiddleware])
+  .inputValidator(z.object({ amount: z.number().int().min(0) }))
+  .handler(async ({ data }) => {
+    await setAffiliateMinimumPayoutUseCase(data.amount);
+    return { success: true };
+  });
+
+// ============================================
+// Pricing Server Functions
+// ============================================
+
+/**
+ * Get pricing settings (for purchase page).
+ */
+export const getPricingSettingsFn = createServerFn({ method: "GET" })
+  .middleware([unauthenticatedMiddleware])
+  .inputValidator(z.void())
+  .handler(async () => {
+    return getPricingSettingsUseCase();
+  });
+
+/**
+ * Update pricing settings (admin only).
+ */
+export const updatePricingSettingsFn = createServerFn({ method: "POST" })
+  .middleware([adminMiddleware])
+  .inputValidator(
+    z.object({
+      currentPrice: z.number().int().min(0).optional(),
+      originalPrice: z.number().int().min(0).optional(),
+      promoLabel: z.string().optional(),
+    })
+  )
+  .handler(async ({ data }) => {
+    await updatePricingSettingsUseCase(data);
     return { success: true };
   });

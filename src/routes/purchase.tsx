@@ -1,6 +1,7 @@
 import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import Stripe from "stripe";
 import { stripe } from "~/lib/stripe";
 import { authenticatedMiddleware } from "~/lib/auth";
 import { env } from "~/utils/env";
@@ -30,20 +31,71 @@ import { Link } from "@tanstack/react-router";
 import { shouldShowEarlyAccessFn } from "~/fn/early-access";
 import { useAnalytics } from "~/hooks/use-analytics";
 import { trackPurchaseIntentFn } from "~/fn/analytics";
-import { PRICING_CONFIG } from "~/config";
+import { getPricingSettingsFn } from "~/fn/app-settings";
+import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
+
+/** Conversion factor: multiply dollars by this to get cents */
+const CENTS_PER_DOLLAR = 100;
+/** Divisor for converting percentage values (e.g., 30% -> 0.30) */
+const PERCENTAGE_DIVISOR = 100;
+
+/** Load Stripe once at module level for efficiency */
+const stripePromise = loadStripe(publicEnv.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const searchSchema = z.object({
   ref: z.string().optional(),
   checkout: z.boolean().optional(),
 });
 
+const getAffiliateInfoSchema = z.object({
+  code: z.string(),
+});
+
+const getAffiliateInfoFn = createServerFn()
+  .inputValidator(getAffiliateInfoSchema)
+  .handler(async ({ data }) => {
+    const { getAffiliateByCode } = await import("~/data-access/affiliates");
+    const { getProfile } = await import("~/data-access/profiles");
+    const affiliate = await getAffiliateByCode(data.code);
+
+    if (!affiliate || !affiliate.isActive) {
+      return null;
+    }
+
+    // Get display name if enabled
+    let displayName = "";
+    const profile = await getProfile(affiliate.userId);
+    if (profile?.useDisplayName && profile.displayName) {
+      displayName = profile.displayName;
+    }
+
+    return {
+      discountRate: affiliate.discountRate,
+      commissionRate: affiliate.commissionRate - affiliate.discountRate,
+      displayName,
+    };
+  });
+
 export const Route = createFileRoute("/purchase")({
-  validateSearch: searchSchema,
-  loader: async () => {
-    const shouldShowEarlyAccess = await shouldShowEarlyAccessFn();
-    return { shouldShowEarlyAccess };
+  validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
+  loaderDeps: ({ search }) => ({ ref: search.ref, checkout: search.checkout }),
+  loader: async ({ deps: { ref } }) => {
+    // Load pricing and early access settings in parallel
+    const [shouldShowEarlyAccess, pricing] = await Promise.all([
+      shouldShowEarlyAccessFn(),
+      getPricingSettingsFn(),
+    ]);
+
+    // Get affiliate info if ref code is present
+    let affiliateInfo = null;
+    if (ref) {
+      affiliateInfo = await getAffiliateInfoFn({ data: { code: ref } });
+    }
+
+    return { shouldShowEarlyAccess, affiliateInfo, pricing };
   },
   component: RouteComponent,
+  errorComponent: DefaultCatchBoundary,
 });
 
 const checkoutSchema = z.object({
@@ -64,8 +116,39 @@ const checkoutFn = createServerFn()
       userId: context.userId.toString(),
     };
 
+    // Look up affiliate for discount and commission info
+    let affiliateDiscount = 0;
+    let affiliateCommission = 0;
+    let affiliateName = "";
+    let affiliateStripeAccountId: string | null = null;
+
     if (data.affiliateCode) {
-      metadata.affiliateCode = data.affiliateCode;
+      const { getAffiliateByCode } = await import("~/data-access/affiliates");
+      const { getProfile } = await import("~/data-access/profiles");
+      const affiliate = await getAffiliateByCode(data.affiliateCode);
+
+      if (affiliate && affiliate.isActive) {
+        metadata.affiliateCode = data.affiliateCode;
+        metadata.affiliateId = affiliate.id.toString();
+        // Store the rates at checkout time (frozen for this transaction)
+        metadata.discountRate = affiliate.discountRate.toString();
+        metadata.commissionRate = (affiliate.commissionRate - affiliate.discountRate).toString();
+        metadata.originalCommissionRate = affiliate.commissionRate.toString();
+
+        affiliateDiscount = affiliate.discountRate;
+        affiliateCommission = affiliate.commissionRate - affiliate.discountRate;
+
+        // Store Stripe Connect account ID for automatic transfer
+        if (affiliate.stripeConnectAccountId && affiliate.stripePayoutsEnabled) {
+          affiliateStripeAccountId = affiliate.stripeConnectAccountId;
+        }
+
+        // Get affiliate display name
+        const profile = await getProfile(affiliate.userId);
+        if (profile?.useDisplayName && profile.displayName) {
+          affiliateName = profile.displayName;
+        }
+      }
     }
 
     if (data.analyticsSessionId) {
@@ -94,9 +177,34 @@ const checkoutFn = createServerFn()
 
     const successUrl = `${env.HOST_NAME}/success`;
 
-    const sessionConfig: any = {
+    // Get current price from database (with fallback to config)
+    const { getPricingCurrentPrice } = await import("~/data-access/app-settings");
+    const currentPriceDollars = await getPricingCurrentPrice();
+
+    // Calculate the final price (in cents)
+    const basePriceInCents = currentPriceDollars * CENTS_PER_DOLLAR;
+    let finalPriceInCents = basePriceInCents;
+
+    // Apply affiliate discount if set
+    if (affiliateDiscount > 0) {
+      finalPriceInCents = Math.round(basePriceInCents * (1 - affiliateDiscount / PERCENTAGE_DIVISOR));
+    }
+
+    const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ["card"],
-      line_items: [{ price: env.STRIPE_PRICE_ID, quantity: 1 }],
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: "Agentic Coding Mastery Course",
+              description: "Lifetime access to AI-first development training",
+            },
+            unit_amount: finalPriceInCents,
+          },
+          quantity: 1,
+        },
+      ],
       mode: "payment",
       success_url: successUrl,
       customer_email: context.email,
@@ -105,18 +213,26 @@ const checkoutFn = createServerFn()
       allow_promotion_codes: true,
     };
 
-    // Apply discount if a valid discount code is provided
-    if (data.discountCode && env.STRIPE_DISCOUNT_COUPON_ID) {
-      sessionConfig.discounts = [
-        {
-          coupon: env.STRIPE_DISCOUNT_COUPON_ID,
+    // Add automatic transfer to affiliate's Stripe Connect account
+    // Stripe will automatically transfer when funds are available (no manual retry needed)
+    if (affiliateStripeAccountId && affiliateCommission > 0) {
+      const commissionAmountCents = Math.floor((finalPriceInCents * affiliateCommission) / PERCENTAGE_DIVISOR);
+      sessionConfig.payment_intent_data = {
+        transfer_data: {
+          destination: affiliateStripeAccountId,
+          amount: commissionAmountCents,
         },
-      ];
+      };
     }
 
     const session = await stripe.checkout.sessions.create(sessionConfig);
 
-    return { sessionId: session.id };
+    return {
+      sessionId: session.id,
+      affiliateDiscount,
+      affiliateCommission,
+      affiliateName,
+    };
   });
 
 const features = [
@@ -163,6 +279,40 @@ function RouteComponent() {
   const { sessionId } = useAnalytics();
   const navigate = Route.useNavigate();
   const hasTriggeredCheckout = React.useRef(false);
+  const { affiliateInfo, pricing } = Route.useLoaderData();
+
+  // Calculate discounted price if affiliate has discount
+  const hasAffiliateDiscount = affiliateInfo && affiliateInfo.discountRate > 0;
+  const discountedPrice = hasAffiliateDiscount
+    ? Math.round(pricing.currentPrice * (1 - affiliateInfo.discountRate / PERCENTAGE_DIVISOR))
+    : pricing.currentPrice;
+
+
+  const proceedToCheckout = React.useCallback(async (affiliateCode: string) => {
+    const stripeResolved = await stripePromise;
+    if (!stripeResolved) throw new Error("Stripe failed to initialize");
+
+    try {
+      const { sessionId: stripeSessionId } = await checkoutFn({
+        data: {
+          affiliateCode: affiliateCode || undefined,
+          // discountCode: affiliateCode || undefined, // Discount codes not implemented yet
+          analyticsSessionId: sessionId || undefined, // Pass analytics session ID (convert null to undefined)
+        },
+      });
+      const { error } = await stripeResolved.redirectToCheckout({
+        sessionId: stripeSessionId,
+      });
+      if (error) throw error;
+    } catch (error) {
+      console.error("Payment error:", error);
+    }
+  }, [sessionId]);
+
+  // Calculate discount percentage from original to current price
+  const discountPercentage = pricing.originalPrice > pricing.currentPrice
+    ? Math.round(((pricing.originalPrice - pricing.currentPrice) / pricing.originalPrice) * 100)
+    : 0;
 
   // Auto-trigger checkout if user just logged in with checkout intent
   // Wait for sessionId to be available (from sessionStorage after OAuth redirect)
@@ -183,7 +333,7 @@ function RouteComponent() {
       // Proceed to checkout
       proceedToCheckout(ref || "");
     }
-  }, [user, checkout, ref, navigate, sessionId]);
+  }, [user, checkout, ref, navigate, sessionId, proceedToCheckout]);
 
   const handlePurchaseClick = async () => {
     // Track purchase intent
@@ -204,27 +354,7 @@ function RouteComponent() {
     await proceedToCheckout(ref || "");
   };
 
-  const proceedToCheckout = async (affiliateCode: string) => {
-    const stripePromise = loadStripe(publicEnv.VITE_STRIPE_PUBLISHABLE_KEY);
-    const stripeResolved = await stripePromise;
-    if (!stripeResolved) throw new Error("Stripe failed to initialize");
 
-    try {
-      const { sessionId: stripeSessionId } = await checkoutFn({
-        data: {
-          affiliateCode: affiliateCode || undefined,
-          // discountCode: affiliateCode || undefined, // Discount codes not implemented yet
-          analyticsSessionId: sessionId || undefined, // Pass analytics session ID (convert null to undefined)
-        },
-      });
-      const { error } = await stripeResolved.redirectToCheckout({
-        sessionId: stripeSessionId,
-      });
-      if (error) throw error;
-    } catch (error) {
-      console.error("Payment error:", error);
-    }
-  };
 
   return (
     <div className="relative w-full min-h-screen bg-slate-50 dark:bg-[#0b101a] text-slate-800 dark:text-slate-200">
@@ -243,7 +373,12 @@ function RouteComponent() {
               >
                 <div className="inline-flex items-center text-sm font-medium text-slate-700 dark:text-cyan-400">
                   <span className="w-2 h-2 bg-cyan-600 dark:bg-cyan-400 rounded-full mr-2 animate-pulse"></span>
-                  Limited Time Offer - {PRICING_CONFIG.DISCOUNT_PERCENTAGE}% OFF
+                  {pricing.promoLabel}{discountPercentage > 0 ? ` - ${discountPercentage}% OFF` : ""}
+                  {hasAffiliateDiscount && (
+                    <span className="text-green-600 dark:text-green-400 ml-2">
+                      + {affiliateInfo.discountRate}% extra
+                    </span>
+                  )}
                 </div>
               </GlassPanel>
 
@@ -305,21 +440,68 @@ function RouteComponent() {
                   {/* Pricing */}
                   <div className="text-center space-y-6">
                     <div>
-                      <div className="text-slate-600 dark:text-slate-400 mb-2">
-                        Regular price{" "}
-                        <span className="line-through">
-                          {PRICING_CONFIG.FORMATTED_ORIGINAL_PRICE}
-                        </span>
-                      </div>
-                      <div className="text-6xl font-bold text-slate-900 dark:text-white mb-2">
-                        {PRICING_CONFIG.FORMATTED_CURRENT_PRICE}
-                      </div>
-                      <div className="text-cyan-600 dark:text-cyan-400 font-medium">
-                        Limited Time Offer
-                      </div>
-                      <div className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-                        One-time payment, lifetime access
-                      </div>
+                      {hasAffiliateDiscount ? (
+                        <>
+                          {/* Always show original price as crossed out */}
+                          <div className="text-slate-600 dark:text-slate-400 mb-2">
+                            Regular price{" "}
+                            <span className="line-through">
+                              ${pricing.originalPrice}
+                            </span>
+                          </div>
+                          <div className="text-6xl font-bold text-slate-900 dark:text-white mb-2">
+                            ${discountedPrice}
+                          </div>
+                          {/* Promo as main discount */}
+                          {pricing.promoLabel && (
+                            <div className="text-cyan-600 dark:text-cyan-400 font-medium">
+                              {pricing.promoLabel}
+                              {discountPercentage > 0 && ` - ${discountPercentage}% OFF`}
+                            </div>
+                          )}
+                          {/* Affiliate discount as extra */}
+                          <div className="text-green-600 dark:text-green-400 text-sm mt-1">
+                            + {affiliateInfo.discountRate}% extra
+                            {affiliateInfo.displayName && (
+                              <span className="text-slate-600 dark:text-slate-400 font-normal">
+                                {" "}via {affiliateInfo.displayName}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-slate-600 dark:text-slate-400 text-sm mt-2">
+                            One-time payment, lifetime access
+                          </div>
+                          {/* Show total savings from original */}
+                          {pricing.originalPrice > discountedPrice && (
+                            <div className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                              Total savings: {Math.round(((pricing.originalPrice - discountedPrice) / pricing.originalPrice) * 100)}% off original
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {pricing.originalPrice > pricing.currentPrice && (
+                            <div className="text-slate-600 dark:text-slate-400 mb-2">
+                              Regular price{" "}
+                              <span className="line-through">
+                                ${pricing.originalPrice}
+                              </span>
+                            </div>
+                          )}
+                          <div className="text-6xl font-bold text-slate-900 dark:text-white mb-2">
+                            ${pricing.currentPrice}
+                          </div>
+                          {pricing.promoLabel && (
+                            <div className="text-cyan-600 dark:text-cyan-400 font-medium">
+                              {pricing.promoLabel}
+                              {discountPercentage > 0 && ` - ${discountPercentage}% OFF`}
+                            </div>
+                          )}
+                          <div className="text-slate-600 dark:text-slate-400 text-sm mt-1">
+                            One-time payment, lifetime access
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     <div className="flex flex-col items-center gap-4">

@@ -36,6 +36,12 @@ export const env = {
   STRIPE_PRICE_ID: testFallback(process.env.STRIPE_PRICE_ID, "price_test_placeholder", "STRIPE_PRICE_ID"),
   STRIPE_WEBHOOK_SECRET: testFallback(process.env.STRIPE_WEBHOOK_SECRET, "whsec_test_placeholder", "STRIPE_WEBHOOK_SECRET"),
   STRIPE_DISCOUNT_COUPON_ID: process.env.STRIPE_DISCOUNT_COUPON_ID,
+  // Dedicated secret for signing tokens (unsubscribe links, etc.)
+  // Independent of Stripe webhook secret for better security separation
+  TOKEN_SIGNING_SECRET: testFallback(process.env.TOKEN_SIGNING_SECRET, "test-token-signing-secret-32chars", "TOKEN_SIGNING_SECRET"),
+  // Stripe Connect OAuth Client ID (for connecting existing accounts)
+  // Get this from Stripe Dashboard > Settings > Connect > Platform settings
+  STRIPE_CLIENT_ID: process.env.STRIPE_CLIENT_ID,
   RECAPTCHA_SECRET_KEY: testFallback(process.env.RECAPTCHA_SECRET_KEY, "test-recaptcha-secret", "RECAPTCHA_SECRET_KEY"),
   MAILING_LIST_ENDPOINT: testFallback(process.env.MAILING_LIST_ENDPOINT, "https://test.example.com/mailing", "MAILING_LIST_ENDPOINT"),
   MAILING_LIST_PASSWORD: testFallback(process.env.MAILING_LIST_PASSWORD, "test-mailing-password", "MAILING_LIST_PASSWORD"),
