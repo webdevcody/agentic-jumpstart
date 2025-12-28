@@ -1,6 +1,7 @@
 import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import Stripe from "stripe";
 import { stripe } from "~/lib/stripe";
 import { authenticatedMiddleware } from "~/lib/auth";
 import { env } from "~/utils/env";
@@ -179,7 +180,7 @@ const checkoutFn = createServerFn()
       finalPriceInCents = Math.round(basePriceInCents * (1 - affiliateDiscount / 100));
     }
 
-    const sessionConfig: Parameters<typeof stripe.checkout.sessions.create>[0] = {
+    const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ["card"],
       line_items: [
         {

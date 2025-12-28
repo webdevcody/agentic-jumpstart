@@ -1,10 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { assertFeatureEnabled } from "~/lib/feature-flags";
-import {
-  useSuspenseQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Button, buttonVariants } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -27,7 +23,6 @@ import {
   updateAffiliateDiscountRateFn,
 } from "~/fn/affiliates";
 import { getPricingSettingsFn } from "~/fn/app-settings";
-import { authenticatedMiddleware } from "~/lib/auth";
 import {
   Copy,
   DollarSign,
@@ -171,6 +166,9 @@ const statsVariants = {
   },
 };
 
+// PERF: If dashboard load times become slow, consider splitting into useSuspenseQuery
+// calls with Suspense boundaries for progressive loading (stats → referrals → payouts).
+// See: https://tanstack.com/query/latest/docs/framework/react/guides/suspense
 export const Route = createFileRoute("/affiliate-dashboard")({
   beforeLoad: async () => {
     await assertFeatureEnabled("AFFILIATES_FEATURE");

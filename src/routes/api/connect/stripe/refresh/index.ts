@@ -4,7 +4,7 @@ import { stripe } from "~/lib/stripe";
 import { assertAuthenticated } from "~/utils/session";
 import { getAffiliateByUserId } from "~/data-access/affiliates";
 import { env } from "~/utils/env";
-import { generateCsrfState } from "~/utils/crypto";
+import { generateCsrfState, timingSafeStringEqual } from "~/utils/crypto";
 
 const MAX_COOKIE_AGE_SECONDS = 60 * 10; // 10 minutes
 
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/api/connect/stripe/refresh/")({
     const storedState = getCookie("stripe_connect_state") ?? null;
 
     // Validate CSRF state token (from the original request)
-    if (!incomingState || !storedState || incomingState !== storedState) {
+    if (!incomingState || !storedState || !timingSafeStringEqual(incomingState, storedState)) {
       // If state validation fails, redirect to start fresh
       return new Response(null, {
         status: 302,
