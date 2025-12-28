@@ -38,6 +38,14 @@ export function FooterSection() {
                   Buy Now
                 </a>
               </li>
+              <li>
+                <Link
+                  to="/success"
+                  className="hover:text-foreground transition-colors"
+                >
+                  x
+                </Link>
+              </li>
             </ul>
           </div>
 
