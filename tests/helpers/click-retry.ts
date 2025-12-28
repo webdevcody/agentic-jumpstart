@@ -1,4 +1,4 @@
-import { expect, type Page, type Locator } from "@playwright/test";
+import { expect, type Locator } from "@playwright/test";
 import { TEST_CONFIG } from "../setup/config";
 
 /**
