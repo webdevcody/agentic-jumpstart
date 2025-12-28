@@ -16,7 +16,8 @@ import { Header } from "~/routes/-components/header";
 import { FooterSection } from "~/routes/-components/footer";
 import { ThemeProvider } from "~/components/ThemeProvider";
 import { ThemeToggle } from "~/components/theme-toggle";
-import { Toaster } from "sonner";
+import { Toaster, type ToasterProps } from "sonner";
+import { useTheme } from "~/components/ThemeProvider";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import { shouldShowEarlyAccessFn } from "~/fn/early-access";
@@ -29,6 +30,19 @@ const getOgImageUrl = () => {
   const baseUrl = publicEnv.VITE_HOST_NAME.replace(/\/$/, "");
   return `${baseUrl}${OG_IMAGE_PATH}`;
 };
+
+function ThemedToaster() {
+  const { theme } = useTheme();
+  const resolvedTheme: ToasterProps["theme"] =
+    theme === "system"
+      ? typeof window !== "undefined" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light"
+      : theme;
+
+  return <Toaster theme={resolvedTheme} />;
+}
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   {
@@ -254,7 +268,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               <ThemeToggle />
             </div>
           )}
-          <Toaster />
+          <ThemedToaster />
           {/* <TanStackRouterDevtools position="bottom-right" />
           <ReactQueryDevtools buttonPosition="bottom-left" /> */}
           <Scripts />

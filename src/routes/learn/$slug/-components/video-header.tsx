@@ -1,12 +1,12 @@
 import { Badge } from "~/components/ui/badge";
-import { Lock, CheckCircle, Edit } from "lucide-react";
+import { Lock, CheckCircle, Circle, Edit } from "lucide-react";
 import { type Segment, type Progress } from "~/db/schema";
 import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "@tanstack/react-router";
-import { markAsCompletedFn } from "~/fn/progress";
+import { markAsCompletedFn, unmarkAsCompletedFn } from "~/fn/progress";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import { DeleteSegmentButton } from "./delete-segment-button";
+import { useSegment } from "~/routes/learn/-components/segment-context";
 
 interface VideoHeaderProps {
   currentSegment: Segment;
@@ -25,12 +25,20 @@ export function VideoHeader({
   progress,
   isPremium,
 }: VideoHeaderProps) {
-  const router = useRouter();
+  const {
+    locallyCompletedSegmentIds,
+    locallyUncompletedSegmentIds,
+    markSegmentAsLocallyCompleted,
+    unmarkSegmentAsLocallyCompleted,
+  } = useSegment();
 
-  const isCompleted = progress.some((p) => p.segmentId === currentSegmentId);
-  const canMarkComplete =
+  // Check both server progress and locally completed segments (for immediate UI feedback)
+  const isCompleted = locallyUncompletedSegmentIds.has(currentSegmentId)
+    ? false
+    : progress.some((p) => p.segmentId === currentSegmentId) ||
+      locallyCompletedSegmentIds.has(currentSegmentId);
+  const canAccessVideo =
     isLoggedIn &&
-    !isCompleted &&
     !currentSegment.isComingSoon &&
     (!currentSegment.isPremium || isPremium || isAdmin);
 
@@ -38,7 +46,7 @@ export function VideoHeader({
     mutationFn: (segmentId: number) =>
       markAsCompletedFn({ data: { segmentId } }),
     onSuccess: () => {
-      router.invalidate();
+      markSegmentAsLocallyCompleted(currentSegmentId);
       toast.success("Video marked as complete");
     },
     onError: () => {
@@ -46,9 +54,27 @@ export function VideoHeader({
     },
   });
 
-  const handleMarkComplete = () => {
-    markCompleteMutation.mutate(currentSegmentId);
+  const unmarkCompleteMutation = useMutation({
+    mutationFn: (segmentId: number) =>
+      unmarkAsCompletedFn({ data: { segmentId } }),
+    onSuccess: () => {
+      unmarkSegmentAsLocallyCompleted(currentSegmentId);
+      toast.success("Video marked as incomplete");
+    },
+    onError: () => {
+      toast.error("Failed to mark video as incomplete");
+    },
+  });
+
+  const handleToggleComplete = () => {
+    if (isCompleted) {
+      unmarkCompleteMutation.mutate(currentSegmentId);
+    } else {
+      markCompleteMutation.mutate(currentSegmentId);
+    }
   };
+
+  const isPending = markCompleteMutation.isPending || unmarkCompleteMutation.isPending;
 
   return (
     <header className="h-16 flex items-center justify-between px-8 border-b border-slate-200/60 dark:border-white/5 bg-white/60 dark:bg-[#0b101a]/40 backdrop-blur-md z-20 shrink-0">
@@ -75,14 +101,27 @@ export function VideoHeader({
       </div>
 
       <div className="flex items-center gap-5">
-        {canMarkComplete && (
+        {canAccessVideo && (
           <button
-            onClick={handleMarkComplete}
-            disabled={markCompleteMutation.isPending}
-            className="cursor-pointer flex items-center gap-2 glass px-5 py-2 rounded-xl text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-white/10 transition"
+            onClick={handleToggleComplete}
+            disabled={isPending}
+            className={`cursor-pointer flex items-center gap-2 glass px-5 py-2 rounded-xl text-xs font-bold transition ${
+              isCompleted
+                ? "text-emerald-600 dark:text-emerald-400 hover:bg-red-50 dark:hover:bg-white/10"
+                : "text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-white/10"
+            }`}
           >
-            <CheckCircle className="w-3.5 h-3.5" />
-            Mark as Complete
+            {isCompleted ? (
+              <>
+                <CheckCircle className="w-3.5 h-3.5" />
+                Completed
+              </>
+            ) : (
+              <>
+                <Circle className="w-3.5 h-3.5" />
+                Mark as Complete
+              </>
+            )}
           </button>
         )}
 

@@ -58,7 +58,24 @@ This is a TanStack Start application for an online learning platform with video 
 - `/src/hooks/` - Custom React hooks
   - `/mutations/` - React Query mutations
 - `/src/db/` - Database configuration and schema
+- `/src/config/` - Global configuration and magic numbers
 - `/drizzle/` - SQL migration files
+
+### Layered Architecture
+
+The codebase follows a strict 3-layer architecture:
+
+1. **Data Access Layer** (`/src/data-access/`) - Pure database operations, no business logic
+2. **Use Cases Layer** (`/src/use-cases/`) - Business logic and orchestration
+3. **Server Functions Layer** (`/src/fn/`) - HTTP endpoints that call use cases
+
+**Important**: Server functions should NEVER import Drizzle objects directly. Always call use cases.
+
+### Naming Conventions
+
+- Use cases: `verbNounUseCase` (e.g., `createUserUseCase`)
+- Data access: `verbNoun` (e.g., `createUser`)
+- Server functions: `verbNounFn` (e.g., `createUserFn`)
 
 ### Key Patterns
 
@@ -92,14 +109,19 @@ Required environment variables (see `/src/utils/env.ts`):
 - All server-side operations should use server functions (`createServerFn`)
 - Authentication state is managed via session cookies and database sessions
 
+## Code Quality Rules
+
+- Never hard code magic numbers - consolidate them at the top of the file or in `/src/config/index.ts`
+- Never let a file exceed 1,000 lines - split into smaller modular components
+
 ## Other Important Documentation Files
 
 - **Layered Architecture** - `/docs/technical/layered-architecture.md`
 - **Tailwind Additional Info** - `/docs/technical/tailwind.md`
 
-## New Tanstack Route
+## Tanstack Routes
 
-When making an admin page, you can protect it by using this type of format:
+When making an admin page, protect it with `beforeLoad`:
 
 ```typescript
 import { assertIsAdminFn } from "~/fn/auth";
@@ -112,50 +134,43 @@ export const Route = createFileRoute("/admin/conversions")({
 
 ## Tanstack Server Functions
 
-When trying to invoke a tanstack server function, remember you need to send an object that has a data property, like so:
+Server functions require: middleware, input validator, and should call use cases (not data-access directly).
 
 ```typescript
-// an example of calling a server function using the { data } object
+import { createServerFn } from "@tanstack/react-start";
+import { adminMiddleware } from "~/lib/auth";
+import { z } from "zod";
+import { reorderSegmentsUseCase } from "~/use-cases/segments";
+
+export const reorderSegmentsFn = createServerFn()
+  .middleware([adminMiddleware])
+  .validator(z.array(z.object({ id: z.number(), order: z.number() })))
+  .handler(async ({ data }) => {
+    return reorderSegmentsUseCase(data);
+  });
+```
+
+### Middleware Options (from `~/lib/auth`)
+
+- `authenticatedMiddleware` - Requires authenticated user
+- `adminMiddleware` - Requires admin permission
+- `unauthenticatedMiddleware` - Optional authentication (userId may be undefined)
+
+### Calling Server Functions
+
+Always pass data via the `data` property:
+
+```typescript
 getConversionMetricsFn({
   data: { start: dateRange.start, end: dateRange.end },
-}),
-```
-
-### Tanstack Server Functions with Authentication Middleware
-
-When making a tanstack server function which requires authentication, remember to use the following middleware:
-
-```typescript
-export const toggleEarlyAccessModeFn = createServerFn({
-  method: "POST",
-}).middleware([authenticatedMiddleware]);
-```
-
-### Tanstack Server Functions with Admin Middleware
-
-When making a tanstack server function which requires admin only permission, remember to use the following middleware:
-
-```typescript
-export const toggleEarlyAccessModeFn = createServerFn({
-  method: "POST",
-}).middleware([adminMiddleware]);
-```
-
-### Tanstack Server Functions with Unauthenticated Middleware
-
-When making a tanstack server function with optional authentication, remember to use the following middleware:
-
-```typescript
-export const toggleEarlyAccessModeFn = createServerFn({
-  method: "POST",
-}).middleware([unauthenticatedMiddleware]);
+});
 ```
 
 ## DO NOT RUN SERVER
 
 I always run my server in a separate terminal. NEVER TRY TO RUN `npm run dev`!
 
-## REMEMBER IMPORTANT
+## UI Components
 
-- all cards should use the shadcn Card component and CardTitle, CardDescription, etc
-- pages should use the Page component and PageHeader when possible
+- All cards should use the shadcn Card component (CardTitle, CardDescription, etc.)
+- Pages should use the Page component and PageHeader when possible

@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { useCallback, useEffect, useRef } from "react";
@@ -130,8 +130,7 @@ function ViewSegment({
   progress: Progress[];
   thumbnailUrl?: string | null;
 }) {
-  const { setCurrentSegmentId } = useSegment();
-  const router = useRouter();
+  const { setCurrentSegmentId, markSegmentAsLocallyCompleted } = useSegment();
 
   useEffect(() => {
     setLastWatchedSegment(currentSegment.slug);
@@ -166,8 +165,9 @@ function ViewSegment({
       await markedAsWatchedFn({
         data: { segmentId: currentSegmentId },
       });
-      // Invalidate the router to refresh the UI (hides "Mark As Complete" button)
-      router.invalidate();
+      // Update local state immediately so the UI reflects the change
+      // without needing to invalidate the router (which would pause the video)
+      markSegmentAsLocallyCompleted(currentSegmentId);
     }
   }, [
     currentSegment.isPremium,
@@ -176,7 +176,7 @@ function ViewSegment({
     isAdmin,
     isLoggedIn,
     currentSegmentId,
-    router,
+    markSegmentAsLocallyCompleted,
   ]);
 
   return (

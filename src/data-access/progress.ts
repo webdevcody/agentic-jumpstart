@@ -25,3 +25,12 @@ export async function markAsWatched(
 ) {
   await database.insert(progress).values({ segmentId, userId });
 }
+
+export async function unmarkAsWatched(
+  userId: UserId,
+  segmentId: Progress["segmentId"]
+) {
+  await database
+    .delete(progress)
+    .where(and(eq(progress.segmentId, segmentId), eq(progress.userId, userId)));
+}

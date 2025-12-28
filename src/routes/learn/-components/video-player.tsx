@@ -102,6 +102,7 @@ export function VideoPlayer({
 }: VideoPlayerProps) {
   const [isClient, setIsClient] = useState(false);
   const playerRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [selectedQuality, setSelectedQuality] = useState<string>("original");
   const [showQualityMenu, setShowQualityMenu] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(
@@ -228,6 +229,41 @@ export function VideoPlayer({
     };
   }, [playbackRate]);
 
+  // Handle space bar to toggle play/pause when video player has focus
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== "Space" && e.key !== " " && e.key !== "Spacebar") return;
+
+      // Check if focus is within the video player container
+      const activeElement = document.activeElement;
+      const container = containerRef.current;
+      if (!container) return;
+
+      // Find the actual video element within the container (ReactPlayer renders a real <video>)
+      const videoElement = container.querySelector(
+        "video"
+      ) as HTMLVideoElement | null;
+
+      const isFocused =
+        container.contains(activeElement) ||
+        container === activeElement ||
+        (videoElement != null && videoElement === activeElement);
+
+      if (isFocused) {
+        e.preventDefault();
+        e.stopPropagation();
+        setPlaying((prev) => !prev);
+      }
+    };
+
+    // Capture phase so we can prevent page scroll before default handlers run
+    document.addEventListener("keydown", handleKeyDown, true);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, true);
+    };
+  }, []);
+
   // Handle quality change
   const handleQualityChange = (quality: string) => {
     const videoElement = playerRef.current;
@@ -300,10 +336,30 @@ export function VideoPlayer({
 
   const handlePlayClick = () => {
     setPlaying(true);
+    // Focus the container so space bar works for play/pause
+    containerRef.current?.focus();
+  };
+
+  const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Focus container when clicked (but not if clicking on interactive elements)
+    const target = e.target as HTMLElement;
+    if (
+      target.tagName !== "BUTTON" &&
+      target.tagName !== "A" &&
+      !target.closest("button") &&
+      !target.closest("a")
+    ) {
+      containerRef.current?.focus();
+    }
   };
 
   return (
-    <div className="w-full h-full overflow-hidden relative group">
+    <div
+      ref={containerRef}
+      className="w-full h-full overflow-hidden relative group outline-none"
+      tabIndex={0}
+      onClick={handleContainerClick}
+    >
       {/* Thumbnail overlay that fades out when video starts playing */}
       {thumbnailUrl && !playing && !hasError && (
         <div
