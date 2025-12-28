@@ -31,12 +31,14 @@ function RouteComponent() {
 
   // Send conversion event to Google Ads
   useEffect(() => {
-    // Wait for gtag to be available
     if (typeof window !== "undefined" && window.gtag) {
       window.gtag("event", "conversion", {
         send_to: publicEnv.VITE_GOOGLE_ADS_CONVERSION_LABEL,
       });
-      console.log("[Analytics] Conversion event sent to Google Ads");
+      console.log(
+        "[Analytics] Conversion event sent to Google Ads:",
+        publicEnv.VITE_GOOGLE_ADS_CONVERSION_LABEL
+      );
     }
   }, []);
 
