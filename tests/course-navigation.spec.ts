@@ -90,7 +90,7 @@ test.describe("Course Navigation", () => {
     // verify a user can click the next button to go to the next segment
     // Progress format is now "X/Y" instead of "X of Y completed"
     await expect(
-      module.locator("span", { hasText: "0/3" })
+      module.locator("span", { hasText: TEST_CONFIG.PROGRESS.GETTING_STARTED_INITIAL })
     ).toBeVisible();
     const nextButton = page.getByRole("button", {
       name: TEST_CONFIG.UI_TEXT.NEXT_VIDEO_BUTTON,
@@ -105,7 +105,7 @@ test.describe("Course Navigation", () => {
 
     // Verify that the progress indicator shows completion
     await expect(
-      module.locator("span", { hasText: "1/3" })
+      module.locator("span", { hasText: TEST_CONFIG.PROGRESS.GETTING_STARTED_ONE_COMPLETE })
     ).toBeVisible();
   });
 
@@ -138,7 +138,7 @@ test.describe("Course Navigation", () => {
 
     // Verify initial progress is 0/2 for Advanced Topics module
     await expect(
-      advancedModule.locator("span", { hasText: "0/2" })
+      advancedModule.locator("span", { hasText: TEST_CONFIG.PROGRESS.ADVANCED_TOPICS_INITIAL })
     ).toBeVisible();
 
     // Click the "Next Video" button - this should navigate to the next segment
@@ -161,7 +161,7 @@ test.describe("Course Navigation", () => {
     // Verify the progress for Advanced Topics module is still 0/2
     // The premium video should NOT have been marked as watched
     await expect(
-      advancedModule.locator("span", { hasText: "0/2" })
+      advancedModule.locator("span", { hasText: TEST_CONFIG.PROGRESS.ADVANCED_TOPICS_INITIAL })
     ).toBeVisible();
 
     // The segment item should NOT have a check icon
@@ -192,7 +192,7 @@ test.describe("Course Navigation", () => {
 
     // Verify initial progress is 0/3
     await expect(
-      module.locator("span", { hasText: "0/3" })
+      module.locator("span", { hasText: TEST_CONFIG.PROGRESS.GETTING_STARTED_INITIAL })
     ).toBeVisible();
 
     // Find the segment item for this segment
@@ -220,7 +220,7 @@ test.describe("Course Navigation", () => {
 
     // Verify progress updated to 1/3
     await expect(
-      module.locator("span", { hasText: "1/3" })
+      module.locator("span", { hasText: TEST_CONFIG.PROGRESS.GETTING_STARTED_ONE_COMPLETE })
     ).toBeVisible();
   });
 });

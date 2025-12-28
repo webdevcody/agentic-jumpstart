@@ -10,6 +10,22 @@ import {
 import { UserId } from "~/use-cases/types";
 import { eq, desc, and, count, ilike } from "drizzle-orm";
 import { getPublicName, toPublicProfile } from "~/utils/name-helpers";
+import { getStorage } from "~/utils/storage";
+
+// Generate fresh presigned URL from imageId, fallback to stored image URL
+async function generateImageUrl(
+  imageId: string | null,
+  fallbackImage: string | null
+): Promise<string | null> {
+  if (!imageId) return fallbackImage; // Fallback for old records without imageId
+  try {
+    const { storage } = getStorage();
+    return await storage.getPresignedUrl(imageId);
+  } catch (error) {
+    console.error(`Failed to generate presigned URL for ${imageId}:`, error);
+    return fallbackImage;
+  }
+}
 
 export async function createProfile(
   userId: UserId,
@@ -45,7 +61,11 @@ export async function getProfile(userId: UserId) {
     where: eq(profiles.userId, userId),
   });
 
-  return profile;
+  if (!profile) return null;
+
+  // Generate fresh presigned URL from imageId
+  const image = await generateImageUrl(profile.imageId, profile.image);
+  return { ...profile, image };
 }
 
 export async function getProfileWithProjects(userId: UserId) {
@@ -59,7 +79,11 @@ export async function getProfileWithProjects(userId: UserId) {
     },
   });
 
-  return profile;
+  if (!profile) return null;
+
+  // Generate fresh presigned URL from imageId
+  const image = await generateImageUrl(profile.imageId, profile.image);
+  return { ...profile, image };
 }
 
 export async function getPublicProfile(userId: UserId) {
@@ -76,8 +100,11 @@ export async function getPublicProfile(userId: UserId) {
   if (profile) {
     // Strip PII (realName, useDisplayName) and add computed publicName
     const safeProfile = toPublicProfile(profile);
+    // Generate fresh presigned URL from imageId
+    const image = await generateImageUrl(profile.imageId, profile.image);
     return {
       ...safeProfile,
+      image,
       projects: profile.projects || [],
     };
   }
@@ -136,6 +163,7 @@ export async function getPublicMembers() {
       displayName: profiles.displayName,
       realName: profiles.realName,
       useDisplayName: profiles.useDisplayName,
+      imageId: profiles.imageId,
       image: profiles.image,
       bio: profiles.bio,
       flair: profiles.flair,
@@ -146,14 +174,18 @@ export async function getPublicMembers() {
     .where(eq(profiles.isPublicProfile, true))
     .orderBy(desc(profiles.updatedAt));
 
-  // Strip PII (realName, useDisplayName) and add computed publicName
-  return members.map((member) => {
-    const { realName, useDisplayName, ...safeMember } = member;
-    return {
-      ...safeMember,
-      publicName: getPublicName(member),
-    };
-  });
+  // Strip PII (realName, useDisplayName), add publicName, generate fresh image URLs
+  return Promise.all(
+    members.map(async (member) => {
+      const { realName, useDisplayName, imageId, image: storedImage, ...safeMember } = member;
+      const image = await generateImageUrl(imageId, storedImage);
+      return {
+        ...safeMember,
+        image,
+        publicName: getPublicName(member),
+      };
+    })
+  );
 }
 
 export async function getCommunityStats() {

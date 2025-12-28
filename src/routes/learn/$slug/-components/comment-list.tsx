@@ -196,6 +196,10 @@ function CommentItem({ comment, level = 0 }: CommentItemProps) {
                     `https://api.dicebear.com/9.x/initials/svg?seed=${comment.profile.publicName || "User"}&backgroundColor=6366f1&textColor=ffffff`
                   }
                   alt="User avatar"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = `https://api.dicebear.com/9.x/initials/svg?seed=${comment.profile.publicName || "User"}&backgroundColor=6366f1&textColor=ffffff`;
+                  }}
                 />
               </div>
 
@@ -360,6 +364,10 @@ function CommentItem({ comment, level = 0 }: CommentItemProps) {
                                     `https://api.dicebear.com/9.x/initials/svg?seed=${user?.id || "user"}&backgroundColor=6366f1&textColor=ffffff`
                                   }
                                   alt="Your avatar"
+                                  onError={(e) => {
+                                    e.currentTarget.onerror = null;
+                                    e.currentTarget.src = `https://api.dicebear.com/9.x/initials/svg?seed=${user?.id || "user"}&backgroundColor=6366f1&textColor=ffffff`;
+                                  }}
                                 />
                               </div>
                               <div className="flex-1">

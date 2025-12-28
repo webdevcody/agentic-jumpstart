@@ -215,7 +215,7 @@ function EditProfilePage() {
 
     setIsUploading(true);
     try {
-      const { presignedUrl, imageKey, imageUrl } =
+      const { presignedUrl, imageKey } =
         await getProfileImageUploadUrlFn({
           data: {
             fileName: file.name,
@@ -235,10 +235,10 @@ function EditProfilePage() {
         throw new Error("Failed to upload image");
       }
 
+      // Only store the imageId (R2 key), not the presigned URL
       await updateProfileMutation.mutateAsync({
         data: {
           imageId: imageKey,
-          image: imageUrl,
         },
       });
 

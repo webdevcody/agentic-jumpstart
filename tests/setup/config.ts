@@ -10,6 +10,11 @@ export const TEST_CONFIG = {
     GETTING_STARTED: "Getting Started",
     ADVANCED_TOPICS: "Advanced Topics"
   },
+  PROGRESS: {
+    GETTING_STARTED_INITIAL: "0/3",
+    GETTING_STARTED_ONE_COMPLETE: "1/3",
+    ADVANCED_TOPICS_INITIAL: "0/2"
+  },
   SEGMENTS: {
     WELCOME_TO_COURSE: {
       slug: "welcome-to-the-course",

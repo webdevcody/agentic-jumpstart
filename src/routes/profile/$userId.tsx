@@ -177,7 +177,7 @@ function ProfilePage() {
                 <div className="flex-shrink-0">
                   <Avatar className="w-32 h-32 shadow-elevation-2">
                     <AvatarImage
-                      src={profile.image || undefined}
+                      src={profileData.image || undefined}
                       alt={publicName}
                       className="object-cover"
                     />
@@ -297,7 +297,7 @@ function ProfilePage() {
                               {JSON.parse(project.technologies).map(
                                 (tech: string, index: number) => (
                                   <Badge
-                                    key={index}
+                                    key={index+tech}
                                     variant="secondary"
                                     className="text-xs"
                                   >

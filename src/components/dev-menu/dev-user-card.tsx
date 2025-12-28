@@ -38,7 +38,13 @@ export function DevUserCard({
         <Avatar className="h-8 w-8 shrink-0">
           <AvatarImage src={user.image} alt={user.name} />
           <AvatarFallback className="text-xs">
-            {user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+            {user.name
+              .split(" ")
+              .filter(Boolean)
+              .map((n) => n[0])
+              .join("")
+              .slice(0, 2)
+              .toUpperCase() || "??"}
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">

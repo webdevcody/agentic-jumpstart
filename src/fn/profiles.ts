@@ -96,7 +96,6 @@ export const getProfileImageUploadUrlFn = createServerFn({
     return {
       presignedUrl,
       imageKey,
-      imageUrl: await storage.getPresignedUrl(imageKey),
     };
   });
 
