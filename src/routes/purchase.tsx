@@ -32,6 +32,15 @@ import { shouldShowEarlyAccessFn } from "~/fn/early-access";
 import { useAnalytics } from "~/hooks/use-analytics";
 import { trackPurchaseIntentFn } from "~/fn/analytics";
 import { getPricingSettingsFn } from "~/fn/app-settings";
+import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
+
+/** Conversion factor: multiply dollars by this to get cents */
+const CENTS_PER_DOLLAR = 100;
+/** Divisor for converting percentage values (e.g., 30% -> 0.30) */
+const PERCENTAGE_DIVISOR = 100;
+
+/** Load Stripe once at module level for efficiency */
+const stripePromise = loadStripe(publicEnv.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const searchSchema = z.object({
   ref: z.string().optional(),
@@ -86,6 +95,7 @@ export const Route = createFileRoute("/purchase")({
     return { shouldShowEarlyAccess, affiliateInfo, pricing };
   },
   component: RouteComponent,
+  errorComponent: DefaultCatchBoundary,
 });
 
 const checkoutSchema = z.object({
@@ -172,12 +182,12 @@ const checkoutFn = createServerFn()
     const currentPriceDollars = await getPricingCurrentPrice();
 
     // Calculate the final price (in cents)
-    const basePriceInCents = currentPriceDollars * 100;
+    const basePriceInCents = currentPriceDollars * CENTS_PER_DOLLAR;
     let finalPriceInCents = basePriceInCents;
 
     // Apply affiliate discount if set
     if (affiliateDiscount > 0) {
-      finalPriceInCents = Math.round(basePriceInCents * (1 - affiliateDiscount / 100));
+      finalPriceInCents = Math.round(basePriceInCents * (1 - affiliateDiscount / PERCENTAGE_DIVISOR));
     }
 
     const sessionConfig: Stripe.Checkout.SessionCreateParams = {
@@ -205,7 +215,7 @@ const checkoutFn = createServerFn()
     // Add automatic transfer to affiliate's Stripe Connect account
     // Stripe will automatically transfer when funds are available (no manual retry needed)
     if (affiliateStripeAccountId && affiliateCommission > 0) {
-      const commissionAmountCents = Math.floor((finalPriceInCents * affiliateCommission) / 100);
+      const commissionAmountCents = Math.floor((finalPriceInCents * affiliateCommission) / PERCENTAGE_DIVISOR);
       sessionConfig.payment_intent_data = {
         transfer_data: {
           destination: affiliateStripeAccountId,
@@ -273,8 +283,30 @@ function RouteComponent() {
   // Calculate discounted price if affiliate has discount
   const hasAffiliateDiscount = affiliateInfo && affiliateInfo.discountRate > 0;
   const discountedPrice = hasAffiliateDiscount
-    ? Math.round(pricing.currentPrice * (1 - affiliateInfo.discountRate / 100))
+    ? Math.round(pricing.currentPrice * (1 - affiliateInfo.discountRate / PERCENTAGE_DIVISOR))
     : pricing.currentPrice;
+
+
+  const proceedToCheckout = React.useCallback(async (affiliateCode: string) => {
+    const stripeResolved = await stripePromise;
+    if (!stripeResolved) throw new Error("Stripe failed to initialize");
+
+    try {
+      const { sessionId: stripeSessionId } = await checkoutFn({
+        data: {
+          affiliateCode: affiliateCode || undefined,
+          // discountCode: affiliateCode || undefined, // Discount codes not implemented yet
+          analyticsSessionId: sessionId || undefined, // Pass analytics session ID (convert null to undefined)
+        },
+      });
+      const { error } = await stripeResolved.redirectToCheckout({
+        sessionId: stripeSessionId,
+      });
+      if (error) throw error;
+    } catch (error) {
+      console.error("Payment error:", error);
+    }
+  }, [sessionId]);
 
   // Calculate discount percentage from original to current price
   const discountPercentage = pricing.originalPrice > pricing.currentPrice
@@ -300,7 +332,7 @@ function RouteComponent() {
       // Proceed to checkout
       proceedToCheckout(ref || "");
     }
-  }, [user, checkout, ref, navigate, sessionId]);
+  }, [user, checkout, ref, navigate, sessionId, proceedToCheckout]);
 
   const handlePurchaseClick = async () => {
     // Track purchase intent
@@ -321,27 +353,7 @@ function RouteComponent() {
     await proceedToCheckout(ref || "");
   };
 
-  const proceedToCheckout = async (affiliateCode: string) => {
-    const stripePromise = loadStripe(publicEnv.VITE_STRIPE_PUBLISHABLE_KEY);
-    const stripeResolved = await stripePromise;
-    if (!stripeResolved) throw new Error("Stripe failed to initialize");
 
-    try {
-      const { sessionId: stripeSessionId } = await checkoutFn({
-        data: {
-          affiliateCode: affiliateCode || undefined,
-          // discountCode: affiliateCode || undefined, // Discount codes not implemented yet
-          analyticsSessionId: sessionId || undefined, // Pass analytics session ID (convert null to undefined)
-        },
-      });
-      const { error } = await stripeResolved.redirectToCheckout({
-        sessionId: stripeSessionId,
-      });
-      if (error) throw error;
-    } catch (error) {
-      console.error("Payment error:", error);
-    }
-  };
 
   return (
     <div className="relative w-full min-h-screen bg-slate-50 dark:bg-[#0b101a] text-slate-800 dark:text-slate-200">

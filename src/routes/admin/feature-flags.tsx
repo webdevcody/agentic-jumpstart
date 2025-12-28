@@ -37,7 +37,8 @@ const FLAG_TOGGLE_FNS: Record<FlagKey, (params: { data: { enabled: boolean } }) 
     toggleFeatureFlagFn({ data: { flagKey: FLAGS.AFFILIATE_DISCOUNT_SPLIT, enabled: params.data.enabled } }),
   [FLAGS.BLOG_FEATURE]: toggleBlogFeatureFn,
   [FLAGS.NEWS_FEATURE]: toggleNewsFeatureFn,
-  [FLAGS.VIDEO_SEGMENT_CONTENT_TABS]: () => Promise.resolve(undefined),
+  [FLAGS.VIDEO_SEGMENT_CONTENT_TABS]: (params) =>
+    toggleFeatureFlagFn({ data: { flagKey: FLAGS.VIDEO_SEGMENT_CONTENT_TABS, enabled: params.data.enabled } }),
 };
 
 export const Route = createFileRoute("/admin/feature-flags")({

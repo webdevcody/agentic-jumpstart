@@ -996,7 +996,12 @@ function AffiliateDashboard() {
                   <span className="text-sm text-muted-foreground">
                     Minimum Payout:{" "}
                   </span>
-                  <span className="text-sm font-medium">$50.00</span>
+                  <span className="text-sm font-medium">
+                    {new Intl.NumberFormat("en-US", {
+                      style: "currency",
+                      currency: "USD",
+                    }).format((AFFILIATE_CONFIG.MINIMUM_PAYOUT ?? 5000) / 100)}
+                  </span>
                 </div>
               )}
             </CardContent>

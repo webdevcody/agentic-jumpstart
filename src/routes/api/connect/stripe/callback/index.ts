@@ -57,12 +57,14 @@ export const Route = createFileRoute("/api/connect/stripe/callback/")({
       return new Response("Invalid state parameter", { status: 400 });
     }
 
-    // Clear cookies after successful validation
-    deleteCookie("stripe_connect_state");
-    deleteCookie("stripe_connect_affiliate_id");
-    if (onboardingInProgress) {
-      deleteCookie("affiliate_onboarding");
-    }
+    // Helper to clear all OAuth cookies
+    const clearOAuthCookies = () => {
+      deleteCookie("stripe_connect_state");
+      deleteCookie("stripe_connect_affiliate_id");
+      if (onboardingInProgress) {
+        deleteCookie("affiliate_onboarding");
+      }
+    };
 
     try {
       // Require authentication
@@ -72,15 +74,19 @@ export const Route = createFileRoute("/api/connect/stripe/callback/")({
       const affiliate = await getAffiliateByUserId(user.id);
 
       if (!affiliate) {
+        // Don't clear cookies - allow retry
         return new Response("Affiliate account not found", { status: 404 });
       }
 
       // Verify affiliate ID matches (extra security)
       if (storedAffiliateId && String(affiliate.id) !== storedAffiliateId) {
+        // Security violation - clear cookies to prevent reuse
+        clearOAuthCookies();
         return new Response("Affiliate mismatch", { status: 403 });
       }
 
       if (!affiliate.stripeConnectAccountId) {
+        // Don't clear cookies - allow retry
         return new Response("Stripe Connect account not found", { status: 404 });
       }
 
@@ -102,6 +108,9 @@ export const Route = createFileRoute("/api/connect/stripe/callback/")({
         lastStripeSync: new Date(),
       });
 
+      // Clear cookies only after successful completion
+      clearOAuthCookies();
+
       // Redirect to onboarding complete step if coming from onboarding flow
       // Otherwise go directly to dashboard
       const redirectUrl = onboardingInProgress
@@ -113,6 +122,7 @@ export const Route = createFileRoute("/api/connect/stripe/callback/")({
       });
     } catch (error) {
       console.error("Stripe Connect callback error:", error);
+      // Don't clear cookies on transient errors - allow retry
       return new Response("Failed to complete Stripe Connect onboarding", {
         status: 500,
       });
