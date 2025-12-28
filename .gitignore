@@ -32,3 +32,5 @@ backups/*
 .swarm/
 
 proof/
+
+.automaker/
