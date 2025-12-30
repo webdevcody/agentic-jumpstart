@@ -40,14 +40,14 @@ function AdminUsers() {
     // Filter by tab
     if (activeTab === "premium" && !user.isPremium) return false;
     if (activeTab === "free" && user.isPremium) return false;
-    
+
     // Filter by email search
     if (searchQuery.trim()) {
       const email = user.email?.toLowerCase() || "";
       const query = searchQuery.toLowerCase().trim();
       if (!email.includes(query)) return false;
     }
-    
+
     return true;
   });
 
@@ -124,9 +124,7 @@ function AdminUsers() {
         }
       />
 
-      <div
-        className="space-y-6"
-      >
+      <div className="space-y-6">
         {/* Search Bar */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -150,10 +148,7 @@ function AdminUsers() {
                 All Users
                 <Badge variant="secondary">{users.length}</Badge>
               </TabsTrigger>
-              <TabsTrigger
-                value="premium"
-                className="flex items-center gap-2"
-              >
+              <TabsTrigger value="premium" className="flex items-center gap-2">
                 <Crown className="h-4 w-4" />
                 Premium
                 <Badge variant="secondary">{premiumCount}</Badge>
@@ -167,10 +162,7 @@ function AdminUsers() {
           </div>
 
           {/* Users Grid */}
-          <TabsContent 
-            value={activeTab} 
-            className="mt-0"
-          >
+          <TabsContent value={activeTab} className="mt-0 animate-none">
             {isLoading ? (
               <UserGridSkeleton />
             ) : filteredUsers.length === 0 ? (
@@ -194,20 +186,25 @@ function AdminUsers() {
                     params={{ userId: user.id.toString() }}
                     className="block"
                   >
-                    <Card 
-                      className="hover:shadow-md border-border/50 hover:border-border cursor-pointer transition-none"
-                    >
-                      <CardContent className="p-6">
+                    <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50 border border-border/50 shadow-sm hover:shadow-md cursor-pointer text-card-foreground flex flex-col gap-6 py-4">
+                      <div className="px-6">
                         {/* Header with Avatar and Status */}
                         <div className="flex items-start mb-4">
                           <div className="flex items-center gap-3">
                             <Avatar className="h-12 w-12 ring-2 ring-background shadow-sm">
                               <AvatarImage
                                 src={getUserAvatar(user.profile, user.email)}
-                                alt={user.profile?.displayName || user.email || "User"}
+                                alt={
+                                  user.profile?.displayName ||
+                                  user.email ||
+                                  "User"
+                                }
                               />
                               <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
-                                {getUserInitials(user.profile?.displayName, user.email)}
+                                {getUserInitials(
+                                  user.profile?.displayName,
+                                  user.email
+                                )}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
@@ -256,8 +253,8 @@ function AdminUsers() {
                             </Badge>
                           )}
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
                   </Link>
                 ))}
               </div>
@@ -285,12 +282,12 @@ function UserGridSkeleton() {
               </div>
               <div className="h-5 w-12 bg-muted animate-pulse rounded-full" />
             </div>
-            
+
             <div className="flex items-center gap-2 mb-4">
               <div className="h-4 w-4 bg-muted animate-pulse rounded" />
               <div className="h-4 w-32 bg-muted animate-pulse rounded" />
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div className="h-6 w-20 bg-muted animate-pulse rounded-full" />
               <div className="h-8 w-12 bg-muted animate-pulse rounded" />
