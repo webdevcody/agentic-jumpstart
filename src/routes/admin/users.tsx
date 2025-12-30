@@ -3,10 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { getAllUsersWithProfilesFn } from "~/fn/users";
 import { assertIsAdminFn } from "~/fn/auth";
-import { Users, Crown, User, UserCheck, Mail } from "lucide-react";
+import { Users, Crown, User, UserCheck, Mail, Search } from "lucide-react";
 import { queryOptions } from "@tanstack/react-query";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "~/components/ui/tabs";
 import { PageHeader } from "~/routes/admin/-components/page-header";
 import { Page } from "~/routes/admin/-components/page";
@@ -32,11 +33,21 @@ const usersQuery = queryOptions({
 
 function AdminUsers() {
   const [activeTab, setActiveTab] = useState<"all" | "premium" | "free">("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const { data: users = [], isLoading } = useQuery(usersQuery);
 
   const filteredUsers = users.filter((user) => {
-    if (activeTab === "premium") return user.isPremium;
-    if (activeTab === "free") return !user.isPremium;
+    // Filter by tab
+    if (activeTab === "premium" && !user.isPremium) return false;
+    if (activeTab === "free" && user.isPremium) return false;
+    
+    // Filter by email search
+    if (searchQuery.trim()) {
+      const email = user.email?.toLowerCase() || "";
+      const query = searchQuery.toLowerCase().trim();
+      if (!email.includes(query)) return false;
+    }
+    
     return true;
   });
 
@@ -114,9 +125,20 @@ function AdminUsers() {
       />
 
       <div
-        className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500"
-        style={{ animationDelay: "0.1s", animationFillMode: "both" }}
+        className="space-y-6"
       >
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search by email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
         <Tabs
           value={activeTab}
           onValueChange={(value) => setActiveTab(value as any)}
@@ -147,8 +169,7 @@ function AdminUsers() {
           {/* Users Grid */}
           <TabsContent 
             value={activeTab} 
-            className="mt-0 animate-in fade-in slide-in-from-bottom-2 duration-500"
-            style={{ animationDelay: "0.2s", animationFillMode: "both" }}
+            className="mt-0"
           >
             {isLoading ? (
               <UserGridSkeleton />
@@ -159,7 +180,9 @@ function AdminUsers() {
                 </div>
                 <h3 className="text-lg font-semibold mb-2">No users found</h3>
                 <p className="text-sm text-muted-foreground">
-                  No users match the selected filter criteria.
+                  {searchQuery.trim()
+                    ? `No users found matching "${searchQuery}"`
+                    : "No users match the selected filter criteria."}
                 </p>
               </div>
             ) : (
@@ -172,12 +195,11 @@ function AdminUsers() {
                     className="block"
                   >
                     <Card 
-                      className="hover:shadow-md transition-all duration-200 border-border/50 hover:border-border animate-in fade-in slide-in-from-bottom-2 duration-300 cursor-pointer hover:scale-105"
-                      style={{ animationDelay: `${0.1 * index}s`, animationFillMode: "both" }}
+                      className="hover:shadow-md border-border/50 hover:border-border cursor-pointer transition-none"
                     >
                       <CardContent className="p-6">
                         {/* Header with Avatar and Status */}
-                        <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-start mb-4">
                           <div className="flex items-center gap-3">
                             <Avatar className="h-12 w-12 ring-2 ring-background shadow-sm">
                               <AvatarImage
@@ -197,14 +219,6 @@ function AdminUsers() {
                               </div>
                             </div>
                           </div>
-                          <div className="flex flex-col gap-1">
-                            {user.isAdmin && (
-                              <Badge variant="destructive" className="text-xs">
-                                <UserCheck className="h-3 w-3 mr-1" />
-                                Admin
-                              </Badge>
-                            )}
-                          </div>
                         </div>
 
                         {/* Email */}
@@ -213,8 +227,8 @@ function AdminUsers() {
                           <span className="truncate">{user.email}</span>
                         </div>
 
-                        {/* Status Badge */}
-                        <div className="flex items-center justify-start">
+                        {/* Status Badges */}
+                        <div className="flex items-center justify-start gap-2 flex-wrap">
                           <Badge
                             variant={user.isPremium ? "default" : "secondary"}
                             className={
@@ -235,6 +249,12 @@ function AdminUsers() {
                               </>
                             )}
                           </Badge>
+                          {user.isAdmin && (
+                            <Badge variant="destructive" className="text-xs">
+                              <UserCheck className="h-3 w-3 mr-1" />
+                              Admin
+                            </Badge>
+                          )}
                         </div>
                       </CardContent>
                     </Card>

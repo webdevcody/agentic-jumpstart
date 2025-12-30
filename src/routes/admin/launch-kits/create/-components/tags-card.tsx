@@ -224,7 +224,7 @@ export function TagsCard({
                                     />
                                   </Badge>
                                 </Label>
-                                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                <div className="opacity-0 group-hover:opacity-100 flex gap-1">
                                   <Button
                                     type="button"
                                     variant="ghost"

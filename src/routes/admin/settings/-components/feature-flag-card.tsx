@@ -55,8 +55,7 @@ export function FeatureFlagCard({
 
   return (
     <Card
-      className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-2 duration-500"
-      style={{ animationDelay, animationFillMode: "both" }}
+      className="flex flex-col h-full"
     >
       <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2 flex-wrap">
@@ -77,23 +76,23 @@ export function FeatureFlagCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-1">
-        <fieldset className={`text-xs border rounded-md px-3 py-2 min-w-0 overflow-hidden transition-colors duration-200 ${isDisabledByDependency ? "border-destructive text-destructive" : "border-border"}`}>
+        <fieldset className={`text-xs border rounded-md px-3 py-2 min-w-0 overflow-hidden ${isDisabledByDependency ? "border-destructive text-destructive" : "border-border"}`}>
           <legend className="px-1 text-muted-foreground">Requirements</legend>
           <div className="overflow-hidden text-center">
             {!dependsOn || dependsOn.length === 0 ? (
               <span>All met</span>
             ) : (
               <div className="grid [&>*]:col-start-1 [&>*]:row-start-1">
-                <span className={`transition-opacity duration-200 ${isDisabledByDependency ? "opacity-0" : "opacity-100"}`}>
+                <span className={`${isDisabledByDependency ? "opacity-0" : "opacity-100"}`}>
                   All met
                 </span>
-                <span className={`inline-flex gap-1 justify-center transition-opacity duration-200 ${isDisabledByDependency ? "opacity-100" : "opacity-0"}`}>
+                <span className={`inline-flex gap-1 justify-center ${isDisabledByDependency ? "opacity-100" : "opacity-0"}`}>
                   {dependsOn?.map((dep, i) => {
                     const isUnmet = !featureStates[dep];
                     return (
                       <span
                         key={dep}
-                        className={`whitespace-nowrap transition-all duration-200 ${isUnmet ? "max-w-[150px] opacity-100" : "max-w-0 opacity-0 overflow-hidden"}`}
+                        className={`whitespace-nowrap ${isUnmet ? "max-w-[150px] opacity-100" : "max-w-0 opacity-0 overflow-hidden"}`}
                       >
                         {flagConfigs[dep]?.title}{i < (dependsOn?.length ?? 0) - 1 && isUnmet ? "," : ""}
                       </span>
@@ -110,7 +109,7 @@ export function FeatureFlagCard({
           <button
             type="button"
             onClick={onConfigureTargeting}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
           >
             <Settings2 className="h-4 w-4" />
             Config

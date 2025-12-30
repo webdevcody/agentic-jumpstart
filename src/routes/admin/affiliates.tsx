@@ -234,24 +234,22 @@ function AdminAffiliates() {
 
       {/* Stats Overview */}
       <div
-        className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12 animate-in fade-in slide-in-from-bottom-2 duration-500"
-        style={{ animationDelay: "0.1s", animationFillMode: "both" }}
+        className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12"
       >
         {/* Total Unpaid */}
         <div
-          className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-          style={{ animationDelay: "0.2s", animationFillMode: "both" }}
+          className="group relative"
         >
           <div className="module-card p-6 h-full">
             <div className="flex flex-row items-center justify-between space-y-0 mb-4">
               <div className="text-sm font-medium text-muted-foreground">
                 Total Unpaid
               </div>
-              <div className="w-10 h-10 rounded-full bg-orange-500/10 dark:bg-orange-400/20 flex items-center justify-center group-hover:bg-orange-500/20 dark:group-hover:bg-orange-400/30 transition-colors duration-300">
+              <div className="w-10 h-10 rounded-full bg-orange-500/10 dark:bg-orange-400/20 flex items-center justify-center group-hover:bg-orange-500/20 dark:group-hover:bg-orange-400/30">
                 <AlertCircle className="h-5 w-5 text-orange-500 dark:text-orange-400" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors duration-300">
+            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-400">
               {isLoading ? (
                 <CountSkeleton />
               ) : (
@@ -264,19 +262,18 @@ function AdminAffiliates() {
 
         {/* Total Paid */}
         <div
-          className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-          style={{ animationDelay: "0.3s", animationFillMode: "both" }}
+          className="group relative"
         >
           <div className="module-card p-6 h-full">
             <div className="flex flex-row items-center justify-between space-y-0 mb-4">
               <div className="text-sm font-medium text-muted-foreground">
                 Total Paid
               </div>
-              <div className="w-10 h-10 rounded-full bg-green-500/10 dark:bg-green-400/20 flex items-center justify-center group-hover:bg-green-500/20 dark:group-hover:bg-green-400/30 transition-colors duration-300">
+              <div className="w-10 h-10 rounded-full bg-green-500/10 dark:bg-green-400/20 flex items-center justify-center group-hover:bg-green-500/20 dark:group-hover:bg-green-400/30">
                 <CheckCircle className="h-5 w-5 text-green-500 dark:text-green-400" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
+            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-green-600 dark:group-hover:text-green-400">
               {isLoading ? <CountSkeleton /> : formatCurrency(totals.totalPaid)}
             </div>
             <p className="text-sm text-muted-foreground">Lifetime payouts</p>
@@ -285,19 +282,18 @@ function AdminAffiliates() {
 
         {/* Total Earnings */}
         <div
-          className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-          style={{ animationDelay: "0.4s", animationFillMode: "both" }}
+          className="group relative"
         >
           <div className="module-card p-6 h-full">
             <div className="flex flex-row items-center justify-between space-y-0 mb-4">
               <div className="text-sm font-medium text-muted-foreground">
                 Total Earnings
               </div>
-              <div className="w-10 h-10 rounded-full bg-theme-500/10 dark:bg-theme-400/20 flex items-center justify-center group-hover:bg-theme-500/20 dark:group-hover:bg-theme-400/30 transition-colors duration-300">
+              <div className="w-10 h-10 rounded-full bg-theme-500/10 dark:bg-theme-400/20 flex items-center justify-center group-hover:bg-theme-500/20 dark:group-hover:bg-theme-400/30">
                 <DollarSign className="h-5 w-5 text-theme-500 dark:text-theme-400" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-theme-600 dark:group-hover:text-theme-400 transition-colors duration-300">
+            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-theme-600 dark:group-hover:text-theme-400">
               {isLoading ? (
                 <CountSkeleton />
               ) : (
@@ -312,19 +308,18 @@ function AdminAffiliates() {
 
         {/* Active Affiliates */}
         <div
-          className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-          style={{ animationDelay: "0.5s", animationFillMode: "both" }}
+          className="group relative"
         >
           <div className="module-card p-6 h-full">
             <div className="flex flex-row items-center justify-between space-y-0 mb-4">
               <div className="text-sm font-medium text-muted-foreground">
                 Active Affiliates
               </div>
-              <div className="w-10 h-10 rounded-full bg-blue-500/10 dark:bg-blue-400/20 flex items-center justify-center group-hover:bg-blue-500/20 dark:group-hover:bg-blue-400/30 transition-colors duration-300">
+              <div className="w-10 h-10 rounded-full bg-blue-500/10 dark:bg-blue-400/20 flex items-center justify-center group-hover:bg-blue-500/20 dark:group-hover:bg-blue-400/30">
                 <Users className="h-5 w-5 text-blue-500 dark:text-blue-400" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
+            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400">
               {isLoading ? <CountSkeleton /> : totals.activeCount}
             </div>
             <p className="text-sm text-muted-foreground">
@@ -336,8 +331,7 @@ function AdminAffiliates() {
 
       {/* Affiliates List */}
       <div
-        className="module-card animate-in fade-in slide-in-from-bottom-2 duration-500"
-        style={{ animationDelay: "0.6s", animationFillMode: "both" }}
+        className="module-card"
       >
         <div className="p-6 border-b border-border/50">
           <h2 className="text-2xl font-semibold mb-2">All Affiliates</h2>
@@ -362,15 +356,10 @@ function AdminAffiliates() {
               {affiliates?.map((affiliate, index) => (
                 <div
                   key={affiliate.id}
-                  className="group relative overflow-hidden rounded-xl bg-card/60 dark:bg-card/40 border border-border/50 p-6 hover:bg-card/80 dark:hover:bg-card/60 hover:border-theme-400/30 hover:shadow-elevation-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2"
-                  style={{
-                    animationDelay: `${0.7 + index * 0.1}s`,
-                    animationFillMode: "both",
-                    animationDuration: "500ms",
-                  }}
+                  className="group relative overflow-hidden rounded-xl bg-card/60 dark:bg-card/40 border border-border/50 p-6 hover:bg-card/80 dark:hover:bg-card/60 hover:border-theme-400/30 hover:shadow-elevation-2"
                 >
                   {/* Subtle hover glow effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-theme-500/5 to-theme-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-theme-500/5 to-theme-400/5 opacity-0 group-hover:opacity-100 pointer-events-none rounded-xl"></div>
 
                   <div className="relative flex items-start justify-between">
                     <div className="flex-1">

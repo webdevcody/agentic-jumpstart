@@ -184,9 +184,9 @@ export function AdminNav({ onItemClick }: AdminNavProps = {}) {
           <Link
             to="/"
             onClick={onItemClick}
-            className="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group relative bg-theme-500/10 hover:bg-theme-500/20 border border-theme-500/30 text-theme-600 dark:text-theme-400 hover:text-theme-700 dark:hover:text-theme-300"
+            className="flex items-center px-4 py-3 text-sm font-medium rounded-lg group relative bg-theme-500/10 hover:bg-theme-500/20 border border-theme-500/30 text-theme-600 dark:text-theme-400 hover:text-theme-700 dark:hover:text-theme-300"
           >
-            <ExternalLink className="mr-3 h-4 w-4 transition-colors duration-200 text-theme-500 group-hover:text-theme-600 dark:group-hover:text-theme-400" />
+            <ExternalLink className="mr-3 h-4 w-4 text-theme-500 group-hover:text-theme-600 dark:group-hover:text-theme-400" />
             <span className="relative z-10 font-semibold">View Site</span>
             <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-theme-500/60">
               →
@@ -200,8 +200,8 @@ export function AdminNav({ onItemClick }: AdminNavProps = {}) {
           onClick={onItemClick}
           className="block mb-8 group"
         >
-          <h2 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2 cursor-pointer transition-colors duration-200 group-hover:text-theme-500">
-            <div className="w-2 h-2 rounded-full bg-theme-500 animate-pulse"></div>
+          <h2 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2 cursor-pointer group-hover:text-theme-500">
+            <div className="w-2 h-2 rounded-full bg-theme-500"></div>
             Admin Panel
           </h2>
           <div className="h-px bg-gradient-to-r from-theme-500/20 via-theme-400/30 to-transparent"></div>
@@ -230,7 +230,7 @@ export function AdminNav({ onItemClick }: AdminNavProps = {}) {
                         to={item.href}
                         onClick={onItemClick}
                         className={cn(
-                          "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group relative",
+                          "flex items-center px-4 py-3 text-sm font-medium rounded-lg group relative",
                           isActive
                             ? "text-theme-600 dark:text-theme-400 bg-theme-500/15 dark:bg-theme-500/10 shadow-sm"
                             : isDisabled
@@ -245,7 +245,7 @@ export function AdminNav({ onItemClick }: AdminNavProps = {}) {
 
                         <item.icon
                           className={cn(
-                            "mr-3 h-4 w-4 transition-colors duration-200",
+                            "mr-3 h-4 w-4",
                             isActive && !isDisabled
                               ? "text-theme-500 dark:text-theme-400"
                               : isDisabled
@@ -269,11 +269,6 @@ export function AdminNav({ onItemClick }: AdminNavProps = {}) {
                             </span>
                             <AlertCircle className="h-3 w-3 text-muted-foreground/50" />
                           </div>
-                        )}
-
-                        {/* Hover indicator */}
-                        {!isDisabled && (
-                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-theme-500 rounded-r-full transition-all duration-200 group-hover:h-8 opacity-0 group-hover:opacity-100"></div>
                         )}
                       </Link>
                     </div>
@@ -304,7 +299,7 @@ export function AdminNav({ onItemClick }: AdminNavProps = {}) {
                             to={item.href}
                             onClick={onItemClick}
                             className={cn(
-                              "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group relative",
+                              "flex items-center px-4 py-3 text-sm font-medium rounded-lg group relative",
                               isActive
                                 ? "text-theme-600 dark:text-theme-400 bg-theme-500/15 dark:bg-theme-500/10 shadow-sm"
                                 : isDisabled
@@ -319,7 +314,7 @@ export function AdminNav({ onItemClick }: AdminNavProps = {}) {
 
                             <item.icon
                               className={cn(
-                                "mr-3 h-4 w-4 transition-colors duration-200",
+                                "mr-3 h-4 w-4",
                                 isActive && !isDisabled
                                   ? "text-theme-500 dark:text-theme-400"
                                   : isDisabled
@@ -344,11 +339,6 @@ export function AdminNav({ onItemClick }: AdminNavProps = {}) {
                                 <AlertCircle className="h-3 w-3 text-muted-foreground/50" />
                               </div>
                             )}
-
-                            {/* Hover indicator */}
-                            {!isDisabled && (
-                              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-theme-500 rounded-r-full transition-all duration-200 group-hover:h-8 opacity-0 group-hover:opacity-100"></div>
-                            )}
                           </Link>
                         </li>
                       );
@@ -365,9 +355,9 @@ export function AdminNav({ onItemClick }: AdminNavProps = {}) {
           <a
             href="/api/logout"
             onClick={onItemClick}
-            className="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group relative text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            className="flex items-center px-4 py-3 text-sm font-medium rounded-lg group relative text-muted-foreground hover:text-foreground hover:bg-muted/50"
           >
-            <LogOut className="mr-3 h-4 w-4 transition-colors duration-200 text-muted-foreground group-hover:text-red-500" />
+            <LogOut className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-red-500" />
             <span className="relative z-10">Sign Out</span>
           </a>
         </div>

@@ -268,7 +268,6 @@ function UtmAnalyticsPage() {
           value={statsLoading ? null : stats?.totalUtmEvents}
           description="Total tracked UTM visits"
           hoverColor="group-hover:text-blue-600"
-          animationDelay="0.1s"
         />
         <StatsCard
           icon={Megaphone}
@@ -278,7 +277,6 @@ function UtmAnalyticsPage() {
           value={statsLoading ? null : stats?.uniqueCampaigns}
           description="Different campaign tags"
           hoverColor="group-hover:text-emerald-600"
-          animationDelay="0.2s"
         />
         <StatsCard
           icon={Link2}
@@ -288,7 +286,6 @@ function UtmAnalyticsPage() {
           value={statsLoading ? null : stats?.uniqueSources}
           description="Traffic sources tracked"
           hoverColor="group-hover:text-amber-600"
-          animationDelay="0.3s"
         />
         <StatsCard
           icon={Target}
@@ -298,7 +295,6 @@ function UtmAnalyticsPage() {
           value={statsLoading ? null : stats?.uniqueMediums}
           description="Marketing mediums used"
           hoverColor="group-hover:text-violet-600"
-          animationDelay="0.4s"
         />
       </div>
 
@@ -331,7 +327,6 @@ function UtmAnalyticsPage() {
                     size="sm"
                     onClick={() => toggleCampaign(item.campaign)}
                     className={cn(
-                      "transition-all",
                       isEnabled && "text-white"
                     )}
                     style={isEnabled ? { backgroundColor: color, borderColor: color } : {}}

@@ -189,24 +189,22 @@ function AdminComments() {
 
       {/* Stats Overview */}
       <div
-        className="grid gap-6 md:grid-cols-3 mb-12 animate-in fade-in slide-in-from-bottom-2 duration-500"
-        style={{ animationDelay: "0.1s", animationFillMode: "both" }}
+        className="grid gap-6 md:grid-cols-3 mb-12"
       >
         {/* Total Comments */}
         <div
-          className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-          style={{ animationDelay: "0.2s", animationFillMode: "both" }}
+          className="group relative"
         >
           <div className="module-card p-6 h-full">
             <div className="flex flex-row items-center justify-between space-y-0 mb-4">
               <div className="text-sm font-medium text-muted-foreground">
                 Total Comments
               </div>
-              <div className="w-10 h-10 rounded-full bg-theme-500/10 dark:bg-theme-400/20 flex items-center justify-center group-hover:bg-theme-500/20 dark:group-hover:bg-theme-400/30 transition-colors duration-300">
+              <div className="w-10 h-10 rounded-full bg-theme-500/10 dark:bg-theme-400/20 flex items-center justify-center group-hover:bg-theme-500/20 dark:group-hover:bg-theme-400/30">
                 <MessageSquare className="h-5 w-5 text-theme-500 dark:text-theme-400" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-theme-600 dark:group-hover:text-theme-400 transition-colors duration-300">
+            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-theme-600 dark:group-hover:text-theme-400">
               {isLoading ? <CountSkeleton /> : totalComments}
             </div>
             <p className="text-sm text-muted-foreground">All user comments</p>
@@ -215,19 +213,18 @@ function AdminComments() {
 
         {/* Pending Comments */}
         <div
-          className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-          style={{ animationDelay: "0.3s", animationFillMode: "both" }}
+          className="group relative"
         >
           <div className="module-card p-6 h-full">
             <div className="flex flex-row items-center justify-between space-y-0 mb-4">
               <div className="text-sm font-medium text-muted-foreground">
                 Pending
               </div>
-              <div className="w-10 h-10 rounded-full bg-orange-500/10 dark:bg-orange-400/20 flex items-center justify-center group-hover:bg-orange-500/20 dark:group-hover:bg-orange-400/30 transition-colors duration-300">
+              <div className="w-10 h-10 rounded-full bg-orange-500/10 dark:bg-orange-400/20 flex items-center justify-center group-hover:bg-orange-500/20 dark:group-hover:bg-orange-400/30">
                 <Calendar className="h-5 w-5 text-orange-500 dark:text-orange-400" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors duration-300">
+            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-400">
               {isLoading ? <CountSkeleton /> : pendingComments}
             </div>
             <p className="text-sm text-muted-foreground">Awaiting response</p>
@@ -236,19 +233,18 @@ function AdminComments() {
 
         {/* Addressed Comments */}
         <div
-          className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-          style={{ animationDelay: "0.4s", animationFillMode: "both" }}
+          className="group relative"
         >
           <div className="module-card p-6 h-full">
             <div className="flex flex-row items-center justify-between space-y-0 mb-4">
               <div className="text-sm font-medium text-muted-foreground">
                 Addressed
               </div>
-              <div className="w-10 h-10 rounded-full bg-green-500/10 dark:bg-green-400/20 flex items-center justify-center group-hover:bg-green-500/20 dark:group-hover:bg-green-400/30 transition-colors duration-300">
+              <div className="w-10 h-10 rounded-full bg-green-500/10 dark:bg-green-400/20 flex items-center justify-center group-hover:bg-green-500/20 dark:group-hover:bg-green-400/30">
                 <CheckCircle2 className="h-5 w-5 text-green-500 dark:text-green-400" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
+            <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-green-600 dark:group-hover:text-green-400">
               {isLoading ? <CountSkeleton /> : addressedComments}
             </div>
             <p className="text-sm text-muted-foreground">Admin replied</p>
@@ -258,8 +254,7 @@ function AdminComments() {
 
       {/* Comments List */}
       <div
-        className="module-card animate-in fade-in slide-in-from-bottom-2 duration-500"
-        style={{ animationDelay: "0.5s", animationFillMode: "both" }}
+        className="module-card"
       >
         <div className="p-6 border-b border-border/50">
           <h2 className="text-2xl font-semibold mb-2">All Comments</h2>
@@ -273,11 +268,6 @@ function AdminComments() {
               {[...Array(3)].map((_, idx) => (
                 <div
                   key={idx}
-                  className="animate-in fade-in slide-in-from-bottom-2 duration-500"
-                  style={{
-                    animationDelay: `${0.6 + idx * 0.1}s`,
-                    animationFillMode: "both",
-                  }}
                 >
                   <div className="flex flex-col gap-3">
                     <div className="h-6 w-1/3 bg-muted/50 rounded animate-pulse mb-2"></div>
@@ -302,11 +292,6 @@ function AdminComments() {
               {comments?.map((comment, index) => (
                 <div
                   key={comment.id}
-                  className="animate-in fade-in slide-in-from-bottom-2 duration-500"
-                  style={{
-                    animationDelay: `${0.6 + index * 0.1}s`,
-                    animationFillMode: "both",
-                  }}
                 >
                   <CommentItem
                     comment={comment}
@@ -403,10 +388,10 @@ function CommentItem({
   const hasAdminReply = (comment as any).hasAdminReply;
 
   return (
-    <div className={level > 0 ? "ml-12 mt-4" : ""}>
-      <div className="group relative overflow-hidden rounded-xl bg-card/60 dark:bg-card/40 border border-border/50 p-6 hover:bg-card/80 dark:hover:bg-card/60 hover:border-theme-400/30 hover:shadow-elevation-2 transition-all duration-300">
+      <div className={level > 0 ? "ml-12 mt-4" : ""}>
+      <div className="group relative overflow-hidden rounded-xl bg-card/60 dark:bg-card/40 border border-border/50 p-6 hover:bg-card/80 dark:hover:bg-card/60 hover:border-theme-400/30 hover:shadow-elevation-2">
         {/* Subtle hover glow effect */}
-        <div className="absolute inset-0 bg-gradient-to-br from-theme-500/5 to-theme-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-theme-500/5 to-theme-400/5 opacity-0 group-hover:opacity-100 pointer-events-none rounded-xl"></div>
 
         <div className="relative">
           <div className="flex justify-between items-start mb-4">
@@ -455,7 +440,7 @@ function CommentItem({
                   to="/learn/$slug"
                   params={{ slug: comment.segment.slug }}
                   search={{ tab: "comments", commentId: comment.id }}
-                  className="inline-flex items-center gap-2 text-sm text-theme-600 dark:text-theme-400 hover:text-theme-700 dark:hover:text-theme-300 transition-colors mb-3 font-medium"
+                  className="inline-flex items-center gap-2 text-sm text-theme-600 dark:text-theme-400 hover:text-theme-700 dark:hover:text-theme-300 mb-3 font-medium"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                   {comment.segment.title}

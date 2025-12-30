@@ -40,24 +40,23 @@ export function StatsCard({
 
   return (
     <div
-      className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500"
-      style={{ animationDelay, animationFillMode: "both" }}
+      className="group relative"
     >
-      <div className="module-card p-6 h-full">
+      <div className="module-card p-6 h-full transition-none">
         <div className="flex flex-row items-center justify-between space-y-0 mb-4">
           <div className="text-sm font-medium text-muted-foreground">
             {title}
           </div>
           {Icon && (
             <div
-              className={`w-10 h-10 rounded-full ${iconBgColor} flex items-center justify-center group-hover:${iconHoverBg} transition-colors duration-300`}
+              className={`w-10 h-10 rounded-full ${iconBgColor} flex items-center justify-center group-hover:${iconHoverBg}`}
             >
               <Icon className={`h-5 w-5 ${iconColor}`} />
             </div>
           )}
         </div>
         <div
-          className={`text-3xl font-bold text-foreground mb-2 ${hoverColor} transition-colors duration-300`}
+          className={`text-3xl font-bold text-foreground mb-2 ${hoverColor}`}
         >
           {value === null || value === undefined ? (
             <ValueSkeleton />

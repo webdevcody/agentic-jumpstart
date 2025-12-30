@@ -140,8 +140,7 @@ function SettingsPage() {
 
       {/* Feature Flags Section */}
       <div
-        className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 animate-in fade-in slide-in-from-bottom-2 duration-500"
-        style={{ animationDelay: "0.1s", animationFillMode: "both" }}
+        className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4"
       >
         {DISPLAYED_FLAGS.map((flag, index) => (
           <FeatureFlagCardWrapper

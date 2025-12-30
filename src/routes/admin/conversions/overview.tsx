@@ -211,7 +211,7 @@ function OverviewPage() {
                       <TabsTrigger
                         key={key}
                         value={key}
-                        className="flex items-center gap-2 transition-all rounded-lg border-2 data-[state=active]:shadow-none"
+                        className="flex items-center gap-2 rounded-lg border-2 data-[state=active]:shadow-none"
                         style={{
                           backgroundColor: series.color,
                           borderColor: isSelected ? "#60a5fa" : series.color,

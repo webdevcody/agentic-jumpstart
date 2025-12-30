@@ -117,7 +117,7 @@ export function SegmentSelector({
             {segments.map((segment) => (
               <label
                 key={segment.id}
-                className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-all duration-200 ${
+                className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer ${
                   selectedIds.includes(segment.id)
                     ? "border-theme-500/50 bg-theme-500/5"
                     : "border-border/50 bg-card/30 hover:bg-card/50 hover:border-border"

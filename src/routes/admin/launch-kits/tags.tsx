@@ -506,7 +506,7 @@ function TagManagementPage() {
                           >
                             {tag.name}
                           </Badge>
-                          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 absolute -top-1 -right-1">
+                          <div className="opacity-0 group-hover:opacity-100 flex gap-1 absolute -top-1 -right-1">
                             <Button
                               variant="ghost"
                               size="sm"

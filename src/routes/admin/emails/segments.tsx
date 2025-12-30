@@ -140,8 +140,7 @@ function SegmentNotificationsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* Segment Selector (Left - 3 columns) */}
         <div
-          className="lg:col-span-3 animate-in fade-in slide-in-from-bottom-2 duration-500"
-          style={{ animationDelay: "0.1s", animationFillMode: "both" }}
+          className="lg:col-span-3"
         >
           <SegmentSelector
             segments={segmentsData?.segments}
@@ -153,8 +152,7 @@ function SegmentNotificationsPage() {
 
         {/* Notification Panel (Right - 2 columns) */}
         <div
-          className="lg:col-span-2 animate-in fade-in slide-in-from-bottom-2 duration-500"
-          style={{ animationDelay: "0.2s", animationFillMode: "both" }}
+          className="lg:col-span-2"
         >
           <SegmentNotificationPanel
             selectedCount={selectedSegmentIds.length}

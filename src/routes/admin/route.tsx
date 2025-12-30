@@ -41,7 +41,7 @@ function AdminLayout() {
 
       {/* Navigation - Responsive with mobile slide-out */}
       <div className={`
-        h-full overflow-y-auto transition-transform duration-300 ease-in-out z-40
+        h-full overflow-y-auto z-40
         lg:relative lg:translate-x-0
         ${sidebarOpen 
           ? 'fixed translate-x-0' 

@@ -101,8 +101,6 @@ function AdminBlog() {
         />
 
         <div
-          className="animate-in fade-in slide-in-from-bottom-2 duration-500"
-          style={{ animationDelay: "0.1s", animationFillMode: "both" }}
         >
           <Tabs
             value={filter}
@@ -124,8 +122,6 @@ function AdminBlog() {
           iconColor="blue"
           title="Blog Posts"
           description="Manage all your blog posts"
-          className="animate-in fade-in slide-in-from-bottom-2 duration-500"
-          style={{ animationDelay: "0.2s", animationFillMode: "both" }}
         >
           {isLoading ? (
             <div className="space-y-4">

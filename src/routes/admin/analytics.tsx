@@ -122,7 +122,8 @@ function TableRowSkeleton() {
 
 function AdminAnalytics() {
   const { data: analytics, isLoading } = useQuery(analyticsQuery);
-  const { data: blogAnalytics, isLoading: blogLoading } = useQuery(blogAnalyticsQuery);
+  const { data: blogAnalytics, isLoading: blogLoading } =
+    useQuery(blogAnalyticsQuery);
   const [selectedModule, setSelectedModule] = useState<number | null>(null);
 
   const filteredSegments = selectedModule
@@ -138,10 +139,7 @@ function AdminAnalytics() {
       />
 
       {/* Key Metrics Overview */}
-      <div
-        className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12 animate-in fade-in slide-in-from-bottom-2 duration-500"
-        style={{ animationDelay: "0.1s", animationFillMode: "both" }}
-      >
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
         <StatsCard
           icon={Users}
           iconColor="text-blue-500 dark:text-blue-400"
@@ -150,7 +148,6 @@ function AdminAnalytics() {
           value={isLoading ? null : analytics?.userStats.totalUsers}
           description="All registered users"
           hoverColor="group-hover:text-blue-600 dark:group-hover:text-blue-400"
-          animationDelay="0.2s"
         />
 
         <StatsCard
@@ -165,7 +162,6 @@ function AdminAnalytics() {
               : `${analytics?.userStats.conversionRate}% conversion rate`
           }
           hoverColor="group-hover:text-theme-600 dark:group-hover:text-theme-400"
-          animationDelay="0.3s"
         />
 
         <StatsCard
@@ -180,7 +176,6 @@ function AdminAnalytics() {
           }
           description="From affiliate referrals"
           hoverColor="group-hover:text-green-600 dark:group-hover:text-green-400"
-          animationDelay="0.4s"
         />
 
         <StatsCard
@@ -193,73 +188,68 @@ function AdminAnalytics() {
           }
           description="Segments per user"
           hoverColor="group-hover:text-purple-600 dark:group-hover:text-purple-400"
-          animationDelay="0.5s"
         />
       </div>
 
       {/* Top Performing Content */}
-      <div
-        className="grid gap-6 lg:grid-cols-2 mb-12 animate-in fade-in slide-in-from-bottom-2 duration-500"
-        style={{ animationDelay: "0.6s", animationFillMode: "both" }}
-      >
+      <div className="grid gap-6 lg:grid-cols-2 mb-12">
         {/* Most Completed Segments */}
         <AppCard
           icon={TrendingUp}
           iconColor="theme"
           title="Top Performing Segments"
           description="Segments with highest completion rates"
-          className="animate-in fade-in slide-in-from-bottom-2 duration-500"
-          style={{ animationDelay: "0.7s", animationFillMode: "both" }}
         >
           <div className="space-y-4">
-            {isLoading
-              ? [...Array(5)].map((_, idx) => <SegmentSkeleton key={idx} />)
-              : analytics?.topPerformingSegments.length === 0
-              ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <TrendingUp className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                    <h3 className="font-medium text-muted-foreground mb-2">
-                      No segments completed yet
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Top performing segments will appear here once users start completing them.
-                    </p>
-                  </div>
-                )
-              : analytics?.topPerformingSegments.map((segment, index) => (
-                  <div
-                    key={segment.segmentId}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-theme-500/10 flex items-center justify-center">
-                        <span className="text-sm font-semibold text-theme-600 dark:text-theme-400">
-                          #{index + 1}
-                        </span>
-                      </div>
-                      <div>
-                        <Link
-                          to="/learn/$slug"
-                          params={{ slug: segment.segmentSlug }}
-                          className="font-medium text-foreground hover:text-theme-600 dark:hover:text-theme-400 transition-colors"
-                        >
-                          {segment.segmentTitle}
-                        </Link>
-                        <p className="text-sm text-muted-foreground">
-                          {segment.moduleTitle}
-                        </p>
-                      </div>
+            {isLoading ? (
+              [...Array(5)].map((_, idx) => <SegmentSkeleton key={idx} />)
+            ) : analytics?.topPerformingSegments.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <TrendingUp className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <h3 className="font-medium text-muted-foreground mb-2">
+                  No segments completed yet
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Top performing segments will appear here once users start
+                  completing them.
+                </p>
+              </div>
+            ) : (
+              analytics?.topPerformingSegments.map((segment, index) => (
+                <div
+                  key={segment.segmentId}
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 "
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-theme-500/10 flex items-center justify-center">
+                      <span className="text-sm font-semibold text-theme-600 dark:text-theme-400">
+                        #{index + 1}
+                      </span>
                     </div>
-                    <div className="text-right">
-                      <div className="font-semibold text-theme-600 dark:text-theme-400">
-                        {segment.completedCount}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        completions
-                      </div>
+                    <div>
+                      <Link
+                        to="/learn/$slug"
+                        params={{ slug: segment.segmentSlug }}
+                        className="font-medium text-foreground hover:text-theme-600 dark:hover:text-theme-400 "
+                      >
+                        {segment.segmentTitle}
+                      </Link>
+                      <p className="text-sm text-muted-foreground">
+                        {segment.moduleTitle}
+                      </p>
                     </div>
                   </div>
-                ))}
+                  <div className="text-right">
+                    <div className="font-semibold text-theme-600 dark:text-theme-400">
+                      {segment.completedCount}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      completions
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </AppCard>
 
@@ -269,8 +259,6 @@ function AdminAnalytics() {
           iconColor="orange"
           title="Most Discussed Segments"
           description="Segments generating the most engagement"
-          className="animate-in fade-in slide-in-from-bottom-2 duration-500"
-          style={{ animationDelay: "0.8s", animationFillMode: "both" }}
         >
           <div className="space-y-4">
             {isLoading
@@ -278,7 +266,7 @@ function AdminAnalytics() {
               : analytics?.mostCommentedSegments.map((segment, index) => (
                   <div
                     key={segment.segmentId}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 "
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center">
@@ -290,7 +278,7 @@ function AdminAnalytics() {
                         <Link
                           to="/learn/$slug"
                           params={{ slug: segment.segmentSlug }}
-                          className="font-medium text-foreground hover:text-theme-600 dark:hover:text-theme-400 transition-colors"
+                          className="font-medium text-foreground hover:text-theme-600 dark:hover:text-theme-400 "
                         >
                           {segment.segmentTitle}
                         </Link>
@@ -314,10 +302,7 @@ function AdminAnalytics() {
       </div>
 
       {/* Blog Analytics */}
-      <div
-        className="mb-12 animate-in fade-in slide-in-from-bottom-2 duration-500"
-        style={{ animationDelay: "0.8s", animationFillMode: "both" }}
-      >
+      <div className="mb-12">
         <div className="module-card">
           <div className="p-6 border-b border-border/50">
             <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
@@ -341,7 +326,7 @@ function AdminAnalytics() {
                 </div>
                 <div className="text-sm text-muted-foreground">Total Posts</div>
               </div>
-              
+
               {/* Published Posts */}
               <div className="text-center">
                 <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
@@ -353,7 +338,7 @@ function AdminAnalytics() {
                 </div>
                 <div className="text-sm text-muted-foreground">Published</div>
               </div>
-              
+
               {/* Total Views */}
               <div className="text-center">
                 <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
@@ -365,66 +350,76 @@ function AdminAnalytics() {
                 </div>
                 <div className="text-sm text-muted-foreground">Total Views</div>
               </div>
-              
+
               {/* Avg Views per Post */}
               <div className="text-center">
                 <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">
                   {blogLoading ? (
                     <CountSkeleton />
                   ) : (
-                    Math.round((blogAnalytics?.totalViews || 0) / (blogAnalytics?.publishedPosts || 1))
+                    Math.round(
+                      (blogAnalytics?.totalViews || 0) /
+                        (blogAnalytics?.publishedPosts || 1)
+                    )
                   )}
                 </div>
-                <div className="text-sm text-muted-foreground">Avg Views/Post</div>
-              </div>
-            </div>
-            
-            {/* Most Viewed Posts */}
-            {blogAnalytics?.mostViewedPosts && blogAnalytics.mostViewedPosts.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <Eye className="h-5 w-5 text-blue-500" />
-                  Most Viewed Posts
-                </h3>
-                <div className="space-y-3">
-                  {blogAnalytics.mostViewedPosts.slice(0, 5).map((post, index) => (
-                    <div key={post.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
-                          <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-                            #{index + 1}
-                          </span>
-                        </div>
-                        <div>
-                          <Link
-                            to="/blog/$slug"
-                            params={{ slug: post.slug }}
-                            className="font-medium text-foreground hover:text-theme-600 dark:hover:text-theme-400 transition-colors"
-                          >
-                            {post.title}
-                          </Link>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-blue-600 dark:text-blue-400">
-                          {post.viewCount}
-                        </div>
-                        <div className="text-sm text-muted-foreground">views</div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="text-sm text-muted-foreground">
+                  Avg Views/Post
                 </div>
               </div>
-            )}
+            </div>
+
+            {/* Most Viewed Posts */}
+            {blogAnalytics?.mostViewedPosts &&
+              blogAnalytics.mostViewedPosts.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Eye className="h-5 w-5 text-blue-500" />
+                    Most Viewed Posts
+                  </h3>
+                  <div className="space-y-3">
+                    {blogAnalytics.mostViewedPosts
+                      .slice(0, 5)
+                      .map((post, index) => (
+                        <div
+                          key={post.id}
+                          className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+                              <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                                #{index + 1}
+                              </span>
+                            </div>
+                            <div>
+                              <Link
+                                to="/blog/$slug"
+                                params={{ slug: post.slug }}
+                                className="font-medium text-foreground hover:text-theme-600 dark:hover:text-theme-400"
+                              >
+                                {post.title}
+                              </Link>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold text-blue-600 dark:text-blue-400">
+                              {post.viewCount}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              views
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
           </div>
         </div>
       </div>
 
       {/* Module Filter */}
-      <div
-        className="mb-6 animate-in fade-in slide-in-from-bottom-2 duration-500"
-        style={{ animationDelay: "0.9s", animationFillMode: "both" }}
-      >
+      <div className="mb-6">
         <div className="flex flex-wrap gap-2">
           {isLoading ? (
             <>
@@ -440,7 +435,7 @@ function AdminAnalytics() {
             <>
               <button
                 onClick={() => setSelectedModule(null)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium ${
                   selectedModule === null
                     ? "bg-theme-500 text-white"
                     : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
@@ -452,7 +447,7 @@ function AdminAnalytics() {
                 <button
                   key={module.id}
                   onClick={() => setSelectedModule(module.id)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
                     selectedModule === module.id
                       ? "bg-theme-500 text-white"
                       : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
@@ -467,10 +462,7 @@ function AdminAnalytics() {
       </div>
 
       {/* Detailed Analytics Table */}
-      <div
-        className="module-card animate-in fade-in slide-in-from-bottom-2 duration-500"
-        style={{ animationDelay: "1.0s", animationFillMode: "both" }}
-      >
+      <div className="module-card">
         <div className="p-6 border-b border-border/50">
           <h2 className="text-2xl font-semibold mb-2">
             {selectedModule ? "Module" : "All"} Segment Analytics
@@ -498,7 +490,7 @@ function AdminAnalytics() {
                 : filteredSegments?.map((segment, index) => (
                     <tr
                       key={segment.id}
-                      className={`border-b border-border/30 hover:bg-muted/20 transition-colors ${
+                      className={`border-b border-border/30 hover:bg-muted/20 ${
                         index % 2 === 0 ? "" : "bg-muted/10"
                       }`}
                     >
@@ -508,7 +500,7 @@ function AdminAnalytics() {
                             <Link
                               to="/learn/$slug"
                               params={{ slug: segment.slug }}
-                              className="text-foreground hover:text-theme-600 dark:hover:text-theme-400 transition-colors"
+                              className="text-foreground hover:text-theme-600 dark:hover:text-theme-400"
                             >
                               {segment.title}
                             </Link>
@@ -567,7 +559,7 @@ function AdminAnalytics() {
                         <Link
                           to="/learn/$slug"
                           params={{ slug: segment.slug }}
-                          className="inline-flex items-center gap-1 text-sm text-theme-600 dark:text-theme-400 hover:text-theme-700 dark:hover:text-theme-300 transition-colors"
+                          className="inline-flex items-center gap-1 text-sm text-theme-600 dark:text-theme-400 hover:text-theme-700 dark:hover:text-theme-300"
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
                           View

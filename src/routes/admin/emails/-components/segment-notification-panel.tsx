@@ -114,7 +114,7 @@ export function SegmentNotificationPanel({
           <button
             type="button"
             onClick={() => onNotificationTypeChange("new")}
-            className={`w-full text-left p-4 rounded-lg border transition-all ${
+            className={`w-full text-left p-4 rounded-lg border ${
               notificationType === "new"
                 ? "border-theme-500 bg-theme-500/10"
                 : "border-border/50 hover:border-border hover:bg-muted/30"
@@ -143,7 +143,7 @@ export function SegmentNotificationPanel({
           <button
             type="button"
             onClick={() => onNotificationTypeChange("updated")}
-            className={`w-full text-left p-4 rounded-lg border transition-all ${
+            className={`w-full text-left p-4 rounded-lg border ${
               notificationType === "updated"
                 ? "border-theme-500 bg-theme-500/10"
                 : "border-border/50 hover:border-border hover:bg-muted/30"
