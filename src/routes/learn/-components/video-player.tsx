@@ -25,6 +25,8 @@ const VIDEO_AVAILABILITY_MAX_ATTEMPTS = 5;
 const VIDEO_AVAILABILITY_INITIAL_DELAY_MS = 300;
 const GLOBAL_QUALITY_PREFERENCE_KEY = "video-quality-preference-global";
 const GLOBAL_PLAYBACK_RATE_KEY = "video-playback-rate-global";
+const GLOBAL_VOLUME_KEY = "video-volume-global";
+const GLOBAL_MUTED_KEY = "video-muted-global";
 
 function wait(durationMs: number) {
   return new Promise((resolve) => setTimeout(resolve, durationMs));
@@ -74,6 +76,51 @@ function setStoredPlaybackRate(rate: number): void {
   }
 }
 
+function getStoredVolume(): number {
+  if (typeof window === "undefined") return 1;
+  try {
+    const stored = localStorage.getItem(GLOBAL_VOLUME_KEY);
+    if (stored) {
+      const volume = parseFloat(stored);
+      // Validate the volume is within valid bounds (0 to 1)
+      if (!isNaN(volume) && volume >= 0 && volume <= 1) {
+        return volume;
+      }
+    }
+    return 1;
+  } catch {
+    return 1;
+  }
+}
+
+function setStoredVolume(volume: number): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(GLOBAL_VOLUME_KEY, volume.toString());
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
+function getStoredMuted(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const stored = localStorage.getItem(GLOBAL_MUTED_KEY);
+    return stored === "true";
+  } catch {
+    return false;
+  }
+}
+
+function setStoredMuted(muted: boolean): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(GLOBAL_MUTED_KEY, muted.toString());
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
 // Map quality values to display labels
 const QUALITY_TO_LABEL: Record<string, string> = {
   original: "1080p",
@@ -101,21 +148,28 @@ export function VideoPlayer({
   onAutoComplete,
 }: VideoPlayerProps) {
   const [isClient, setIsClient] = useState(false);
-  const playerRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const qualityRestoreTimeoutRef = useRef<number | null>(null);
   const [selectedQuality, setSelectedQuality] = useState<string>("original");
   const [showQualityMenu, setShowQualityMenu] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(
     initialThumbnailUrl || null
   );
   const [playing, setPlaying] = useState(false);
-  const [playedSeconds, setPlayedSeconds] = useState(0);
   const [isReady, setIsReady] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
+  const [volume, setVolume] = useState(() => getStoredVolume());
+  const [muted, setMuted] = useState(() => getStoredMuted());
   const [hasAutoCompleted, setHasAutoCompleted] = useState(false);
   const getAvailableQualities = useServerFn(getAvailableQualitiesFn);
   const getThumbnailUrl = useServerFn(getThumbnailUrlFn);
+
+  const getVideoElement = () => {
+    const container = containerRef.current;
+    if (!container) return null;
+    return container.querySelector("video") as HTMLVideoElement | null;
+  };
 
   // Ensure client-side only rendering for ReactPlayer
   useEffect(() => {
@@ -126,28 +180,59 @@ export function VideoPlayer({
 
   // Reset state when navigating to a different video segment
   useEffect(() => {
+    if (qualityRestoreTimeoutRef.current != null) {
+      window.clearTimeout(qualityRestoreTimeoutRef.current);
+      qualityRestoreTimeoutRef.current = null;
+    }
+
     setThumbnailUrl(initialThumbnailUrl || null);
     setPlaying(false);
-    setPlayedSeconds(0);
     setIsReady(false);
     setHasError(false);
     setHasAutoCompleted(false);
   }, [segmentId, initialThumbnailUrl]);
+
+  // Cleanup timers + pause the underlying video element on unmount.
+  // Note: avoid clearing `src`/calling `load()` here because `react-player` manages the
+  // media element internally; forcing a manual unload can leave it in a broken state
+  // when navigating away and back (e.g. A → B → A).
+  useEffect(() => {
+    return () => {
+      if (qualityRestoreTimeoutRef.current != null) {
+        window.clearTimeout(qualityRestoreTimeoutRef.current);
+        qualityRestoreTimeoutRef.current = null;
+      }
+
+      const video = getVideoElement();
+      if (!video) return;
+
+      try {
+        video.pause();
+      } catch {
+        // Best-effort cleanup only
+      }
+    };
+  }, []);
 
   // Fetch thumbnail URL independently (never blocks video loading)
   // Only fetch if we don't already have an initial thumbnail
   useEffect(() => {
     if (!videoKey || initialThumbnailUrl) return;
 
+    let cancelled = false;
     getThumbnailUrl({ data: { segmentId } })
       .then((result) => {
-        if (result?.thumbnailUrl) {
+        if (!cancelled && result?.thumbnailUrl) {
           setThumbnailUrl(result.thumbnailUrl);
         }
       })
       .catch(() => {
         // Silently ignore - thumbnail is optional
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [segmentId, videoKey, getThumbnailUrl, initialThumbnailUrl]);
 
   // Fetch available qualities
@@ -212,7 +297,7 @@ export function VideoPlayer({
   // Listen for playback rate changes from native video controls
   // This serves as a fallback in case onRateChange prop doesn't fire
   useEffect(() => {
-    const videoElement = playerRef.current;
+    const videoElement = getVideoElement();
     if (!videoElement) return;
 
     const handleRateChange = () => {
@@ -227,7 +312,36 @@ export function VideoPlayer({
     return () => {
       videoElement.removeEventListener("ratechange", handleRateChange);
     };
-  }, [playbackRate]);
+  }, [playbackRate, isReady]);
+
+  // Listen for volume changes from native video controls
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !isReady) return;
+
+    // Find the actual video element within the container (ReactPlayer renders a real <video>)
+    const videoElement = container.querySelector("video") as HTMLVideoElement | null;
+    if (!videoElement) return;
+
+    const handleVolumeChange = () => {
+      const newVolume = videoElement.volume;
+      const newMuted = videoElement.muted;
+
+      if (newVolume !== volume) {
+        setVolume(newVolume);
+        setStoredVolume(newVolume);
+      }
+      if (newMuted !== muted) {
+        setMuted(newMuted);
+        setStoredMuted(newMuted);
+      }
+    };
+
+    videoElement.addEventListener("volumechange", handleVolumeChange);
+    return () => {
+      videoElement.removeEventListener("volumechange", handleVolumeChange);
+    };
+  }, [isReady, volume, muted]);
 
   // Handle space bar to toggle play/pause when video player has focus
   useEffect(() => {
@@ -266,8 +380,8 @@ export function VideoPlayer({
 
   // Handle quality change
   const handleQualityChange = (quality: string) => {
-    const videoElement = playerRef.current;
-    const currentTime = videoElement?.currentTime || playedSeconds;
+    const videoElement = getVideoElement();
+    const currentTime = videoElement?.currentTime ?? 0;
     const wasPlaying = playing;
 
     setSelectedQuality(quality);
@@ -275,13 +389,18 @@ export function VideoPlayer({
     setShowQualityMenu(false);
 
     // Restore playback position after a short delay
-    setTimeout(() => {
-      if (videoElement) {
-        videoElement.currentTime = currentTime;
+    if (qualityRestoreTimeoutRef.current != null) {
+      window.clearTimeout(qualityRestoreTimeoutRef.current);
+    }
+    qualityRestoreTimeoutRef.current = window.setTimeout(() => {
+      const nextVideoElement = getVideoElement();
+      if (nextVideoElement) {
+        nextVideoElement.currentTime = currentTime;
         if (wasPlaying) {
           setPlaying(true);
         }
       }
+      qualityRestoreTimeoutRef.current = null;
     }, 100);
   };
 
@@ -389,10 +508,12 @@ export function VideoPlayer({
       )}
       <div className="relative z-10 w-full h-full">
         <ReactPlayer
-          ref={playerRef}
+          key={`${segmentId}:${selectedQuality}`}
           src={currentVideoUrl}
           playing={playing}
           playbackRate={playbackRate}
+          volume={volume}
+          muted={muted}
           controls
           width="100%"
           height="100%"
