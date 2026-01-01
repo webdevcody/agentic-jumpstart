@@ -93,7 +93,7 @@ function AdminVectorization() {
   });
 
   const handleVectorizeAll = () => {
-    vectorizeAllMutation.mutate({});
+    vectorizeAllMutation.mutate({ data: {} });
   };
 
   const handleVectorizeSegment = (segmentId: number) => {
