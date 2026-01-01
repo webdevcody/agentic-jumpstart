@@ -3,8 +3,8 @@ import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import { SegmentItem } from "./segment-item";
 import { useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
-import { cn } from "~/lib/utils";
 import { useRef } from "react";
+import { useSegment } from "./segment-context";
 
 interface ModuleWithSegments extends Module {
   segments: Segment[];
@@ -35,9 +35,19 @@ export function ModulePanel({
 }: ModulePanelProps) {
   const navigate = useNavigate();
   const contentRef = useRef<HTMLDivElement>(null);
+  const { locallyCompletedSegmentIds, locallyUncompletedSegmentIds } =
+    useSegment();
 
   const isSegmentCompleted = (segmentId: number) => {
-    return progress.some((p) => p.segmentId === segmentId);
+    // Check local uncompleted state first (takes precedence)
+    if (locallyUncompletedSegmentIds.has(segmentId)) {
+      return false;
+    }
+    // Check both server progress and locally completed segments (for immediate UI feedback)
+    return (
+      progress.some((p) => p.segmentId === segmentId) ||
+      locallyCompletedSegmentIds.has(segmentId)
+    );
   };
 
   const handleCreateSegment = () => {

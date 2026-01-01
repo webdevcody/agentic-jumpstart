@@ -6,6 +6,7 @@ import { GlassPanel } from "~/components/ui/glass-panel";
 import { CircuitBoardPattern } from "~/components/ui/background-patterns";
 import { useAuth } from "~/hooks/use-auth";
 import { useContinueSlug } from "~/hooks/use-continue-slug";
+import { PRICING_CONFIG } from "~/config";
 
 export function PricingSection() {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -67,11 +68,21 @@ export function PricingSection() {
                     <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 text-cyan-600 dark:text-cyan-400">
                       Agentic Coding Mastery
                     </h3>
-                    <div className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 md:mb-8 text-slate-900 dark:text-white">
-                      $199
-                      <span className="text-lg text-slate-600 dark:text-slate-400 font-normal">
-                        /lifetime access
-                      </span>
+                    <div className="mb-6 md:mb-8">
+                      <div className="text-slate-600 dark:text-slate-400 mb-2">
+                        <span className="line-through text-xl">
+                          {PRICING_CONFIG.FORMATTED_ORIGINAL_PRICE}
+                        </span>
+                        <span className="ml-2 text-sm text-cyan-600 dark:text-cyan-400 font-medium">
+                          Save {PRICING_CONFIG.DISCOUNT_PERCENTAGE}%
+                        </span>
+                      </div>
+                      <div className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-white">
+                        {PRICING_CONFIG.FORMATTED_CURRENT_PRICE}
+                        <span className="text-lg text-slate-600 dark:text-slate-400 font-normal">
+                          /lifetime access
+                        </span>
+                      </div>
                     </div>
                     <ul className="text-left space-y-6 mb-10">
                       <li className="flex items-center text-slate-600 dark:text-slate-400 group">

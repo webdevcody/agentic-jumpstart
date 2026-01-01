@@ -89,3 +89,15 @@ export const getUniqueModuleNamesFn = createServerFn()
     const modules = await getModulesUseCase();
     return modules.map((module) => module.title);
   });
+
+export const validateSlugFn = createServerFn()
+  .middleware([adminMiddleware])
+  .inputValidator(z.object({ slug: z.string() }))
+  .handler(async ({ data }) => {
+    if (await isSlugInUse(data.slug)) {
+      throw new Error(
+        `The slug "${data.slug}" is already in use. Please choose a different slug.`
+      );
+    }
+    return { valid: true };
+  });

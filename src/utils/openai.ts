@@ -3,8 +3,9 @@ import { writeFile, unlink, readFile, readdir } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import { randomUUID } from "crypto";
+import { env } from "~/utils/env";
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_API_KEY = env.OPENAI_API_KEY;
 
 // OpenAI Whisper API has a 25MB limit (26,214,400 bytes)
 // We use 20MB chunks to have buffer room for encoding overhead

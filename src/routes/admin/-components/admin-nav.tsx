@@ -16,6 +16,8 @@ import {
   AlertCircle,
   TrendingUp,
   Video,
+  Database,
+  Search,
 } from "lucide-react";
 import { useFeatureFlag } from "~/components/feature-flag";
 
@@ -53,6 +55,18 @@ const navigation: NavigationItem[] = [
     name: "Video Processing",
     href: "/admin/video-processing",
     icon: Video,
+    category: "content",
+  },
+  {
+    name: "Vectorization",
+    href: "/admin/vectorization",
+    icon: Database,
+    category: "content",
+  },
+  {
+    name: "Vector Search",
+    href: "/admin/vector-search",
+    icon: Search,
     category: "content",
   },
   {

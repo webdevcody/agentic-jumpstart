@@ -43,4 +43,5 @@ export const env = {
   AWS_SES_SECRET_ACCESS_KEY: testFallback(process.env.AWS_SES_SECRET_ACCESS_KEY, "test-ses-secret-key", "AWS_SES_SECRET_ACCESS_KEY"),
   AWS_SES_REGION: process.env.AWS_SES_REGION || "us-east-1",
   FROM_EMAIL_ADDRESS: testFallback(process.env.FROM_EMAIL_ADDRESS, "test@example.com", "FROM_EMAIL_ADDRESS"),
+  OPENAI_API_KEY: testFallback(process.env.OPENAI_API_KEY, "sk-test-placeholder", "OPENAI_API_KEY"),
 };

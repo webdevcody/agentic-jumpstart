@@ -2,8 +2,8 @@ export const DISCORD_INVITE_LINK = "https://discord.gg/JUDWZDN3VT";
 
 // Pricing configuration - update prices in one place
 export const PRICING_CONFIG = {
-  CURRENT_PRICE: 199, // Current discounted price
-  ORIGINAL_PRICE: 297, // Original price before discount
+  CURRENT_PRICE: 249, // Current discounted price
+  ORIGINAL_PRICE: 299, // Original price before discount
   get DISCOUNT_PERCENTAGE() {
     return Math.round(
       ((this.ORIGINAL_PRICE - this.CURRENT_PRICE) / this.ORIGINAL_PRICE) * 100

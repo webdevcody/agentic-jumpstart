@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { createSegmentFn } from "./server-functions";
+import { createSegmentFn, validateSlugFn } from "./server-functions";
 import { type SegmentFormValues } from "../segment-form";
 import {
   uploadVideoWithPresignedUrl,
@@ -22,6 +22,10 @@ export function useAddSegment() {
   const onSubmit = async (values: SegmentFormValues) => {
     try {
       setIsSubmitting(true);
+
+      // Validate slug before uploading video to avoid wasting time on large uploads
+      await validateSlugFn({ data: { slug: values.slug } });
+
       let videoKey;
       let videoDuration;
 

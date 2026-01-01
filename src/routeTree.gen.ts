@@ -48,6 +48,8 @@ import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as AgentsNewRouteImport } from './routes/agents/new'
 import { Route as AgentsSlugRouteImport } from './routes/agents/$slug'
 import { Route as AdminVideoProcessingRouteImport } from './routes/admin/video-processing'
+import { Route as AdminVectorizationRouteImport } from './routes/admin/vectorization'
+import { Route as AdminVectorSearchRouteImport } from './routes/admin/vector-search'
 import { Route as AdminUtmAnalyticsRouteImport } from './routes/admin/utm-analytics'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
@@ -279,6 +281,16 @@ const AdminVideoProcessingRoute = AdminVideoProcessingRouteImport.update({
   path: '/video-processing',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminVectorizationRoute = AdminVectorizationRouteImport.update({
+  id: '/vectorization',
+  path: '/vectorization',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminVectorSearchRoute = AdminVectorSearchRouteImport.update({
+  id: '/vector-search',
+  path: '/vector-search',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminUtmAnalyticsRoute = AdminUtmAnalyticsRouteImport.update({
   id: '/utm-analytics',
   path: '/utm-analytics',
@@ -490,6 +502,8 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/utm-analytics': typeof AdminUtmAnalyticsRoute
+  '/admin/vector-search': typeof AdminVectorSearchRoute
+  '/admin/vectorization': typeof AdminVectorizationRoute
   '/admin/video-processing': typeof AdminVideoProcessingRoute
   '/agents/$slug': typeof AgentsSlugRoute
   '/agents/new': typeof AgentsNewRoute
@@ -564,6 +578,8 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/utm-analytics': typeof AdminUtmAnalyticsRoute
+  '/admin/vector-search': typeof AdminVectorSearchRoute
+  '/admin/vectorization': typeof AdminVectorizationRoute
   '/admin/video-processing': typeof AdminVideoProcessingRoute
   '/agents/$slug': typeof AgentsSlugRoute
   '/agents/new': typeof AgentsNewRoute
@@ -640,6 +656,8 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/utm-analytics': typeof AdminUtmAnalyticsRoute
+  '/admin/vector-search': typeof AdminVectorSearchRoute
+  '/admin/vectorization': typeof AdminVectorizationRoute
   '/admin/video-processing': typeof AdminVideoProcessingRoute
   '/agents/$slug': typeof AgentsSlugRoute
   '/agents/new': typeof AgentsNewRoute
@@ -718,6 +736,8 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/admin/utm-analytics'
+    | '/admin/vector-search'
+    | '/admin/vectorization'
     | '/admin/video-processing'
     | '/agents/$slug'
     | '/agents/new'
@@ -792,6 +812,8 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/admin/utm-analytics'
+    | '/admin/vector-search'
+    | '/admin/vectorization'
     | '/admin/video-processing'
     | '/agents/$slug'
     | '/agents/new'
@@ -867,6 +889,8 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/admin/utm-analytics'
+    | '/admin/vector-search'
+    | '/admin/vectorization'
     | '/admin/video-processing'
     | '/agents/$slug'
     | '/agents/new'
@@ -1235,6 +1259,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminVideoProcessingRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/vectorization': {
+      id: '/admin/vectorization'
+      path: '/vectorization'
+      fullPath: '/admin/vectorization'
+      preLoaderRoute: typeof AdminVectorizationRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/vector-search': {
+      id: '/admin/vector-search'
+      path: '/vector-search'
+      fullPath: '/admin/vector-search'
+      preLoaderRoute: typeof AdminVectorSearchRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/utm-analytics': {
       id: '/admin/utm-analytics'
       path: '/utm-analytics'
@@ -1532,6 +1570,8 @@ interface AdminRouteRouteChildren {
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminUtmAnalyticsRoute: typeof AdminUtmAnalyticsRoute
+  AdminVectorSearchRoute: typeof AdminVectorSearchRoute
+  AdminVectorizationRoute: typeof AdminVectorizationRoute
   AdminVideoProcessingRoute: typeof AdminVideoProcessingRoute
   AdminBlogNewRoute: typeof AdminBlogNewRoute
   AdminLaunchKitsTagsRoute: typeof AdminLaunchKitsTagsRoute
@@ -1554,6 +1594,8 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminUtmAnalyticsRoute: AdminUtmAnalyticsRoute,
+  AdminVectorSearchRoute: AdminVectorSearchRoute,
+  AdminVectorizationRoute: AdminVectorizationRoute,
   AdminVideoProcessingRoute: AdminVideoProcessingRoute,
   AdminBlogNewRoute: AdminBlogNewRoute,
   AdminLaunchKitsTagsRoute: AdminLaunchKitsTagsRoute,

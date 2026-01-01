@@ -1,6 +1,6 @@
 services:
   wdc-tanstack-starter-kit-db:
-    image: postgres:17
+    image: pgvector/pgvector:pg17
     restart: always
     container_name: agentic-jumpstart-db
     ports:
@@ -12,7 +12,7 @@ services:
       - postgres:/data/postgres
 
   wdc-tanstack-starter-kit-db-test:
-    image: postgres:17
+    image: pgvector/pgvector:pg17
     restart: always
     container_name: wdc-tanstack-starter-kit-db-test
     ports:
