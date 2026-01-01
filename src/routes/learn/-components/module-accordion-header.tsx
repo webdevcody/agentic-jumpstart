@@ -31,6 +31,7 @@ import { buttonVariants } from "~/components/ui/button";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { deleteModuleFn } from "./delete-module-button";
+import { useSegment } from "./segment-context";
 
 interface ModuleWithSegments extends Module {
   segments: Segment[];
@@ -58,11 +59,25 @@ export function ModuleAccordionHeader({
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { locallyCompletedSegmentIds, locallyUncompletedSegmentIds } =
+    useSegment();
 
   // Early return if module data is incomplete
   if (!module || !module.title) {
     return null;
   }
+
+  const isSegmentCompleted = (segmentId: number) => {
+    // Check local uncompleted state first (takes precedence)
+    if (locallyUncompletedSegmentIds.has(segmentId)) {
+      return false;
+    }
+    // Check both server progress and locally completed segments (for immediate UI feedback)
+    return (
+      progress.some((p) => p.segmentId === segmentId) ||
+      locallyCompletedSegmentIds.has(segmentId)
+    );
+  };
 
   const moduleProgress = useMemo(() => {
     // Add safety check for module.segments
@@ -75,7 +90,7 @@ export function ModuleAccordionHeader({
     }
 
     const completedSegments = module.segments.filter((segment) =>
-      progress.some((p) => p.segmentId === segment.id)
+      isSegmentCompleted(segment.id)
     ).length;
     return {
       completed: completedSegments,
@@ -85,7 +100,7 @@ export function ModuleAccordionHeader({
           ? (completedSegments / module.segments.length) * 100
           : 0,
     };
-  }, [module.segments, progress]);
+  }, [module.segments, progress, locallyCompletedSegmentIds, locallyUncompletedSegmentIds]);
 
   const handleDeleteModule = async () => {
     try {
