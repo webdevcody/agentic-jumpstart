@@ -21,7 +21,7 @@ export function useCreateComment() {
       if (!user) {
         return { previousComments: undefined };
       }
-      
+
       const previousComments = queryClient.getQueryData(
         getCommentsQuery(segment.id).queryKey
       );

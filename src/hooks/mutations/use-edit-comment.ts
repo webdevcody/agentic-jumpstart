@@ -18,11 +18,16 @@ export function useEditComment() {
       });
     },
     onMutate: (variables) => {
-      if (!user || !navigator.onLine) throw new Error("Something went wrong");
+      // Only do optimistic update if we have a user
+      // Don't throw errors here - let the server function handle validation
+      if (!user) {
+        return { previousComments: undefined };
+      }
+
       const previousComments = queryClient.getQueryData(
         getCommentsQuery(segment.id).queryKey
       );
-      
+
       // Optimistically update both top-level comments and nested replies
       queryClient.setQueryData(getCommentsQuery(segment.id).queryKey, (old) =>
         old?.map((comment) => {
