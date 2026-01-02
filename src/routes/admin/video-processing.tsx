@@ -11,6 +11,7 @@ import {
   XCircle,
   AlertCircle,
   RefreshCw,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
@@ -27,6 +28,7 @@ import {
   getSegmentsWithProcessingStatusFn,
   queueMissingJobsForAllSegmentsFn,
   queueAllJobsForSegmentFn,
+  queueMissingSummaryJobsFn,
 } from "~/fn/video-processing-jobs";
 import { toast } from "sonner";
 import { queryOptions } from "@tanstack/react-query";
@@ -96,8 +98,29 @@ function AdminVideoProcessing() {
     },
   });
 
+  const queueSummariesMutation = useMutation({
+    mutationFn: queueMissingSummaryJobsFn,
+    onSuccess: (result) => {
+      toast.success(
+        `Queued ${result.jobsQueued} summary job${result.jobsQueued !== 1 ? "s" : ""} for processing`
+      );
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "video-processing"],
+      });
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to queue summary jobs"
+      );
+    },
+  });
+
   const handleQueueAll = () => {
     queueAllMutation.mutate({});
+  };
+
+  const handleQueueSummaries = () => {
+    queueSummariesMutation.mutate({});
   };
 
   const handleQueueSegment = (segmentId: number) => {
@@ -159,8 +182,15 @@ function AdminVideoProcessing() {
   const segmentsNeedingThumbnail = segments.filter(
     (s) => s.needsThumbnail && !s.activeThumbnailJob
   ).length;
+  const segmentsNeedingSummary = segments.filter(
+    (s) => s.needsSummary && !s.activeSummaryJob
+  ).length;
   const activeJobs = segments.filter(
-    (s) => s.activeTranscriptJob || s.activeTranscodeJob || s.activeThumbnailJob
+    (s) =>
+      s.activeTranscriptJob ||
+      s.activeTranscodeJob ||
+      s.activeThumbnailJob ||
+      s.activeSummaryJob
   ).length;
 
   return (
@@ -170,33 +200,55 @@ function AdminVideoProcessing() {
         highlightedWord="Processing"
         description="Manage video transcript generation and transcoding for all course segments. Jobs are processed sequentially to prevent system overload."
         actions={
-          <Button
-            onClick={handleQueueAll}
-            disabled={
-              queueAllMutation.isPending ||
-              (segmentsNeedingTranscript === 0 &&
-                segmentsNeedingTranscode === 0 &&
-                segmentsNeedingThumbnail === 0)
-            }
-            className="flex items-center gap-2"
-          >
-            {queueAllMutation.isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Queueing...
-              </>
-            ) : (
-              <>
-                <Play className="h-4 w-4" />
-                Process All Missing
-              </>
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleQueueSummaries}
+              disabled={
+                queueSummariesMutation.isPending || segmentsNeedingSummary === 0
+              }
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              {queueSummariesMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Queueing...
+                </>
+              ) : (
+                <>
+                  <BookOpen className="h-4 w-4" />
+                  Generate Summaries
+                </>
+              )}
+            </Button>
+            <Button
+              onClick={handleQueueAll}
+              disabled={
+                queueAllMutation.isPending ||
+                (segmentsNeedingTranscript === 0 &&
+                  segmentsNeedingTranscode === 0 &&
+                  segmentsNeedingThumbnail === 0)
+              }
+              className="flex items-center gap-2"
+            >
+              {queueAllMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Queueing...
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4" />
+                  Process All Missing
+                </>
+              )}
+            </Button>
+          </div>
         }
       />
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -249,6 +301,16 @@ function AdminVideoProcessing() {
             <div className="text-2xl font-bold">{segmentsNeedingThumbnail}</div>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Need Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{segmentsNeedingSummary}</div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Segments List */}
@@ -295,7 +357,8 @@ function SegmentRow({ segment, onProcess, isProcessing }: SegmentRowProps) {
   const needsProcessing =
     (segment.needsTranscript && !segment.activeTranscriptJob) ||
     (segment.needsTranscode && !segment.activeTranscodeJob) ||
-    (segment.needsThumbnail && !segment.activeThumbnailJob);
+    (segment.needsThumbnail && !segment.activeThumbnailJob) ||
+    (segment.needsSummary && !segment.activeSummaryJob);
 
   return (
     <div className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
@@ -343,6 +406,13 @@ function SegmentRow({ segment, onProcess, isProcessing }: SegmentRowProps) {
             active={segment.activeThumbnailJob}
             needs={segment.needsThumbnail}
           />
+          <StatusBadge
+            icon={BookOpen}
+            label="Summary"
+            has={segment.hasSummary}
+            active={segment.activeSummaryJob}
+            needs={segment.needsSummary}
+          />
         </div>
       </div>
       <div className="ml-4">
@@ -367,7 +437,8 @@ function SegmentRow({ segment, onProcess, isProcessing }: SegmentRowProps) {
           </Button>
         ) : segment.activeTranscriptJob ||
           segment.activeTranscodeJob ||
-          segment.activeThumbnailJob ? (
+          segment.activeThumbnailJob ||
+          segment.activeSummaryJob ? (
           <Badge variant="secondary" className="flex items-center gap-1">
             <Loader2 className="h-3 w-3 animate-spin" />
             Processing

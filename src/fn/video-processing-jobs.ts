@@ -7,6 +7,8 @@ import {
   queueThumbnailJobUseCase,
   queueAllJobsForSegmentUseCase,
   queueMissingJobsForAllSegmentsUseCase,
+  queueSummaryJobUseCase,
+  queueMissingSummaryJobsUseCase,
 } from "~/use-cases/video-processing";
 import {
   getVideoProcessingJobsBySegmentId,
@@ -29,10 +31,14 @@ export const queueTranscriptJobFn = createServerFn({ method: "POST" })
     })
   )
   .handler(async ({ data }) => {
+    console.log(`[VideoProcessing] queueTranscriptJobFn called for segment ${data.segmentId}`);
     const job = await queueTranscriptJobUseCase(data.segmentId);
     if (job) {
+      console.log(`[VideoProcessing] Transcript job ${job.id} created for segment ${data.segmentId}`);
       // Start worker if not already running
       await startVideoProcessingWorker();
+    } else {
+      console.log(`[VideoProcessing] Transcript job already exists for segment ${data.segmentId}, skipping`);
     }
     return { success: true, job };
   });
@@ -48,10 +54,14 @@ export const queueTranscodeJobFn = createServerFn({ method: "POST" })
     })
   )
   .handler(async ({ data }) => {
+    console.log(`[VideoProcessing] queueTranscodeJobFn called for segment ${data.segmentId}`);
     const job = await queueTranscodeJobUseCase(data.segmentId);
     if (job) {
+      console.log(`[VideoProcessing] Transcode job ${job.id} created for segment ${data.segmentId}`);
       // Start worker if not already running
       await startVideoProcessingWorker();
+    } else {
+      console.log(`[VideoProcessing] Transcode job already exists for segment ${data.segmentId}, skipping`);
     }
     return { success: true, job };
   });
@@ -67,10 +77,14 @@ export const queueThumbnailJobFn = createServerFn({ method: "POST" })
     })
   )
   .handler(async ({ data }) => {
+    console.log(`[VideoProcessing] queueThumbnailJobFn called for segment ${data.segmentId}`);
     const job = await queueThumbnailJobUseCase(data.segmentId);
     if (job) {
+      console.log(`[VideoProcessing] Thumbnail job ${job.id} created for segment ${data.segmentId}`);
       // Start worker if not already running
       await startVideoProcessingWorker();
+    } else {
+      console.log(`[VideoProcessing] Thumbnail job already exists for segment ${data.segmentId}, skipping`);
     }
     return { success: true, job };
   });
@@ -86,10 +100,14 @@ export const queueAllJobsForSegmentFn = createServerFn({ method: "POST" })
     })
   )
   .handler(async ({ data }) => {
+    console.log(`[VideoProcessing] queueAllJobsForSegmentFn called for segment ${data.segmentId}`);
     const jobs = await queueAllJobsForSegmentUseCase(data.segmentId);
     if (jobs.length > 0) {
+      console.log(`[VideoProcessing] Created ${jobs.length} jobs for segment ${data.segmentId}: ${jobs.map(j => `${j.jobType}(${j.id})`).join(', ')}`);
       // Start worker if not already running
       await startVideoProcessingWorker();
+    } else {
+      console.log(`[VideoProcessing] No jobs needed for segment ${data.segmentId}`);
     }
     return { success: true, jobs };
   });
@@ -102,10 +120,18 @@ export const queueMissingJobsForAllSegmentsFn = createServerFn({
 })
   .middleware([adminMiddleware])
   .handler(async () => {
+    console.log(`[VideoProcessing] queueMissingJobsForAllSegmentsFn called`);
     const jobs = await queueMissingJobsForAllSegmentsUseCase();
     if (jobs.length > 0) {
+      const jobsByType = jobs.reduce((acc, j) => {
+        acc[j.jobType] = (acc[j.jobType] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      console.log(`[VideoProcessing] Created ${jobs.length} jobs: ${JSON.stringify(jobsByType)}`);
       // Start worker if not already running
       await startVideoProcessingWorker();
+    } else {
+      console.log(`[VideoProcessing] No missing jobs found for any segment`);
     }
     return { success: true, jobsQueued: jobs.length, jobs };
   });
@@ -188,6 +214,11 @@ export const getSegmentsWithProcessingStatusFn = createServerFn({
             job.jobType === "thumbnail" &&
             (job.status === "pending" || job.status === "processing")
         );
+        const hasActiveSummaryJob = jobs.some(
+          (job) =>
+            job.jobType === "summary" &&
+            (job.status === "pending" || job.status === "processing")
+        );
 
         let has720p = false;
         let has480p = false;
@@ -213,16 +244,19 @@ export const getSegmentsWithProcessingStatusFn = createServerFn({
           moduleOrder: module.order,
           hasVideo: !!segment.videoKey,
           hasTranscript: !!segment.transcripts,
+          hasSummary: !!segment.summary,
           has720p,
           has480p,
           hasThumbnail,
           needsTranscript: !segment.transcripts && !!segment.videoKey,
+          needsSummary: !!segment.transcripts && !segment.summary,
           needsTranscode:
             canTranscode && !!segment.videoKey && (!has720p || !has480p),
           needsThumbnail: canTranscode && !!segment.videoKey && !hasThumbnail,
           activeTranscriptJob: hasActiveTranscriptJob,
           activeTranscodeJob: hasActiveTranscodeJob,
           activeThumbnailJob: hasActiveThumbnailJob,
+          activeSummaryJob: hasActiveSummaryJob,
           jobs,
         };
       })
@@ -237,4 +271,47 @@ export const getSegmentsWithProcessingStatusFn = createServerFn({
         order: module.order,
       })),
     };
+  });
+
+/**
+ * Queue a summary job for a segment
+ */
+export const queueSummaryJobFn = createServerFn({ method: "POST" })
+  .middleware([adminMiddleware])
+  .inputValidator(
+    z.object({
+      segmentId: z.number(),
+    })
+  )
+  .handler(async ({ data }) => {
+    console.log(`[VideoProcessing] queueSummaryJobFn called for segment ${data.segmentId}`);
+    const job = await queueSummaryJobUseCase(data.segmentId);
+    if (job) {
+      console.log(`[VideoProcessing] Summary job ${job.id} created for segment ${data.segmentId}`);
+      // Start worker if not already running
+      await startVideoProcessingWorker();
+    } else {
+      console.log(`[VideoProcessing] Summary job already exists for segment ${data.segmentId}, skipping`);
+    }
+    return { success: true, job };
+  });
+
+/**
+ * Queue summary jobs for all segments that have transcripts but no summary
+ */
+export const queueMissingSummaryJobsFn = createServerFn({
+  method: "POST",
+})
+  .middleware([adminMiddleware])
+  .handler(async () => {
+    console.log(`[VideoProcessing] queueMissingSummaryJobsFn called`);
+    const jobs = await queueMissingSummaryJobsUseCase();
+    if (jobs.length > 0) {
+      console.log(`[VideoProcessing] Created ${jobs.length} summary jobs for segments: ${jobs.map(j => j.segmentId).join(', ')}`);
+      // Start worker if not already running
+      await startVideoProcessingWorker();
+    } else {
+      console.log(`[VideoProcessing] No missing summary jobs found`);
+    }
+    return { success: true, jobsQueued: jobs.length, jobs };
   });

@@ -25,8 +25,10 @@ if (!OPENAI_API_KEY) {
  * Returns the audio as a buffer in mp3 format
  */
 async function extractAudioFromVideo(videoBuffer: Buffer): Promise<Buffer> {
+  console.log(`[OpenAI] extractAudioFromVideo - input: ${videoBuffer.length} bytes`);
   const tempVideoPath = join(tmpdir(), `video-${randomUUID()}.mp4`);
   const tempAudioPath = join(tmpdir(), `audio-${randomUUID()}.mp3`);
+  console.log(`[OpenAI] extractAudioFromVideo - tempVideoPath: ${tempVideoPath}, tempAudioPath: ${tempAudioPath}`);
 
   try {
     // Write video buffer to temp file
@@ -68,6 +70,7 @@ async function extractAudioFromVideo(videoBuffer: Buffer): Promise<Buffer> {
 
     // Read the audio file
     const audioBuffer = await readFile(tempAudioPath);
+    console.log(`[OpenAI] extractAudioFromVideo - output: ${audioBuffer.length} bytes`);
     return audioBuffer;
   } finally {
     // Clean up temp files
@@ -171,7 +174,9 @@ async function splitAudioIntoChunks(audioBuffer: Buffer): Promise<Buffer[]> {
 async function transcribeSingleAudioChunk(
   audioBuffer: Buffer
 ): Promise<string> {
+  console.log(`[OpenAI] transcribeSingleAudioChunk - input: ${audioBuffer.length} bytes`);
   if (!OPENAI_API_KEY) {
+    console.log(`[OpenAI] transcribeSingleAudioChunk - OPENAI_API_KEY not configured`);
     throw new Error("OPENAI_API_KEY is not configured");
   }
 
@@ -183,6 +188,8 @@ async function transcribeSingleAudioChunk(
   formData.append("model", "whisper-1");
   formData.append("response_format", "text");
 
+  console.log(`[OpenAI] transcribeSingleAudioChunk - calling Whisper API...`);
+  const startTime = Date.now();
   const response = await fetch(
     "https://api.openai.com/v1/audio/transcriptions",
     {
@@ -193,15 +200,19 @@ async function transcribeSingleAudioChunk(
       body: formData,
     }
   );
+  const duration = Date.now() - startTime;
 
   if (!response.ok) {
     const errorText = await response.text();
+    console.log(`[OpenAI] transcribeSingleAudioChunk - API error after ${duration}ms: ${response.status} - ${errorText}`);
     throw new Error(
       `OpenAI transcription failed: ${response.status} - ${errorText}`
     );
   }
 
-  return response.text();
+  const result = await response.text();
+  console.log(`[OpenAI] transcribeSingleAudioChunk - completed in ${duration}ms, output: ${result.length} characters`);
+  return result;
 }
 
 /**
@@ -240,10 +251,14 @@ async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
 async function formatTranscriptIntoParagraphs(
   rawTranscript: string
 ): Promise<string> {
+  console.log(`[OpenAI] formatTranscriptIntoParagraphs - input: ${rawTranscript.length} characters`);
   if (!OPENAI_API_KEY) {
+    console.log(`[OpenAI] formatTranscriptIntoParagraphs - OPENAI_API_KEY not configured`);
     throw new Error("OPENAI_API_KEY is not configured");
   }
 
+  console.log(`[OpenAI] formatTranscriptIntoParagraphs - calling GPT-4o-mini API...`);
+  const startTime = Date.now();
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -274,15 +289,19 @@ IMPORTANT RULES:
     }),
   });
 
+  const duration = Date.now() - startTime;
   if (!response.ok) {
     const errorText = await response.text();
+    console.log(`[OpenAI] formatTranscriptIntoParagraphs - API error after ${duration}ms: ${response.status} - ${errorText}`);
     throw new Error(
       `OpenAI formatting failed: ${response.status} - ${errorText}`
     );
   }
 
   const data = await response.json();
-  return data.choices[0].message.content.trim();
+  const result = data.choices[0].message.content.trim();
+  console.log(`[OpenAI] formatTranscriptIntoParagraphs - completed in ${duration}ms, output: ${result.length} characters`);
+  return result;
 }
 
 /**
@@ -294,18 +313,107 @@ IMPORTANT RULES:
 export async function generateTranscriptFromVideo(
   videoBuffer: Buffer
 ): Promise<string> {
-  console.log("Extracting audio from video...");
+  console.log(`[OpenAI] generateTranscriptFromVideo - starting with ${videoBuffer.length} bytes`);
+  const overallStartTime = Date.now();
+
+  console.log("[OpenAI] generateTranscriptFromVideo - step 1: extracting audio...");
+  const audioStartTime = Date.now();
   const audioBuffer = await extractAudioFromVideo(videoBuffer);
-  console.log(`Audio extracted: ${audioBuffer.length} bytes`);
+  console.log(`[OpenAI] generateTranscriptFromVideo - audio extracted: ${audioBuffer.length} bytes in ${Date.now() - audioStartTime}ms`);
 
-  console.log("Transcribing audio with Whisper...");
+  console.log("[OpenAI] generateTranscriptFromVideo - step 2: transcribing with Whisper...");
+  const transcribeStartTime = Date.now();
   const rawTranscript = await transcribeAudio(audioBuffer);
-  console.log(`Raw transcript: ${rawTranscript.length} characters`);
+  console.log(`[OpenAI] generateTranscriptFromVideo - raw transcript: ${rawTranscript.length} characters in ${Date.now() - transcribeStartTime}ms`);
 
-  console.log("Formatting transcript into paragraphs...");
+  console.log("[OpenAI] generateTranscriptFromVideo - step 3: formatting into paragraphs...");
+  const formatStartTime = Date.now();
   const formattedTranscript =
     await formatTranscriptIntoParagraphs(rawTranscript);
-  console.log(`Formatted transcript: ${formattedTranscript.length} characters`);
+  console.log(`[OpenAI] generateTranscriptFromVideo - formatted transcript: ${formattedTranscript.length} characters in ${Date.now() - formatStartTime}ms`);
 
+  console.log(`[OpenAI] generateTranscriptFromVideo - completed in ${Date.now() - overallStartTime}ms`);
   return formattedTranscript;
+}
+
+/**
+ * Generates a structured summary from a transcript using GPT
+ * Returns a formatted summary with:
+ * - What the video is about
+ * - What you'll learn
+ * - Key takeaways
+ */
+export async function generateSummaryFromTranscript(
+  transcript: string
+): Promise<string> {
+  console.log(`[OpenAI] generateSummaryFromTranscript - starting with ${transcript.length} characters`);
+
+  if (!OPENAI_API_KEY) {
+    console.log(`[OpenAI] generateSummaryFromTranscript - OPENAI_API_KEY not configured`);
+    throw new Error("OPENAI_API_KEY is not configured");
+  }
+
+  if (!transcript || transcript.trim().length === 0) {
+    console.log(`[OpenAI] generateSummaryFromTranscript - transcript is empty`);
+    throw new Error("Transcript is empty or invalid");
+  }
+
+  console.log(`[OpenAI] generateSummaryFromTranscript - calling GPT-4o API...`);
+  const startTime = Date.now();
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert at creating concise, informative video summaries for an online learning platform. Your summaries help learners quickly understand what a video covers and decide if it's relevant to their learning goals.
+
+Create a well-structured summary with these exact sections:
+
+## About This Video
+A concise 1-2 sentence overview of what the video covers and its main purpose.
+
+## What You'll Learn
+- 3-5 specific, actionable learning outcomes
+- Each bullet should start with an action verb (Learn, Understand, Build, Implement, etc.)
+- Be specific about skills or concepts covered
+
+## Key Takeaways
+- 3-5 most important concepts or insights from the video
+- Focus on memorable, practical points learners should remember
+- These should be things learners can apply immediately
+
+IMPORTANT:
+- Keep the entire summary under 300 words
+- Use clear, accessible language suitable for developers of all levels
+- Be specific and avoid vague statements
+- Format using markdown with ## headers and - for bullet points`,
+        },
+        {
+          role: "user",
+          content: `Please create a structured summary for this video transcript:\n\n${transcript}`,
+        },
+      ],
+      temperature: 0.3,
+    }),
+  });
+
+  const duration = Date.now() - startTime;
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.log(`[OpenAI] generateSummaryFromTranscript - API error after ${duration}ms: ${response.status} - ${errorText}`);
+    throw new Error(
+      `OpenAI summary generation failed: ${response.status} - ${errorText}`
+    );
+  }
+
+  const data = await response.json();
+  const result = data.choices[0].message.content.trim();
+  console.log(`[OpenAI] generateSummaryFromTranscript - completed in ${duration}ms, output: ${result.length} characters`);
+  return result;
 }

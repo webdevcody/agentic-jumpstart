@@ -133,6 +133,7 @@ export const segments = tableCreator(
     title: text("title").notNull(),
     content: text("content"),
     transcripts: text("transcripts"),
+    summary: text("summary"),
     order: integer("order").notNull(),
     length: text("length"),
     icon: text("icon"), // Lucide icon name, e.g., "PlayCircle", "Code", "FileText"
