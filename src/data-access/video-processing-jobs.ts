@@ -133,3 +133,23 @@ export async function hasPendingOrProcessingJobs(segmentId: number) {
     .limit(1);
   return result.length > 0;
 }
+
+export async function cancelPendingOrProcessingJobsByType(
+  segmentId: number,
+  jobType: string
+) {
+  const result = await database
+    .delete(videoProcessingJobs)
+    .where(
+      and(
+        eq(videoProcessingJobs.segmentId, segmentId),
+        eq(videoProcessingJobs.jobType, jobType),
+        or(
+          eq(videoProcessingJobs.status, "pending"),
+          eq(videoProcessingJobs.status, "processing")
+        )
+      )
+    )
+    .returning();
+  return result;
+}

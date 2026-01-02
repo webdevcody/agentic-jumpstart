@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   AlertCircle,
   FileText,
+  X,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
@@ -23,6 +24,7 @@ import {
   getVectorizationStatusFn,
   queueVectorizeAllSegmentsFn,
   queueVectorizeSegmentFn,
+  cancelVectorizeSegmentFn,
 } from "~/fn/vector-search";
 import { toast } from "sonner";
 import { queryOptions } from "@tanstack/react-query";
@@ -93,12 +95,37 @@ function AdminVectorization() {
     },
   });
 
+  const cancelSegmentMutation = useMutation({
+    mutationFn: cancelVectorizeSegmentFn,
+    onSuccess: (result) => {
+      if (result.cancelledCount > 0) {
+        toast.success("Vectorization job cancelled");
+      } else {
+        toast.info("No active job to cancel");
+      }
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "vectorization"],
+      });
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to cancel vectorization job"
+      );
+    },
+  });
+
   const handleVectorizeAll = () => {
     queueAllMutation.mutate({});
   };
 
   const handleVectorizeSegment = (segmentId: number) => {
     queueSegmentMutation.mutate({ data: { segmentId } });
+  };
+
+  const handleCancelSegment = (segmentId: number) => {
+    cancelSegmentMutation.mutate({ data: { segmentId } });
   };
 
   // Check if any segments have active jobs
@@ -284,9 +311,15 @@ function AdminVectorization() {
                       key={segment.id}
                       segment={segment}
                       onVectorize={() => handleVectorizeSegment(segment.id)}
+                      onCancel={() => handleCancelSegment(segment.id)}
                       isQueueing={
                         queueSegmentMutation.isPending &&
                         queueSegmentMutation.variables?.data.segmentId ===
+                          segment.id
+                      }
+                      isCancelling={
+                        cancelSegmentMutation.isPending &&
+                        cancelSegmentMutation.variables?.data.segmentId ===
                           segment.id
                       }
                     />
@@ -303,10 +336,18 @@ function AdminVectorization() {
 interface SegmentRowProps {
   segment: SegmentStatus;
   onVectorize: () => void;
+  onCancel: () => void;
   isQueueing: boolean;
+  isCancelling: boolean;
 }
 
-function SegmentRow({ segment, onVectorize, isQueueing }: SegmentRowProps) {
+function SegmentRow({
+  segment,
+  onVectorize,
+  onCancel,
+  isQueueing,
+  isCancelling,
+}: SegmentRowProps) {
   const isProcessing = segment.activeVectorizeJob;
 
   return (
@@ -348,10 +389,26 @@ function SegmentRow({ segment, onVectorize, isQueueing }: SegmentRowProps) {
       </div>
       <div className="ml-4 flex items-center gap-2">
         {isProcessing ? (
-          <Badge variant="outline" className="flex items-center gap-1">
-            <Loader2 className="h-3 w-3 animate-spin" />
-            Processing
-          </Badge>
+          <>
+            <Badge variant="outline" className="flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Processing
+            </Badge>
+            <Button
+              onClick={onCancel}
+              disabled={isCancelling}
+              size="sm"
+              variant="ghost"
+              title="Cancel vectorization"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              {isCancelling ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <X className="h-3 w-3" />
+              )}
+            </Button>
+          </>
         ) : segment.needsVectorization ? (
           <Button
             onClick={onVectorize}

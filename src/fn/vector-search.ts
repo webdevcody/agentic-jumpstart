@@ -8,6 +8,7 @@ import {
 import {
   queueVectorizeJobUseCase,
   queueVectorizeAllSegmentsUseCase,
+  cancelVectorizeJobUseCase,
 } from "~/use-cases/video-processing";
 import { startVideoProcessingWorker } from "~/lib/video-processing-worker";
 
@@ -51,4 +52,15 @@ export const getVectorizationStatusFn = createServerFn({ method: "GET" })
   .middleware([adminMiddleware])
   .handler(async () => {
     return getVectorizationStatusUseCase();
+  });
+
+/**
+ * Cancel a pending or processing vectorization job for a segment
+ */
+export const cancelVectorizeSegmentFn = createServerFn({ method: "POST" })
+  .middleware([adminMiddleware])
+  .inputValidator(z.object({ segmentId: z.number() }))
+  .handler(async ({ data }) => {
+    const result = await cancelVectorizeJobUseCase(data.segmentId);
+    return { success: true, ...result };
   });

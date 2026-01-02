@@ -2,13 +2,12 @@ import {
   createVideoProcessingJob,
   createVideoProcessingJobs,
   getVideoProcessingJobsBySegmentId,
-  hasPendingOrProcessingJobs,
   getVideoProcessingJobsBySegmentIds,
+  cancelPendingOrProcessingJobsByType,
 } from "~/data-access/video-processing-jobs";
 import { getSegments, getSegmentById } from "~/data-access/segments";
 import { getStorage } from "~/utils/storage";
 import { getVideoQualityKey } from "~/utils/storage/r2";
-import { getThumbnailKey } from "~/utils/video-transcoding";
 import type { VideoProcessingJobCreate } from "~/db/schema";
 
 export type JobType = "transcript" | "transcode" | "thumbnail" | "vectorize";
@@ -358,4 +357,15 @@ export async function queueVectorizeAllSegmentsUseCase() {
   }
 
   return createVideoProcessingJobs(jobsToCreate);
+}
+
+/**
+ * Cancel a pending or processing vectorization job for a segment
+ */
+export async function cancelVectorizeJobUseCase(segmentId: number) {
+  const cancelledJobs = await cancelPendingOrProcessingJobsByType(
+    segmentId,
+    "vectorize"
+  );
+  return { cancelledCount: cancelledJobs.length, jobs: cancelledJobs };
 }

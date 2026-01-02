@@ -8,31 +8,32 @@ export async function createTranscriptChunks(chunks: TranscriptChunkCreate[]) {
   return database.insert(transcriptChunks).values(chunks).returning();
 }
 
+/**
+ * Insert chunks in a batch without returning data to reduce memory usage.
+ * Use this for bulk operations where you don't need the returned rows.
+ */
+export async function createTranscriptChunksBatch(
+  chunks: TranscriptChunkCreate[]
+): Promise<void> {
+  if (chunks.length === 0) return;
+  await database.insert(transcriptChunks).values(chunks);
+}
+
 export async function deleteChunksBySegmentId(segmentId: number) {
   const startedAt = Date.now();
   console.log("[Vectorize] Deleting chunks start", { segmentId });
-  const slowLog = setTimeout(() => {
-    console.warn("[Vectorize] Deleting chunks still running", {
-      segmentId,
-      durationMs: Date.now() - startedAt,
-    });
-  }, 10000);
 
-  try {
-    const deleted = await database
-      .delete(transcriptChunks)
-      .where(eq(transcriptChunks.segmentId, segmentId))
-      .returning();
-    const durationMs = Date.now() - startedAt;
-    console.log("[Vectorize] Deleting chunks done", {
-      segmentId,
-      durationMs,
-      deletedCount: deleted.length,
-    });
-    return deleted;
-  } finally {
-    clearTimeout(slowLog);
-  }
+  // Don't use .returning() to avoid holding connection unnecessarily
+  // If we need the count, we can query separately
+  await database
+    .delete(transcriptChunks)
+    .where(eq(transcriptChunks.segmentId, segmentId));
+  
+  const durationMs = Date.now() - startedAt;
+  console.log("[Vectorize] Deleting chunks done", {
+    segmentId,
+    durationMs,
+  });
 }
 
 export async function getChunksBySegmentId(segmentId: number) {

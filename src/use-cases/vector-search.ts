@@ -1,5 +1,5 @@
 import {
-  createTranscriptChunks,
+  createTranscriptChunksBatch,
   deleteChunksBySegmentId,
   getChunkCountBySegmentIds,
   getTotalChunkCount,
@@ -13,6 +13,7 @@ import { chunkTranscript } from "~/lib/chunking";
 import { generateEmbedding, generateEmbeddings } from "~/lib/openai";
 
 const EMBEDDING_BATCH_SIZE = 20;
+const DB_INSERT_BATCH_SIZE = 50;
 
 export async function vectorizeSegmentUseCase(segmentId: number) {
   const startedAt = Date.now();
@@ -33,9 +34,19 @@ export async function vectorizeSegmentUseCase(segmentId: number) {
     // Delete existing chunks for this segment
     console.log("[Vectorize] Deleting existing chunks", { segmentId });
     await deleteChunksBySegmentId(segmentId);
+    console.log("[Vectorize] Delete operation completed, continuing...", {
+      segmentId,
+    });
 
-    // Chunk the transcript
-    const chunks = chunkTranscript(segment.transcripts);
+    // Don't log the full transcript - it can be 10KB+ and crash dev server console
+    console.log("[Vectorize] Transcript loaded", {
+      segmentId,
+      transcriptLength: segment.transcripts.length,
+      transcriptPreview: segment.transcripts.substring(0, 100) + "...",
+    });
+
+    // Chunk the transcript (async to avoid blocking event loop)
+    const chunks = await chunkTranscript(segment.transcripts);
     const totalTokens = chunks.reduce((sum, c) => sum + c.tokenCount, 0);
     console.log("[Vectorize] Chunked transcript", {
       segmentId,
@@ -50,8 +61,9 @@ export async function vectorizeSegmentUseCase(segmentId: number) {
       };
     }
 
-    // Generate embeddings in batches
-    const allChunksWithEmbeddings: Array<{
+    // Generate embeddings in batches and insert incrementally to avoid memory buildup
+    let totalChunksCreated = 0;
+    let pendingChunks: Array<{
       segmentId: number;
       chunkIndex: number;
       chunkText: string;
@@ -79,7 +91,7 @@ export async function vectorizeSegmentUseCase(segmentId: number) {
       });
 
       for (let j = 0; j < batch.length; j++) {
-        allChunksWithEmbeddings.push({
+        pendingChunks.push({
           segmentId,
           chunkIndex: batch[j].index,
           chunkText: batch[j].text,
@@ -87,34 +99,51 @@ export async function vectorizeSegmentUseCase(segmentId: number) {
           tokenCount: batch[j].tokenCount,
         });
       }
+
+      // Insert to database when we've accumulated enough chunks to reduce memory
+      if (pendingChunks.length >= DB_INSERT_BATCH_SIZE) {
+        console.log("[Vectorize] Inserting batch to database", {
+          segmentId,
+          batchSize: pendingChunks.length,
+        });
+        await createTranscriptChunksBatch(pendingChunks);
+        totalChunksCreated += pendingChunks.length;
+        pendingChunks = []; // Release memory
+      }
     }
 
-    console.log("[Vectorize] Saving chunks", {
-      segmentId,
-      chunks: allChunksWithEmbeddings.length,
-    });
+    // Insert any remaining chunks
+    if (pendingChunks.length > 0) {
+      console.log("[Vectorize] Inserting final batch to database", {
+        segmentId,
+        batchSize: pendingChunks.length,
+      });
+      await createTranscriptChunksBatch(pendingChunks);
+      totalChunksCreated += pendingChunks.length;
+    }
 
-    // Store chunks
-    const created = await createTranscriptChunks(allChunksWithEmbeddings);
     const durationMs = Date.now() - startedAt;
     console.log("[Vectorize] Completed", {
       segmentId,
-      chunksCreated: created.length,
+      chunksCreated: totalChunksCreated,
       durationMs,
     });
 
     return {
       segmentId,
-      chunksCreated: created.length,
+      chunksCreated: totalChunksCreated,
     };
   } catch (error) {
     const durationMs = Date.now() - startedAt;
     const errorDetails =
       error && typeof error === "object"
         ? {
-            errorCode: "code" in error ? (error as { code?: string }).code : undefined,
+            errorCode:
+              "code" in error ? (error as { code?: string }).code : undefined,
             errorStatus:
-              "status" in error ? (error as { status?: number }).status : undefined,
+              "status" in error
+                ? (error as { status?: number }).status
+                : undefined,
             errorContext:
               "context" in error
                 ? (error as { context?: Record<string, unknown> }).context
