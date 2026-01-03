@@ -7,7 +7,7 @@
     "dev": "npm run db:up && vite dev",
     "build": "vite build",
     "preview": "npm run build && npm run start",
-    "start": "npm run db:migrate && node --env-file=.env .output/server/index.mjs",
+    "start": "npm run db:migrate && node .output/server/index.mjs",
     "start:test": "npm run db:migrate:test && cross-env PORT=3001 HOST_NAME=http://localhost:3001 IS_TEST=true DATABASE_URL_TEST=postgresql://postgres:example@localhost:5433/postgres node .output/server/index.mjs",
     "db:push": "drizzle-kit push --config=drizzle.config.ts",
     "db:migrate": "tsx ./src/db/migrate.ts",
