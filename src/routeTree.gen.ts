@@ -14,6 +14,7 @@ import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
 import { Route as UnauthenticatedRouteImport } from './routes/unauthenticated'
 import { Route as TermsOfServiceRouteImport } from './routes/terms-of-service'
 import { Route as SuccessRouteImport } from './routes/success'
+import { Route as ShowcasesRouteImport } from './routes/showcases'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RefundPolicyRouteImport } from './routes/refund-policy'
 import { Route as PurchaseRouteImport } from './routes/purchase'
@@ -109,6 +110,11 @@ const TermsOfServiceRoute = TermsOfServiceRouteImport.update({
 const SuccessRoute = SuccessRouteImport.update({
   id: '/success',
   path: '/success',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShowcasesRoute = ShowcasesRouteImport.update({
+  id: '/showcases',
+  path: '/showcases',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -489,6 +495,7 @@ export interface FileRoutesByFullPath {
   '/purchase': typeof PurchaseRoute
   '/refund-policy': typeof RefundPolicyRoute
   '/settings': typeof SettingsRoute
+  '/showcases': typeof ShowcasesRoute
   '/success': typeof SuccessRoute
   '/terms-of-service': typeof TermsOfServiceRoute
   '/unauthenticated': typeof UnauthenticatedRoute
@@ -567,6 +574,7 @@ export interface FileRoutesByTo {
   '/purchase': typeof PurchaseRoute
   '/refund-policy': typeof RefundPolicyRoute
   '/settings': typeof SettingsRoute
+  '/showcases': typeof ShowcasesRoute
   '/success': typeof SuccessRoute
   '/terms-of-service': typeof TermsOfServiceRoute
   '/unauthenticated': typeof UnauthenticatedRoute
@@ -643,6 +651,7 @@ export interface FileRoutesById {
   '/purchase': typeof PurchaseRoute
   '/refund-policy': typeof RefundPolicyRoute
   '/settings': typeof SettingsRoute
+  '/showcases': typeof ShowcasesRoute
   '/success': typeof SuccessRoute
   '/terms-of-service': typeof TermsOfServiceRoute
   '/unauthenticated': typeof UnauthenticatedRoute
@@ -723,6 +732,7 @@ export interface FileRouteTypes {
     | '/purchase'
     | '/refund-policy'
     | '/settings'
+    | '/showcases'
     | '/success'
     | '/terms-of-service'
     | '/unauthenticated'
@@ -801,6 +811,7 @@ export interface FileRouteTypes {
     | '/purchase'
     | '/refund-policy'
     | '/settings'
+    | '/showcases'
     | '/success'
     | '/terms-of-service'
     | '/unauthenticated'
@@ -876,6 +887,7 @@ export interface FileRouteTypes {
     | '/purchase'
     | '/refund-policy'
     | '/settings'
+    | '/showcases'
     | '/success'
     | '/terms-of-service'
     | '/unauthenticated'
@@ -955,6 +967,7 @@ export interface RootRouteChildren {
   PurchaseRoute: typeof PurchaseRoute
   RefundPolicyRoute: typeof RefundPolicyRoute
   SettingsRoute: typeof SettingsRoute
+  ShowcasesRoute: typeof ShowcasesRoute
   SuccessRoute: typeof SuccessRoute
   TermsOfServiceRoute: typeof TermsOfServiceRoute
   UnauthenticatedRoute: typeof UnauthenticatedRoute
@@ -1019,6 +1032,13 @@ declare module '@tanstack/react-router' {
       path: '/success'
       fullPath: '/success'
       preLoaderRoute: typeof SuccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/showcases': {
+      id: '/showcases'
+      path: '/showcases'
+      fullPath: '/showcases'
+      preLoaderRoute: typeof ShowcasesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -1643,6 +1663,7 @@ const rootRouteChildren: RootRouteChildren = {
   PurchaseRoute: PurchaseRoute,
   RefundPolicyRoute: RefundPolicyRoute,
   SettingsRoute: SettingsRoute,
+  ShowcasesRoute: ShowcasesRoute,
   SuccessRoute: SuccessRoute,
   TermsOfServiceRoute: TermsOfServiceRoute,
   UnauthenticatedRoute: UnauthenticatedRoute,

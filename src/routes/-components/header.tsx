@@ -22,6 +22,7 @@ import {
   MessageSquare,
   Link2,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import {
   Sheet,
@@ -117,6 +118,12 @@ const NAVIGATION_LINKS: NavLink[] = [
   },
 
   // Resources dropdown (all secondary links)
+  {
+    to: "/showcases",
+    label: "Showcases",
+    icon: Sparkles,
+    category: "resources",
+  },
   {
     to: "/blog",
     label: "Blog",

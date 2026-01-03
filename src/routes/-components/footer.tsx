@@ -98,7 +98,7 @@ export function FooterSection() {
         </div>
 
         <div className="text-center pt-8 border-t border-border">
-          <p>© 2025 Seibert Software Solutions, LLC. All rights reserved.</p>
+          <p>© 2026 Seibert Software Solutions, LLC. All rights reserved.</p>
         </div>
       </div>
     </footer>

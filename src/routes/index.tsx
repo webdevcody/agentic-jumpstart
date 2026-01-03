@@ -21,6 +21,7 @@ import { segments, modules } from "~/db/schema";
 import { eq } from "drizzle-orm";
 import { getStorage } from "~/utils/storage";
 import { getThumbnailKey } from "~/utils/video-transcoding";
+import { ShowcasesCTA } from "./-components/showcases-cta";
 
 const getFirstVideoSegmentFn = createServerFn().handler(async () => {
   // Get segments ordered by module order, then segment order
@@ -107,6 +108,7 @@ function Home() {
         waitlistCount={waitlistCount}
         initialVideoData={firstVideoData}
       />
+      {!shouldShowEarlyAccess && <ShowcasesCTA />}
       {shouldShowEarlyAccess && <DiscordCommunitySection />}
       <FutureOfCodingSection />
       {stats && <StatsSection stats={stats} />}
