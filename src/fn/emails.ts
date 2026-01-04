@@ -23,7 +23,7 @@ import {
   renderMultiSegmentNotificationEmail,
 } from "~/utils/email";
 import { EmailBatchCreate, Segment } from "~/db/schema";
-import { createUnsubscribeToken } from "~/data-access/unsubscribe-tokens";
+import { createUnsubscribeToken, createUnsubscribeTokensBatch } from "~/data-access/unsubscribe-tokens";
 import { env } from "~/utils/env";
 import {
   getRecentSegmentsWithModules,
@@ -267,29 +267,26 @@ async function processBulkEmails(
     // Update batch status to processing
     await updateEmailBatchProgress(batchId, { status: "processing" });
 
-    // Prepare all emails with personalized unsubscribe URLs
-    const emails = await Promise.all(
-      users.map(async (user) => {
-        let finalHtmlContent = htmlContent;
-
-        // Generate unsubscribe token for all recipients (both users and newsletter-only)
-        const unsubscribeToken = await createUnsubscribeToken(
-          user.email,
-          user.id ?? undefined
-        );
-        const unsubscribeUrl = `${env.HOST_NAME}/unsubscribe?token=${unsubscribeToken}`;
-        finalHtmlContent = htmlContent.replace(
-          /{{unsubscribeUrl}}/g,
-          unsubscribeUrl
-        );
-
-        return {
-          to: user.email,
-          subject,
-          html: finalHtmlContent,
-        };
-      })
+    // Batch create all unsubscribe tokens in a single database query
+    const tokenMap = await createUnsubscribeTokensBatch(
+      users.map((user) => ({ email: user.email, userId: user.id }))
     );
+
+    // Prepare all emails with personalized unsubscribe URLs
+    const emails = users.map((user) => {
+      const unsubscribeToken = tokenMap.get(user.email)!;
+      const unsubscribeUrl = `${env.HOST_NAME}/unsubscribe?token=${unsubscribeToken}`;
+      const finalHtmlContent = htmlContent.replace(
+        /{{unsubscribeUrl}}/g,
+        unsubscribeUrl
+      );
+
+      return {
+        to: user.email,
+        subject,
+        html: finalHtmlContent,
+      };
+    });
 
     // Send emails using the bulk email utility with progress tracking
     const { sent, failed } = await sendBulkEmails(emails, {
@@ -596,26 +593,30 @@ async function processMultiSegmentNotificationEmails(
     // Update batch status to processing
     await updateEmailBatchProgress(batchId, { status: "processing" });
 
+    // Pre-compute segment data once (it's the same for all recipients)
+    const segmentData = segments.map((s) => ({
+      title: s.title,
+      description:
+        s.content?.substring(0, 150) +
+          (s.content && s.content.length > 150 ? "..." : "") || "",
+      url: `${env.HOST_NAME}/learn/${s.slug}`,
+      isPremium: s.isPremium,
+    }));
+
+    // Batch create all unsubscribe tokens in a single database query
+    const tokenMap = await createUnsubscribeTokensBatch(
+      recipients.map((recipient) => ({ email: recipient.email, userId: recipient.id }))
+    );
+
     // Prepare emails with personalized unsubscribe URLs
     const emails = await Promise.all(
       recipients.map(async (recipient) => {
-        // Generate unsubscribe token
-        const unsubscribeToken = await createUnsubscribeToken(
-          recipient.email,
-          recipient.id ?? undefined
-        );
+        const unsubscribeToken = tokenMap.get(recipient.email)!;
         const unsubscribeUrl = `${env.HOST_NAME}/unsubscribe?token=${unsubscribeToken}`;
 
         // Render email HTML
         const html = await renderMultiSegmentNotificationEmail({
-          segments: segments.map((s) => ({
-            title: s.title,
-            description:
-              s.content?.substring(0, 150) +
-                (s.content && s.content.length > 150 ? "..." : "") || "",
-            url: `${env.HOST_NAME}/learn/${s.slug}`,
-            isPremium: s.isPremium,
-          })),
+          segments: segmentData,
           unsubscribeUrl,
           notificationType,
         });

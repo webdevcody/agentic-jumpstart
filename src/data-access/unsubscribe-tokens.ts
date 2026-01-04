@@ -29,6 +29,39 @@ export async function createUnsubscribeToken(
   return token;
 }
 
+// Batch create unsubscribe tokens for multiple recipients in a single query
+// Returns a Map of email -> token for easy lookup
+export async function createUnsubscribeTokensBatch(
+  recipients: Array<{ email: string; userId?: number }>
+): Promise<Map<string, string>> {
+  if (recipients.length === 0) {
+    return new Map();
+  }
+
+  // Token expires in 1 year (marketing emails need long-lived tokens)
+  const expiresAt = new Date();
+  expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+
+  // Generate tokens for all recipients
+  const tokenData = recipients.map((recipient) => ({
+    token: generateUnsubscribeToken(),
+    userId: recipient.userId ?? null,
+    emailAddress: recipient.email,
+    expiresAt,
+  }));
+
+  // Batch insert all tokens in a single query
+  await database.insert(unsubscribeTokens).values(tokenData);
+
+  // Create a map of email -> token for easy lookup
+  const tokenMap = new Map<string, string>();
+  for (const data of tokenData) {
+    tokenMap.set(data.emailAddress, data.token);
+  }
+
+  return tokenMap;
+}
+
 // Validate and consume an unsubscribe token
 export async function validateAndConsumeUnsubscribeToken(
   token: string
